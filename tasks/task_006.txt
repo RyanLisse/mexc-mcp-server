@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Develop Market Data API
+# Status: pending
+# Dependencies: 3, 5
+# Priority: medium
+# Description: Implement endpoints for real-time ticker prices, order book, and market statistics.
+# Details:
+Create REST endpoints using Encore.ts. Fetch data from MEXC REST API. Cache responses in Redis. Example: `fetch('https://api.mexc.com/api/v3/ticker/price')`. Use Zod for response validation.
+
+# Test Strategy:
+Test data retrieval, caching, and validation. Verify response times <200ms.

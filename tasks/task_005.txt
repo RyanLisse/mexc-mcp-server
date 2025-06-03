@@ -1,0 +1,11 @@
+# Task ID: 5
+# Title: Implement Rate Limiting
+# Status: pending
+# Dependencies: 2, 3
+# Priority: medium
+# Description: Enforce MEXC API rate limits and protect against abuse.
+# Details:
+Use Encore.ts middleware to track and limit requests per API key. Store counters in Redis (via Encore.ts). Example: `redis.incr(key)` and check against limit. Return 429 on exceedance.
+
+# Test Strategy:
+Test with rapid requests. Verify rate limiting and error responses.

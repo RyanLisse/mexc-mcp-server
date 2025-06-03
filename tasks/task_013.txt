@@ -1,0 +1,11 @@
+# Task ID: 13
+# Title: Implement Advanced Order Types
+# Status: pending
+# Dependencies: 3, 5, 7
+# Priority: medium
+# Description: Enable stop-loss and OCO order placement.
+# Details:
+Extend order placement API to support advanced types. Validate inputs with Zod. Example: `type: 'STOP_LOSS'`. Call MEXC REST API accordingly.
+
+# Test Strategy:
+Test advanced order placement. Verify validation and execution.

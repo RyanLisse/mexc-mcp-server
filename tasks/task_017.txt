@@ -1,0 +1,11 @@
+# Task ID: 17
+# Title: Implement MCP Protocol Interface
+# Status: pending
+# Dependencies: 3, 5, 6, 15
+# Priority: medium
+# Description: Develop the MCP protocol interface for AI assistant integration.
+# Details:
+Implement MCP protocol handlers using JSON-RPC over HTTP/SSE. Use Zod for request/response validation. Example: `{ jsonrpc: '2.0', method: 'getPrice', params: {...} }`.
+
+# Test Strategy:
+Test MCP protocol compliance. Verify request/response validation and error handling.

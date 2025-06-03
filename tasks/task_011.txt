@@ -1,0 +1,11 @@
+# Task ID: 11
+# Title: Implement Position Monitoring API
+# Status: pending
+# Dependencies: 3, 5, 10
+# Priority: medium
+# Description: Enable position monitoring and P&L calculations.
+# Details:
+Create GET endpoint for positions. Calculate P&L using current prices and entry points. Store in PostgreSQL. Example: `GET /portfolio/positions`.
+
+# Test Strategy:
+Test position retrieval and P&L calculation. Verify accuracy and performance.

@@ -1,0 +1,11 @@
+# Task ID: 16
+# Title: Implement Subscription Management
+# Status: pending
+# Dependencies: 3, 5, 15
+# Priority: medium
+# Description: Enable clients to subscribe to real-time updates for prices and account changes.
+# Details:
+Create endpoints for subscription management. Track subscriptions in PostgreSQL. Broadcast updates via WebSocket. Example: `POST /subscribe`.
+
+# Test Strategy:
+Test subscription lifecycle. Verify update delivery and unsubscription.

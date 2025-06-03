@@ -1,0 +1,11 @@
+# Task ID: 2
+# Title: Configure Secrets Management
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Implement secure storage and retrieval of MEXC API keys using Encore.ts secrets.
+# Details:
+Use Encore.ts secrets API for storing and retrieving MEXC API keys. Example: `encore.secret('MEXC_API_KEY')`. Ensure secrets are never logged or exposed in code. Document secret management process.
+
+# Test Strategy:
+Test secret retrieval in a local environment. Verify secrets are not exposed in logs or error messages.

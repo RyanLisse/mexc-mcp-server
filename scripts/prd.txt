@@ -1,0 +1,169 @@
+<context>
+# Overview  
+The MEXC MCP Server is a Model Context Protocol (MCP) server implementation that provides AI assistants with secure, real-time access to MEXC cryptocurrency exchange functionality. This server enables AI models to perform trading operations, retrieve market data, manage portfolios, and monitor real-time updates through a standardized protocol interface.
+
+The project solves the problem of AI assistants needing reliable, secure access to cryptocurrency trading platforms while maintaining proper authentication, rate limiting, and error handling. It's designed for developers building AI-powered trading applications, portfolio management tools, and market analysis systems.
+
+# Core Features  
+## Authentication & Security
+- MEXC API key validation and secure storage using Encore.ts secrets management
+- Rate limiting compliance with MEXC API limits
+- Comprehensive audit logging for all operations
+- Test mode for safe development without real trades
+
+## Market Data Access
+- Real-time ticker price fetching with caching
+- Order book depth data retrieval
+- 24-hour trading statistics and volume calculations
+- Market cap and price change percentage calculations
+
+## Trading Operations
+- Market and limit order placement with safety checks
+- Order cancellation and status tracking
+- Order history and transaction management
+- Advanced order types (stop-loss, OCO orders)
+- Batch operations for multiple orders
+
+## Portfolio Management
+- Real-time account balance tracking with USD conversion
+- Position monitoring and P&L calculations
+- Transaction history with export capabilities
+- Risk metrics and portfolio analytics
+
+## Real-time Updates
+- WebSocket integration for live price feeds
+- Order execution notifications
+- Balance change events
+- Subscription management for multiple clients
+
+# User Experience  
+## User Personas
+- **AI Application Developers**: Need reliable API access for building trading bots and portfolio management tools
+- **Quantitative Analysts**: Require real-time data feeds and historical analysis capabilities
+- **Trading Platform Builders**: Want to integrate MEXC functionality into their applications
+
+## Key User Flows
+1. **Authentication Setup**: Configure API keys securely through Encore.ts secrets
+2. **Market Data Retrieval**: Query current prices, order books, and market statistics
+3. **Trade Execution**: Place orders with proper validation and confirmation
+4. **Portfolio Monitoring**: Track balances, positions, and performance metrics
+5. **Real-time Monitoring**: Subscribe to live updates for prices and account changes
+
+## UI/UX Considerations
+- MCP protocol compliance for seamless AI assistant integration
+- Clear error messages with actionable guidance
+- Comprehensive logging for debugging and audit trails
+- Performance optimization with sub-200ms response times
+</context>
+<PRD>
+# Technical Architecture  
+## System Components
+- **Encore.ts Framework**: Provides infrastructure, deployment, and service management
+- **Bun Runtime**: High-performance JavaScript runtime for faster execution
+- **TypeScript 5.0+**: Type-safe development with strict compilation
+- **Zod Validation**: Runtime type checking and input validation
+- **Biome.js**: Fast linting and formatting (35x faster than ESLint)
+- **PostgreSQL**: Database for audit logs and caching via Encore.ts SQL
+
+## Data Models
+- **User Authentication**: API key storage and validation schemas
+- **Market Data**: Ticker, order book, and statistics structures
+- **Trading Orders**: Order placement, status, and history models
+- **Portfolio Data**: Balance, position, and transaction tracking
+- **WebSocket Subscriptions**: Real-time data stream management
+
+## APIs and Integrations
+- **MEXC REST API**: Primary integration for trading and data retrieval
+- **MEXC WebSocket API**: Real-time data streaming
+- **MCP Protocol**: Standardized interface for AI assistant communication
+- **Encore.ts Services**: Microservice architecture with automatic deployment
+
+## Infrastructure Requirements
+- **Encore.ts Cloud**: Managed deployment and scaling
+- **PostgreSQL Database**: Persistent storage for logs and cache
+- **Redis Cache**: High-speed data caching (via Encore.ts)
+- **WebSocket Connections**: Persistent connections for real-time data
+
+# Development Roadmap  
+## Phase 1: Foundation (MVP)
+- Authentication system with MEXC API key validation
+- Basic market data tools (ticker prices, order book)
+- Simple order placement and cancellation
+- Core MCP protocol implementation
+- Basic error handling and logging
+
+## Phase 2: Enhanced Trading
+- Advanced order types (stop-loss, OCO)
+- Batch operations for multiple orders
+- Comprehensive order status tracking
+- Portfolio balance and position management
+- Enhanced safety features and validation
+
+## Phase 3: Real-time Integration
+- WebSocket implementation for live data
+- Real-time price feeds and order updates
+- Subscription management system
+- Connection resilience and auto-reconnection
+- Performance optimization and caching
+
+## Phase 4: Production Readiness
+- Comprehensive rate limiting and compliance
+- Security hardening and penetration testing
+- Performance monitoring and analytics
+- Health check endpoints and observability
+- Complete documentation and deployment automation
+
+# Logical Dependency Chain
+## Foundation First (Slice 1)
+- Authentication must be implemented first as all other features depend on it
+- Secure API key storage and validation forms the security foundation
+- Basic error handling patterns established early
+
+## Core Functionality (Slices 2-3)
+- Market data tools provide immediate value and can be tested independently
+- Trading operations build upon authentication and market data
+- Each tool can be developed and tested in isolation
+
+## Advanced Features (Slices 4-6)
+- Portfolio management requires trading operations to be functional
+- WebSocket integration enhances existing market data and trading features
+- Advanced trading features build upon basic trading operations
+
+## Production Polish (Slices 7-8)
+- Compliance and rate limiting wrap around all existing functionality
+- Production readiness ensures reliability and monitoring
+- Documentation and deployment automation complete the system
+
+# Risks and Mitigations  
+## Technical Challenges
+- **MEXC API Rate Limits**: Implement intelligent caching and request batching
+- **WebSocket Connection Stability**: Build robust reconnection logic and message queuing
+- **Type Safety**: Use Zod for runtime validation alongside TypeScript compilation
+- **Performance Requirements**: Leverage Bun's speed and implement efficient caching
+
+## MVP Scope Management
+- **Start with Basic Trading**: Focus on essential order placement and market data
+- **Incremental Feature Addition**: Each slice provides immediate value
+- **Test-Driven Development**: Ensure reliability through comprehensive testing
+- **Vertical Slice Architecture**: Complete features that can be used independently
+
+## Resource Constraints
+- **Junior Developer Focus**: Detailed implementation guide with examples
+- **Modern Tooling**: Bun and Biome.js provide faster development cycles
+- **Encore.ts Benefits**: Reduces infrastructure complexity and deployment overhead
+- **Clear Documentation**: Comprehensive guides for troubleshooting and development
+
+# Appendix  
+## Research Findings
+- Bun provides 2-3x faster package installation and runtime performance
+- Biome.js offers 35x faster linting compared to ESLint
+- Encore.ts simplifies deployment and infrastructure management
+- MCP protocol ensures compatibility with various AI assistants
+
+## Technical Specifications
+- **Test Coverage Target**: 85%+ for all modules
+- **Response Time SLA**: <200ms for API calls
+- **Uptime Requirement**: 99.9% availability
+- **Security Standards**: API key encryption, audit logging, rate limiting
+- **Performance Benchmarks**: Support 100+ concurrent WebSocket connections
+</PRD>

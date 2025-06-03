@@ -1,0 +1,11 @@
+# Task ID: 10
+# Title: Implement Portfolio Balance API
+# Status: pending
+# Dependencies: 3, 5, 6
+# Priority: medium
+# Description: Enable real-time account balance tracking with USD conversion.
+# Details:
+Create GET endpoint for account balances. Fetch from MEXC REST API. Convert to USD using latest rates. Cache balances in Redis. Example: `GET /portfolio/balance`.
+
+# Test Strategy:
+Test balance retrieval and conversion. Verify caching and response times.

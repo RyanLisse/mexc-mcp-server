@@ -1,0 +1,11 @@
+# Task ID: 15
+# Title: Implement WebSocket Integration
+# Status: pending
+# Dependencies: 3, 5, 6
+# Priority: medium
+# Description: Integrate MEXC WebSocket API for live price feeds and order updates.
+# Details:
+Use Bun's WebSocket support to connect to MEXC WebSocket API. Manage subscriptions and broadcast updates to clients. Example: `new WebSocket('wss://api.mexc.com/ws')`.
+
+# Test Strategy:
+Test WebSocket connection, subscription, and data broadcast. Verify resilience and reconnection.

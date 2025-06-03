@@ -35,3 +35,21 @@ yarn-error.log*
 # Temporary files
 *.tmp
 *.temp
+
+# Added by Claude Task Master
+logs
+dev-debug.log
+# Dependency directories
+# Environment variables
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+# Task files - commented out to include in version control for team collaboration
+# tasks.json
+# tasks/

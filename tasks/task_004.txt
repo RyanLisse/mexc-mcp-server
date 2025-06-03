@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Set Up Audit Logging
+# Status: pending
+# Dependencies: 1, 2
+# Priority: medium
+# Description: Implement comprehensive audit logging for all operations.
+# Details:
+Use PostgreSQL via Encore.ts SQL to log all API requests, responses, and errors. Include timestamp, user/API key, operation, and outcome. Example: `INSERT INTO audit_logs (...) VALUES (...)`. Ensure logs are queryable and secure.
+
+# Test Strategy:
+Test logging of various operations. Verify log integrity and queryability.

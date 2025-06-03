@@ -1,0 +1,11 @@
+# Task ID: 12
+# Title: Implement Transaction History API
+# Status: pending
+# Dependencies: 3, 5, 9
+# Priority: medium
+# Description: Provide endpoints for transaction history with export capabilities.
+# Details:
+Create GET endpoints for transaction history. Support CSV/JSON export. Store in PostgreSQL. Example: `GET /transactions?format=csv`.
+
+# Test Strategy:
+Test history retrieval and export. Verify data integrity and format.

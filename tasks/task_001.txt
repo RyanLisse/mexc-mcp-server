@@ -1,0 +1,11 @@
+# Task ID: 1
+# Title: Setup Project Repository
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Initialize the project repository with Encore.ts, Bun, TypeScript 5.0+, Biome.js, and PostgreSQL integration.
+# Details:
+Create a new Encore.ts project using `npx create-encore-app`. Install Bun as the runtime (`bun install`). Configure TypeScript 5.0+ with strict mode. Integrate Biome.js for linting and formatting. Set up PostgreSQL via Encore.ts SQL for audit logs and caching. Use `bun add` for dependencies. Example: `bun add zod biomejs`.
+
+# Test Strategy:
+Verify project structure, dependencies, and initial linting/formatting pass. Run `bun test` for basic smoke tests.

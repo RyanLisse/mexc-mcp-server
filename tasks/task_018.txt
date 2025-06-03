@@ -1,0 +1,11 @@
+# Task ID: 18
+# Title: Implement Health Check and Observability
+# Status: pending
+# Dependencies: 1, 4
+# Priority: medium
+# Description: Add health check endpoints and observability features.
+# Details:
+Create `/health` endpoint. Integrate Encore.ts observability for metrics and logging. Example: `GET /health` returns service status. Monitor uptime and performance.
+
+# Test Strategy:
+Test health check endpoint. Verify observability integration and alerting.

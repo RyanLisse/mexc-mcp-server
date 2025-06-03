@@ -1,0 +1,11 @@
+# Task ID: 7
+# Title: Implement Order Placement API
+# Status: pending
+# Dependencies: 3, 5, 6
+# Priority: medium
+# Description: Enable market and limit order placement with safety checks.
+# Details:
+Create POST endpoints for order placement. Validate inputs with Zod. Example: `z.object({ symbol: z.string(), side: z.enum(['BUY', 'SELL']), ... })`. Call MEXC REST API for execution. Log all orders.
+
+# Test Strategy:
+Test order placement with valid/invalid inputs. Verify logging and error handling.

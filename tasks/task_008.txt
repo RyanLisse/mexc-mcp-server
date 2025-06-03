@@ -1,0 +1,11 @@
+# Task ID: 8
+# Title: Implement Order Cancellation API
+# Status: pending
+# Dependencies: 3, 5, 7
+# Priority: medium
+# Description: Enable order cancellation and status tracking.
+# Details:
+Create DELETE endpoint for order cancellation. Track order status in PostgreSQL. Example: `DELETE /orders/:id`. Validate permissions and log actions.
+
+# Test Strategy:
+Test cancellation with valid/invalid IDs. Verify status updates and logging.
