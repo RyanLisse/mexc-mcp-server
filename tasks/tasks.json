@@ -18,7 +18,9 @@
       "details": "Use Encore.ts secrets API for storing and retrieving MEXC API keys. Example: `encore.secret('MEXC_API_KEY')`. Ensure secrets are never logged or exposed in code. Document secret management process.",
       "testStrategy": "Test secret retrieval in a local environment. Verify secrets are not exposed in logs or error messages.",
       "priority": "high",
-      "dependencies": [1],
+      "dependencies": [
+        1
+      ],
       "status": "done",
       "subtasks": []
     },
@@ -29,8 +31,10 @@
       "details": "Create middleware using Encore.ts to validate API keys on each request. Use Zod for input validation. Example: `z.string().min(32)` for API key format. Reject unauthorized requests with clear error messages.",
       "testStrategy": "Test with valid/invalid API keys. Verify error messages and logging. Check for rate limiting integration.",
       "priority": "high",
-      "dependencies": [2],
-      "status": "in-progress",
+      "dependencies": [
+        2
+      ],
+      "status": "done",
       "subtasks": []
     },
     {
@@ -40,8 +44,11 @@
       "details": "Use PostgreSQL via Encore.ts SQL to log all API requests, responses, and errors. Include timestamp, user/API key, operation, and outcome. Example: `INSERT INTO audit_logs (...) VALUES (...)`. Ensure logs are queryable and secure.",
       "testStrategy": "Test logging of various operations. Verify log integrity and queryability.",
       "priority": "medium",
-      "dependencies": [1, 2],
-      "status": "pending",
+      "dependencies": [
+        1,
+        2
+      ],
+      "status": "done",
       "subtasks": []
     },
     {
@@ -51,7 +58,10 @@
       "details": "Use Encore.ts middleware to track and limit requests per API key. Store counters in Redis (via Encore.ts). Example: `redis.incr(key)` and check against limit. Return 429 on exceedance.",
       "testStrategy": "Test with rapid requests. Verify rate limiting and error responses.",
       "priority": "medium",
-      "dependencies": [2, 3],
+      "dependencies": [
+        2,
+        3
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -62,7 +72,10 @@
       "details": "Create REST endpoints using Encore.ts. Fetch data from MEXC REST API. Cache responses in Redis. Example: `fetch('https://api.mexc.com/api/v3/ticker/price')`. Use Zod for response validation.",
       "testStrategy": "Test data retrieval, caching, and validation. Verify response times <200ms.",
       "priority": "medium",
-      "dependencies": [3, 5],
+      "dependencies": [
+        3,
+        5
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -73,7 +86,11 @@
       "details": "Create POST endpoints for order placement. Validate inputs with Zod. Example: `z.object({ symbol: z.string(), side: z.enum(['BUY', 'SELL']), ... })`. Call MEXC REST API for execution. Log all orders.",
       "testStrategy": "Test order placement with valid/invalid inputs. Verify logging and error handling.",
       "priority": "medium",
-      "dependencies": [3, 5, 6],
+      "dependencies": [
+        3,
+        5,
+        6
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -84,7 +101,11 @@
       "details": "Create DELETE endpoint for order cancellation. Track order status in PostgreSQL. Example: `DELETE /orders/:id`. Validate permissions and log actions.",
       "testStrategy": "Test cancellation with valid/invalid IDs. Verify status updates and logging.",
       "priority": "medium",
-      "dependencies": [3, 5, 7],
+      "dependencies": [
+        3,
+        5,
+        7
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -95,7 +116,11 @@
       "details": "Create GET endpoints for order and transaction history. Store data in PostgreSQL. Example: `GET /orders?status=completed`. Use Zod for query validation.",
       "testStrategy": "Test history retrieval with various filters. Verify data integrity and performance.",
       "priority": "medium",
-      "dependencies": [3, 5, 7],
+      "dependencies": [
+        3,
+        5,
+        7
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -106,7 +131,11 @@
       "details": "Create GET endpoint for account balances. Fetch from MEXC REST API. Convert to USD using latest rates. Cache balances in Redis. Example: `GET /portfolio/balance`.",
       "testStrategy": "Test balance retrieval and conversion. Verify caching and response times.",
       "priority": "medium",
-      "dependencies": [3, 5, 6],
+      "dependencies": [
+        3,
+        5,
+        6
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -117,7 +146,11 @@
       "details": "Create GET endpoint for positions. Calculate P&L using current prices and entry points. Store in PostgreSQL. Example: `GET /portfolio/positions`.",
       "testStrategy": "Test position retrieval and P&L calculation. Verify accuracy and performance.",
       "priority": "medium",
-      "dependencies": [3, 5, 10],
+      "dependencies": [
+        3,
+        5,
+        10
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -128,7 +161,11 @@
       "details": "Create GET endpoints for transaction history. Support CSV/JSON export. Store in PostgreSQL. Example: `GET /transactions?format=csv`.",
       "testStrategy": "Test history retrieval and export. Verify data integrity and format.",
       "priority": "medium",
-      "dependencies": [3, 5, 9],
+      "dependencies": [
+        3,
+        5,
+        9
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -139,7 +176,11 @@
       "details": "Extend order placement API to support advanced types. Validate inputs with Zod. Example: `type: 'STOP_LOSS'`. Call MEXC REST API accordingly.",
       "testStrategy": "Test advanced order placement. Verify validation and execution.",
       "priority": "medium",
-      "dependencies": [3, 5, 7],
+      "dependencies": [
+        3,
+        5,
+        7
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -150,7 +191,12 @@
       "details": "Create POST/DELETE endpoints for batch operations. Validate batch requests with Zod. Example: `POST /orders/batch`. Log all batch actions.",
       "testStrategy": "Test batch operations with valid/invalid inputs. Verify logging and error handling.",
       "priority": "medium",
-      "dependencies": [3, 5, 7, 13],
+      "dependencies": [
+        3,
+        5,
+        7,
+        13
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -161,7 +207,11 @@
       "details": "Use Bun's WebSocket support to connect to MEXC WebSocket API. Manage subscriptions and broadcast updates to clients. Example: `new WebSocket('wss://api.mexc.com/ws')`.",
       "testStrategy": "Test WebSocket connection, subscription, and data broadcast. Verify resilience and reconnection.",
       "priority": "medium",
-      "dependencies": [3, 5, 6],
+      "dependencies": [
+        3,
+        5,
+        6
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -172,7 +222,11 @@
       "details": "Create endpoints for subscription management. Track subscriptions in PostgreSQL. Broadcast updates via WebSocket. Example: `POST /subscribe`.",
       "testStrategy": "Test subscription lifecycle. Verify update delivery and unsubscription.",
       "priority": "medium",
-      "dependencies": [3, 5, 15],
+      "dependencies": [
+        3,
+        5,
+        15
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -183,7 +237,12 @@
       "details": "Implement MCP protocol handlers using JSON-RPC over HTTP/SSE. Use Zod for request/response validation. Example: `{ jsonrpc: '2.0', method: 'getPrice', params: {...} }`.",
       "testStrategy": "Test MCP protocol compliance. Verify request/response validation and error handling.",
       "priority": "medium",
-      "dependencies": [3, 5, 6, 15],
+      "dependencies": [
+        3,
+        5,
+        6,
+        15
+      ],
       "status": "pending",
       "subtasks": []
     },
@@ -194,8 +253,228 @@
       "details": "Create `/health` endpoint. Integrate Encore.ts observability for metrics and logging. Example: `GET /health` returns service status. Monitor uptime and performance.",
       "testStrategy": "Test health check endpoint. Verify observability integration and alerting.",
       "priority": "medium",
-      "dependencies": [1, 4],
+      "dependencies": [
+        1,
+        4
+      ],
       "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 19,
+      "title": "Task #19: Install and Configure Vercel AI SDK and Google AI SDK for Gemini 2.5 Flash Integration",
+      "description": "Install and configure the necessary AI SDK dependencies to integrate Gemini 2.5 Flash into the application, including Vercel AI SDK and Google AI SDK packages with proper versioning in package.json.",
+      "details": "This task involves the following steps:\n\n1. Install the required packages:\n   - Add the Vercel AI SDK (`ai` package)\n   - Add the Google AI SDK (`@ai-sdk/google` package)\n   - Ensure compatibility with existing dependencies\n\n2. Update package.json:\n   - Add the new dependencies with specific version numbers\n   - Verify there are no version conflicts with existing packages\n   - Document the purpose of these dependencies in comments\n\n3. Configure the SDKs:\n   - Set up environment variables for API keys and endpoints\n   - Create configuration files for both SDKs\n   - Implement initialization code for the Gemini 2.5 Flash model\n   - Configure proper error handling and fallback mechanisms\n\n4. Create a simple integration layer:\n   - Develop a wrapper/adapter for the Gemini 2.5 Flash model\n   - Ensure it follows the existing architecture patterns\n   - Document the API surface for other developers\n\n5. Security considerations:\n   - Ensure API keys are properly secured\n   - Implement rate limiting to prevent excessive usage\n   - Add appropriate logging for debugging and monitoring\n\n6. Update documentation:\n   - Add usage examples for the team\n   - Document configuration options\n   - Update architecture diagrams if necessary\n\nThis task builds upon the MCP protocol interface implemented in Task #17, providing the actual AI model integration that will be used by that interface.",
+      "testStrategy": "The testing strategy should include:\n\n1. Unit Tests:\n   - Verify successful installation of packages\n   - Test initialization of both SDKs\n   - Validate configuration loading\n   - Test error handling scenarios (API key missing, network issues)\n\n2. Integration Tests:\n   - Create test cases for basic prompts to Gemini 2.5 Flash\n   - Verify responses match expected formats\n   - Test integration with the MCP protocol interface from Task #17\n   - Measure and validate response times\n\n3. Environment Validation:\n   - Create a script to verify all dependencies are correctly installed\n   - Check that environment variables are properly set\n   - Validate that the SDKs can connect to their respective services\n\n4. Manual Testing:\n   - Perform a sample conversation with the AI model\n   - Verify that responses are appropriate and relevant\n   - Test edge cases with complex prompts\n\n5. CI/CD Integration:\n   - Add dependency checks to the CI pipeline\n   - Ensure tests run on each commit\n   - Verify that the integration doesn't break existing functionality\n\n6. Performance Testing:\n   - Measure response times for various prompt lengths\n   - Test concurrent requests to ensure stability\n   - Validate memory usage during extended operations\n\nDocumentation of test results should include screenshots of successful API calls to Gemini 2.5 Flash and logs showing proper initialization of both SDKs.",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 20,
+      "title": "Task #20: Implement AI Service Structure with Encore Service and Gemini 2.5 Flash Analyzer",
+      "description": "Create a structured AI service architecture with encore.service.ts and implement a Gemini 2.5 Flash analyzer class that includes caching mechanisms, thinking budget management, and market data analysis capabilities.",
+      "details": "1. Create an `encore.service.ts` file in the services directory to serve as the foundation for AI service interactions.\n\n2. Implement the GeminiAnalyzer class with the following components:\n   - Constructor that initializes the Gemini 2.5 Flash model using the previously configured Google AI SDK\n   - Configuration for model parameters (temperature, top_k, top_p)\n   - Implementation of response caching mechanism to avoid redundant API calls\n   - Thinking budget management system that:\n     * Tracks token usage across requests\n     * Implements cost control mechanisms\n     * Provides usage statistics and warnings when approaching limits\n   \n3. Develop market data analysis capabilities:\n   - Methods for analyzing financial data patterns\n   - Functions for sentiment analysis on market news\n   - Trend identification algorithms\n   - Risk assessment capabilities\n   \n4. Create a clean API interface for the service:\n   - Implement async methods for different analysis types\n   - Provide proper error handling and retry mechanisms\n   - Add comprehensive logging for debugging and monitoring\n   - Design for extensibility to add more analysis types in the future\n   \n5. Implement proper dependency injection:\n   - Ensure the service can be easily injected into components\n   - Configure service providers appropriately\n   \n6. Add documentation:\n   - JSDoc comments for all methods and classes\n   - Usage examples\n   - Performance considerations\n\n7. Ensure the implementation follows best practices:\n   - Proper typing with TypeScript\n   - Efficient memory management\n   - Adherence to the project's coding standards",
+      "testStrategy": "1. Unit Testing:\n   - Create comprehensive unit tests for each method in the GeminiAnalyzer class\n   - Mock the Gemini API responses to test different scenarios\n   - Verify caching mechanisms work correctly by tracking API call counts\n   - Test thinking budget management with various usage patterns\n   - Validate market data analysis functions with known datasets\n\n2. Integration Testing:\n   - Test the integration between the encore service and the Gemini 2.5 Flash API\n   - Verify proper error handling when API limits are reached\n   - Test the service with actual market data inputs\n   - Ensure proper interaction with other dependent services\n\n3. Performance Testing:\n   - Measure response times for different types of analysis requests\n   - Test caching efficiency by measuring hit/miss ratios\n   - Evaluate memory usage during extended operation\n   - Verify thinking budget tracking accuracy over multiple requests\n\n4. Edge Case Testing:\n   - Test behavior with malformed or unexpected input data\n   - Verify graceful degradation when API is unavailable\n   - Test recovery mechanisms after failures\n   - Validate behavior when approaching or exceeding budget limits\n\n5. Documentation Verification:\n   - Review all JSDoc comments for completeness and accuracy\n   - Verify example code in documentation works as expected\n   - Ensure all public methods are properly documented\n\n6. Manual Testing:\n   - Perform exploratory testing of the analyzer with real-world scenarios\n   - Verify the quality of market analysis outputs\n   - Test the user experience when interacting with the service\n\n7. Acceptance Criteria:\n   - The service successfully initializes with the Gemini 2.5 Flash model\n   - Caching reduces duplicate API calls by at least 90% for identical requests\n   - Thinking budget management accurately tracks and reports usage\n   - Market data analysis produces actionable insights\n   - All tests pass with at least 90% code coverage",
+      "status": "done",
+      "dependencies": [
+        19
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 21,
+      "title": "Task #21: Extend shared/types with AI-specific TypeScript Interfaces",
+      "description": "Create comprehensive TypeScript interfaces for AI-related data structures in the shared/types directory, including AIAnalysisResult, EnhancedAnalysisResponse, RiskAssessment, StreamingAnalysisUpdate, and all request/response types for AI endpoints.",
+      "details": "This task involves creating a new set of TypeScript interfaces in the shared/types directory to support AI functionality throughout the application. The developer should:\n\n1. Create a new file `ai-types.ts` within the shared/types directory\n2. Define the following interfaces with appropriate properties:\n   - `AIAnalysisResult`: Interface for storing the results of AI analysis, including fields for confidence scores, detected entities, sentiment analysis, etc.\n   - `EnhancedAnalysisResponse`: Extended interface that builds upon AIAnalysisResult with additional metadata, processing time, model version, etc.\n   - `RiskAssessment`: Interface for AI-generated risk evaluations, including risk scores, potential issues, confidence levels, and mitigation suggestions\n   - `StreamingAnalysisUpdate`: Interface for real-time updates during streaming AI analysis, with partial results and progress indicators\n   - Request types for AI endpoints (e.g., `AIAnalysisRequest`, `StreamingAnalysisRequest`)\n   - Response types for AI endpoints (e.g., `AIAnalysisResponse`, `StreamingAnalysisResponse`)\n\n3. Ensure all interfaces are properly documented with JSDoc comments explaining each property\n4. Include proper type definitions that align with the Vercel AI SDK and Google AI SDK for Gemini 2.5 Flash\n5. Export all interfaces from the file and update the main index.ts in the shared/types directory to re-export these interfaces\n6. Consider edge cases like nullable fields, optional properties, and union types where appropriate\n7. Implement any necessary type guards or type predicates for runtime type checking\n\nThe interfaces should be designed to be extensible for future AI features while maintaining backward compatibility.",
+      "testStrategy": "To verify the successful completion of this task:\n\n1. **Static Type Checking**:\n   - Run TypeScript compiler (tsc) in strict mode to ensure all interfaces are properly defined without type errors\n   - Verify that there are no \"any\" types used unless absolutely necessary\n   - Check that all required properties are properly marked as non-optional\n\n2. **Integration Testing**:\n   - Create a simple test file that imports and uses each interface\n   - Verify that the interfaces can be used with sample data from the AI SDKs\n   - Test edge cases with optional properties and nullable fields\n\n3. **Documentation Review**:\n   - Ensure all interfaces have proper JSDoc comments\n   - Verify that complex properties have detailed descriptions\n   - Check that examples are provided for non-obvious usage patterns\n\n4. **Code Review**:\n   - Have another developer review the interfaces for completeness and correctness\n   - Verify that the interfaces align with the AI SDK documentation\n   - Ensure naming conventions are consistent with the rest of the codebase\n\n5. **Import Testing**:\n   - Create a test component that imports these types from the shared directory\n   - Verify that the types can be properly imported and used in different parts of the application\n   - Test with both direct imports and index imports\n\n6. **Barrel Export Verification**:\n   - Confirm that all new interfaces are properly exported from the main index.ts file\n   - Test importing the interfaces through the barrel export pattern",
+      "status": "done",
+      "dependencies": [
+        19
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 22,
+      "title": "Task #22: Extend shared/config.ts with AI Configuration Parameters",
+      "description": "Enhance the shared/config.ts file to include comprehensive AI configuration parameters including Gemini API key management, thinking budgets, cache settings, and risk configuration parameters.",
+      "details": "This task involves extending the existing shared/config.ts file to support AI functionality by implementing:\n\n1. **Environment Variable Management**:\n   - Add Gemini API key configuration using environment variables\n   - Implement proper fallbacks and validation for API keys\n   - Use a secure approach for handling API secrets (e.g., process.env with appropriate typing)\n\n2. **AI Configuration Interface**:\n   - Create an `AIConfig` interface that extends from existing config structures\n   - Implement thinking budget parameters (e.g., maxTokens, maxRequestsPerMinute, costLimits)\n   - Add cache configuration (e.g., cacheTTL, maxCacheSize, enableCache)\n   - Include risk configuration parameters (e.g., safetyThresholds, contentFilters, maxRiskLevel)\n\n3. **Default Configuration**:\n   - Provide sensible defaults for all AI parameters\n   - Include documentation comments for each configuration option\n   - Ensure type safety by leveraging interfaces from Task #21\n\n4. **Environment-specific Configurations**:\n   - Implement different AI configurations for development, testing, and production\n   - Add debug flags for AI operations in development mode\n\n5. **Configuration Validation**:\n   - Add runtime validation to ensure all required AI configuration is present\n   - Implement helper functions to access AI configuration safely\n\nThe implementation should follow the project's existing configuration patterns and maintain backward compatibility with any code already using the config.ts file.",
+      "testStrategy": "To verify this task has been completed successfully:\n\n1. **Unit Tests**:\n   - Write unit tests for the configuration validation logic\n   - Test that default values are applied correctly when environment variables are missing\n   - Verify that different environment configurations load appropriate values\n   - Test error handling for invalid configurations\n\n2. **Integration Tests**:\n   - Create tests that verify the AI configuration can be properly accessed by components that will use it\n   - Test that the Gemini API key is properly retrieved and validated\n   - Verify that thinking budget constraints are properly applied\n\n3. **Security Review**:\n   - Perform a security review to ensure API keys are not exposed in client-side code\n   - Verify that sensitive configuration is properly protected\n   - Check that environment variables are properly sanitized\n\n4. **Manual Verification**:\n   - Manually verify that the configuration works with the AI SDKs from Task #19\n   - Confirm that the configuration interfaces align with the types defined in Task #21\n   - Test the configuration in different environments (dev, test, prod)\n\n5. **Documentation Check**:\n   - Ensure all configuration options are well-documented with JSDoc comments\n   - Verify that example usage is provided for key configuration options\n   - Check that the README or relevant documentation is updated with information about the new configuration options",
+      "status": "done",
+      "dependencies": [
+        19,
+        21
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 23,
+      "title": "Task #23: Implement Enhanced Error Handling System in shared/errors.ts",
+      "description": "Create a robust error handling system in shared/errors.ts that includes specialized error classes (AIAnalysisError, MEXCError) and error handling functions with fallback mechanisms for AI operations.",
+      "details": "The implementation should include:\n\n1. Create a base `ApplicationError` class that extends the native Error class with additional properties like errorCode, timestamp, and severity.\n\n2. Implement specialized error classes:\n   - `AIAnalysisError`: For errors related to AI analysis operations, with properties for the specific AI operation that failed, input data reference, and potential recovery options.\n   - `MEXCError`: For errors related to MEXC API interactions, with properties for request details, response status, and error messages from the external API.\n\n3. Develop utility functions for error handling:\n   - `handleAIError(error: Error, fallbackValue?: AIAnalysisResult): AIAnalysisResult` - Processes AI-related errors with appropriate logging and returns a fallback value if provided.\n   - `createErrorResponse(error: Error): ErrorResponse` - Converts any error into a standardized error response format for client consumption.\n   - `logAndNotify(error: Error, context?: any): void` - Logs errors and triggers notifications for critical issues.\n\n4. Implement fallback mechanisms:\n   - Create a fallback strategy for AI operations that fail, using cached results or simplified analysis when possible.\n   - Implement retry logic with exponential backoff for transient errors.\n\n5. Ensure integration with the TypeScript interfaces defined in Task #21, particularly using the AIAnalysisResult interface for fallback values.\n\n6. Add comprehensive JSDoc documentation for all classes and functions.\n\n7. Export all error classes and utility functions from the module.",
+      "testStrategy": "Testing should verify the error handling system works correctly through:\n\n1. Unit tests:\n   - Test each error class constructor with various parameters and verify properties are set correctly.\n   - Test inheritance hierarchy to ensure error instances can be properly identified with instanceof.\n   - Test all utility functions with different error scenarios and verify correct behavior.\n   - Test fallback mechanisms with simulated AI service failures.\n\n2. Integration tests:\n   - Create mock AI services that deliberately fail and verify the error handling system properly catches, logs, and recovers.\n   - Test integration with actual AI endpoints in a controlled environment.\n   - Verify that errors are properly transformed into client-friendly formats.\n\n3. Edge cases:\n   - Test with missing or malformed input data.\n   - Test with network timeouts and connection issues.\n   - Test with partial AI analysis results.\n\n4. Documentation verification:\n   - Ensure all exported classes and functions have proper JSDoc documentation.\n   - Verify TypeScript types are correctly implemented and used.\n\n5. Code review:\n   - Conduct a thorough code review focusing on error handling patterns and recovery mechanisms.\n   - Verify proper use of the interfaces defined in Task #21.\n\n6. Create a test harness that simulates various error conditions to demonstrate the system's resilience.",
+      "status": "done",
+      "dependencies": [
+        21
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 24,
+      "title": "Task #24: Implement AI Market Analysis API Endpoint with Multiple Analysis Depths",
+      "description": "Create a new API endpoint at /mcp/ai-market-analysis that supports different analysis depth levels (quick, standard, comprehensive, deep) with confidence validation mechanisms.",
+      "details": "This task involves implementing a new API endpoint that leverages the AI service architecture from Task #20. The implementation should:\n\n1. Create a new controller file in the appropriate directory (likely src/controllers/ai/market-analysis.controller.ts)\n2. Implement the endpoint handler with proper request validation\n3. Support the following analysis depth levels with corresponding thinking budget allocations:\n   - quick: Minimal analysis for rapid insights (low thinking budget)\n   - standard: Balanced analysis for routine decisions (medium thinking budget)\n   - comprehensive: Detailed analysis with multiple factors (high thinking budget)\n   - deep: Exhaustive analysis with maximum context (maximum thinking budget)\n4. Implement confidence validation that:\n   - Assigns confidence scores to analysis results\n   - Provides confidence thresholds based on analysis depth\n   - Triggers reanalysis or fallback mechanisms when confidence is below threshold\n5. Utilize the TypeScript interfaces from Task #21 for request/response typing\n6. Incorporate configuration parameters from Task #22 for thinking budgets and thresholds\n7. Implement error handling using the system from Task #23\n8. Add appropriate logging throughout the endpoint\n9. Implement rate limiting based on analysis depth (deeper analysis should have stricter limits)\n10. Document the API endpoint with OpenAPI/Swagger annotations\n\nThe endpoint should accept market symbols, timeframes, and optional parameters specific to each analysis depth. The response should include the analysis results, confidence scores, and any warnings or recommendations.",
+      "testStrategy": "Testing for this endpoint should be comprehensive and include:\n\n1. Unit tests:\n   - Test each analysis depth level with valid inputs\n   - Verify proper handling of invalid inputs\n   - Test confidence validation logic with mock data\n   - Verify error handling for various error scenarios\n   - Test rate limiting functionality\n\n2. Integration tests:\n   - Test the endpoint with the actual AI service\n   - Verify proper integration with the Gemini 2.5 Flash analyzer\n   - Test caching mechanisms with repeated requests\n   - Verify thinking budget management across different analysis depths\n   - Test fallback mechanisms when primary analysis fails\n\n3. Performance tests:\n   - Measure response times for each analysis depth\n   - Test concurrent request handling\n   - Verify memory usage during deep analysis operations\n   - Test with simulated high load scenarios\n\n4. Manual testing:\n   - Use Postman or similar tool to test the endpoint with real market data\n   - Verify the quality of analysis results at each depth level\n   - Compare confidence scores across different market conditions\n   - Test with edge cases (highly volatile markets, new assets, etc.)\n\n5. Documentation verification:\n   - Ensure OpenAPI/Swagger documentation is accurate\n   - Verify that all parameters and response fields are properly documented\n   - Test the endpoint using the generated documentation\n\nAll tests should be documented in the project's test directory with clear descriptions of test scenarios and expected outcomes.",
+      "status": "done",
+      "dependencies": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 25,
+      "title": "Task #25: Implement Streaming AI Market Analysis Endpoint with Real-time Updates",
+      "description": "Develop a streaming endpoint (/mcp/ai-market-analysis-stream) using Encore.ts streaming API that provides real-time progress updates and partial results for AI market analysis.",
+      "details": "This task involves extending the existing AI market analysis functionality (from Task #24) to support streaming responses:\n\n1. Create a new endpoint at `/mcp/ai-market-analysis-stream` that leverages the Encore.ts streaming API.\n2. Implement streaming response handling that sends partial analysis results as they become available.\n3. Design a progress tracking mechanism that reports completion percentage and current analysis phase.\n4. Support all analysis depth levels (quick, standard, comprehensive, deep) from Task #24.\n5. Ensure proper error handling within the stream, including graceful termination on errors.\n6. Implement backpressure handling to manage resource consumption during streaming.\n7. Add configurable timeout parameters to control maximum streaming duration.\n8. Create a client-side example demonstrating how to consume the streaming endpoint.\n9. Document the streaming response format, including progress indicators and partial result structure.\n10. Ensure compatibility with the confidence validation mechanisms from Task #24.\n11. Implement proper connection management, including heartbeat mechanisms for long-running analyses.\n12. Add logging for stream lifecycle events (start, progress updates, completion, errors).\n\nThe implementation should prioritize resource efficiency and maintain consistent performance under load. Consider implementing a fallback mechanism to non-streaming responses if client connections are dropped.",
+      "testStrategy": "Testing for this streaming endpoint should include:\n\n1. Unit tests:\n   - Test stream initialization with different analysis depth parameters\n   - Verify proper error handling during stream processing\n   - Test timeout functionality works as expected\n   - Validate progress calculation logic accuracy\n\n2. Integration tests:\n   - Verify streaming endpoint correctly processes requests for all analysis depths\n   - Test that partial results maintain consistency with final results\n   - Ensure progress updates are sent at appropriate intervals\n   - Validate error propagation through the stream\n\n3. Performance tests:\n   - Measure latency between progress updates\n   - Test system behavior under multiple concurrent streaming connections\n   - Verify memory usage remains stable during long-running streams\n   - Benchmark CPU utilization during streaming vs. non-streaming requests\n\n4. End-to-end tests:\n   - Create a test client that consumes the streaming API\n   - Verify all partial results can be properly assembled into a complete result\n   - Test reconnection scenarios and verify data integrity\n   - Validate that progress reporting accurately reflects actual completion status\n\n5. Edge case testing:\n   - Test with extremely large analysis requests\n   - Verify behavior when client disconnects mid-stream\n   - Test with intentionally slow analysis to verify timeout handling\n   - Validate behavior when backend services become unavailable during streaming\n\nDocument all test results and ensure that streaming performance meets or exceeds defined SLAs.",
+      "status": "pending",
+      "dependencies": [
+        24
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 26,
+      "title": "Task #26: Implement Intelligent Risk Assessment API Endpoint with Vercel AI SDK",
+      "description": "Develop a new API endpoint (/mcp/risk-assessment) that leverages the Vercel AI SDK's generateText functionality to perform structured portfolio risk analysis with JSON parsing capabilities.",
+      "details": "This task involves implementing a new API endpoint at /mcp/risk-assessment that utilizes the Vercel AI SDK to provide intelligent risk assessment for user portfolios. Key implementation details include:\n\n1. Create a new API route handler in the appropriate directory structure (likely pages/api/mcp/risk-assessment.ts or app/api/mcp/risk-assessment/route.ts depending on project structure)\n\n2. Integrate the Vercel AI SDK's generateText function to process risk assessment requests:\n   - Import and configure the Vercel AI SDK with appropriate models\n   - Structure prompts that effectively analyze portfolio risk factors\n   - Implement proper error handling using the enhanced error system from Task #23\n\n3. Develop a structured JSON parsing mechanism:\n   - Define a schema for the expected AI response format\n   - Implement validation and parsing of AI-generated text into structured JSON\n   - Handle edge cases where AI responses don't match expected formats\n\n4. Implement portfolio risk analysis logic:\n   - Utilize the Gemini 2.5 Flash Analyzer from Task #20\n   - Apply risk assessment algorithms based on portfolio composition\n   - Calculate risk scores, volatility metrics, and diversification ratings\n   - Generate actionable recommendations based on risk profiles\n\n5. Optimize performance:\n   - Implement caching mechanisms as defined in Task #20\n   - Manage thinking budgets according to configurations in Task #22\n   - Add appropriate logging for monitoring and debugging\n\n6. Ensure the endpoint adheres to the TypeScript interfaces defined in Task #21, particularly the RiskAssessment interface\n\n7. Add appropriate authentication and authorization checks to protect sensitive financial data\n\n8. Implement rate limiting to prevent abuse of the AI-powered endpoint\n\nThe implementation should be modular, well-documented, and follow the project's established coding standards.",
+      "testStrategy": "The testing strategy for this task should include:\n\n1. Unit Tests:\n   - Test the API route handler with mocked AI responses\n   - Verify proper parsing of structured JSON from AI responses\n   - Test error handling for various failure scenarios (AI service unavailable, malformed responses, etc.)\n   - Validate that risk calculations produce expected results for known test portfolios\n\n2. Integration Tests:\n   - Test the integration between the API endpoint and the Gemini 2.5 Flash Analyzer\n   - Verify that the endpoint correctly utilizes the shared configuration parameters\n   - Test the caching mechanism to ensure it works as expected\n   - Validate that the endpoint adheres to thinking budget constraints\n\n3. End-to-End Tests:\n   - Create test scenarios with various portfolio compositions\n   - Verify that the endpoint returns properly structured responses matching the RiskAssessment interface\n   - Test performance under load to ensure the endpoint remains responsive\n   - Validate that authentication and authorization mechanisms work correctly\n\n4. Manual Testing:\n   - Perform exploratory testing with real portfolio data\n   - Verify that risk assessments provide meaningful and accurate insights\n   - Test edge cases such as empty portfolios or portfolios with unusual asset compositions\n\n5. Documentation Verification:\n   - Ensure API documentation is updated to include the new endpoint\n   - Verify that usage examples and response formats are clearly documented\n   - Confirm that error responses are properly documented\n\nAll tests should be automated where possible and integrated into the CI/CD pipeline to ensure ongoing reliability.",
+      "status": "done",
+      "dependencies": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 27,
+      "title": "Task #27: Implement MEXC Strategy Optimizer API Endpoint with AI-Powered Optimization",
+      "description": "Develop a new API endpoint (/mcp/strategy-optimizer) that leverages AI capabilities to optimize trading strategies specifically for MEXC exchange, taking advantage of unique features like 0% fees and high leverage options.",
+      "details": "The implementation should include:\n\n1. Create a new controller in the API structure for the strategy optimizer endpoint (/mcp/strategy-optimizer)\n2. Implement request validation middleware that validates input parameters including timeframe, asset pairs, risk tolerance, and optimization goals\n3. Develop the core optimization service that:\n   - Connects to the Gemini 2.5 Flash analyzer (from Task #20) for AI-powered analysis\n   - Utilizes MEXC-specific features in optimization calculations (0% fees, high leverage options)\n   - Implements multiple optimization algorithms (e.g., Sharpe ratio maximization, drawdown minimization)\n   - Calculates expected performance metrics with and without MEXC advantages\n4. Create a response formatter that structures the optimization results according to the AIAnalysisResult interface (from Task #21)\n5. Implement caching mechanisms for optimization results to manage API usage and improve response times\n6. Add appropriate error handling using the enhanced error system (from Task #23)\n7. Configure the service with parameters from the shared config (from Task #22)\n8. Document the API endpoint with OpenAPI specifications\n9. Implement rate limiting and authentication requirements\n\nThe implementation should be modular, allowing for easy addition of new optimization strategies and MEXC-specific features in the future. The optimizer should clearly demonstrate the advantages of using MEXC for the given strategy compared to other exchanges.",
+      "testStrategy": "Testing should be comprehensive and include:\n\n1. Unit tests:\n   - Test each optimization algorithm independently with mock market data\n   - Verify correct calculation of metrics with and without MEXC advantages\n   - Test error handling for various failure scenarios\n   - Validate request parameter handling and validation\n\n2. Integration tests:\n   - Test the endpoint with the AI service integration\n   - Verify correct data flow between components\n   - Test caching mechanisms and performance\n   - Validate that configuration parameters are correctly applied\n\n3. Performance tests:\n   - Measure response times for various complexity levels of optimization\n   - Test under load to ensure stability\n   - Verify memory usage during complex optimizations\n\n4. Functional tests:\n   - Compare optimization results with known good strategies\n   - Verify that MEXC advantages are correctly factored into results\n   - Test with real historical data for accuracy validation\n   - Ensure results are consistent and reproducible\n\n5. Documentation verification:\n   - Verify API documentation is complete and accurate\n   - Test examples in documentation work as expected\n\nSuccess criteria: The endpoint should return optimized strategies within 5 seconds for standard requests, demonstrate at least 10% improvement when utilizing MEXC-specific features, and handle concurrent requests without degradation in performance.",
+      "status": "pending",
+      "dependencies": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 28,
+      "title": "Task #28: Implement AI-Enhanced Trading Tools Endpoint with Tool Calling Capabilities",
+      "description": "Develop a new API endpoint (/mcp/trading-tools) that leverages AI capabilities to provide advanced trading tools with function calling for position sizing, technical analysis, and market conditions assessment.",
+      "details": "This task involves creating a new endpoint in the API that integrates with the Gemini 2.5 Flash Analyzer to provide AI-enhanced trading tools. Implementation details include:\n\n1. Create a new controller file `trading-tools.controller.ts` in the appropriate directory structure.\n2. Implement the main endpoint handler for `/mcp/trading-tools` that accepts POST requests with trading context data.\n3. Develop specialized tool functions for:\n   - Position sizing calculator that considers account balance, risk tolerance, and market volatility\n   - Technical analysis tools that can evaluate chart patterns, indicators, and potential entry/exit points\n   - Market conditions assessment that analyzes current market sentiment, volatility, and trend strength\n4. Integrate with the Encore service from Task #20 to utilize the Gemini 2.5 Flash Analyzer.\n5. Implement proper request validation using the TypeScript interfaces defined in Task #21.\n6. Configure the endpoint with appropriate AI parameters from the shared/config.ts (Task #22).\n7. Implement comprehensive error handling using the error system from Task #23.\n8. Add rate limiting and caching mechanisms to optimize performance and manage API costs.\n9. Ensure all responses follow the standardized format defined in the shared types.\n10. Document the endpoint thoroughly with OpenAPI/Swagger annotations.\n11. Implement logging for all tool calls to facilitate debugging and performance monitoring.\n\nThe implementation should support both synchronous responses and potentially asynchronous processing for more complex analyses. Ensure the tool calling mechanism is extensible to allow for future trading tools to be added easily.",
+      "testStrategy": "Testing for this endpoint should be comprehensive and include:\n\n1. Unit tests:\n   - Test each tool function independently with various input parameters\n   - Verify correct error handling for invalid inputs\n   - Test the integration with the Encore service using mocks\n   - Ensure proper validation of request payloads\n\n2. Integration tests:\n   - Test the complete endpoint with valid requests for each tool type\n   - Verify correct responses for position sizing recommendations\n   - Test technical analysis functionality with historical price data\n   - Validate market conditions assessment with different market scenarios\n   - Test error handling with malformed requests and service failures\n   - Verify rate limiting functionality\n\n3. Performance testing:\n   - Measure response times under various loads\n   - Test caching mechanisms effectiveness\n   - Verify the endpoint can handle concurrent requests\n\n4. Manual testing:\n   - Create a test harness or Postman collection to manually verify endpoint behavior\n   - Test with real market data to ensure recommendations are reasonable\n   - Verify the format and completeness of responses\n\n5. Documentation verification:\n   - Ensure OpenAPI/Swagger documentation is accurate and complete\n   - Verify that all tool capabilities are properly documented\n\nAll tests should be automated where possible and included in the CI/CD pipeline. Test coverage should aim for at least 85% of the codebase.",
+      "status": "pending",
+      "dependencies": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 29,
+      "title": "Task #29: Create Comprehensive AI Integration Test Suite for Market Analysis and Trading Tools",
+      "description": "Develop a comprehensive test suite that validates all AI-powered endpoints, covering GeminiAnalyzer functionality, API endpoints, Encore validation compliance, streaming analysis, and error handling scenarios.",
+      "details": "This task involves creating an extensive test suite to ensure the reliability and correctness of all AI-powered components in the system. The test suite should include:\n\n1. **GeminiAnalyzer Tests**:\n   - Unit tests for all GeminiAnalyzer methods\n   - Integration tests with mock API responses\n   - Validation of analysis depth levels (quick, standard, comprehensive, deep)\n   - Verification of confidence scoring mechanisms\n\n2. **API Endpoint Tests**:\n   - Complete coverage for all AI endpoints (/mcp/ai-market-analysis, /mcp/ai-market-analysis-stream, /mcp/risk-assessment, /mcp/strategy-optimizer, /mcp/trading-tools)\n   - Request validation tests with valid and invalid inputs\n   - Response structure validation against expected schemas\n   - Performance tests under various load conditions\n\n3. **Encore Validation Tests**:\n   - Compliance with Encore.ts API standards\n   - Validation of proper error handling and status codes\n   - Authentication and authorization tests\n   - Rate limiting and throttling tests\n\n4. **Streaming Analysis Tests**:\n   - Verification of real-time updates functionality\n   - Connection stability tests under various network conditions\n   - Partial results validation\n   - Stream interruption and recovery tests\n\n5. **Error Handling Tests**:\n   - Comprehensive tests for all error scenarios\n   - Validation of error messages and codes\n   - Recovery mechanisms testing\n   - Edge case handling\n\n6. **AI Model Integration Tests**:\n   - Tests for Vercel AI SDK integration\n   - Tool calling capabilities validation\n   - JSON parsing validation for structured responses\n   - Model version compatibility tests\n\nThe test suite should be implemented using Jest or a similar testing framework, with proper mocking of external dependencies. Tests should be organized in a hierarchical structure that mirrors the system architecture. Automated CI/CD integration should be set up to run tests on every code change.",
+      "testStrategy": "The test strategy will involve multiple layers of validation:\n\n1. **Automated Unit Tests**:\n   - Create unit tests for all individual components\n   - Use Jest with proper mocking of AI model responses\n   - Achieve >90% code coverage for core functionality\n\n2. **Integration Test Suite**:\n   - Develop integration tests that validate the interaction between components\n   - Create test fixtures with sample market data\n   - Test all API endpoints with various input combinations\n   - Validate response structures against defined schemas\n\n3. **End-to-End Testing**:\n   - Set up E2E tests using Cypress or similar tools\n   - Create test scenarios that mimic real user workflows\n   - Test the complete flow from request to response for all endpoints\n\n4. **Performance Testing**:\n   - Implement load tests using k6 or similar tools\n   - Measure response times under various load conditions\n   - Establish performance baselines and regression tests\n\n5. **Error Injection Testing**:\n   - Deliberately introduce errors to test error handling\n   - Validate error responses and recovery mechanisms\n   - Test timeout scenarios and partial failures\n\n6. **Streaming Tests**:\n   - Develop specialized tests for streaming endpoints\n   - Validate real-time updates and partial results\n   - Test connection stability and reconnection logic\n\n7. **Validation Criteria**:\n   - All tests must pass consistently in the CI/CD pipeline\n   - Performance tests must meet defined SLAs\n   - No regressions in functionality when compared to previous versions\n   - Documentation of test coverage and results\n\n8. **Test Reporting**:\n   - Generate comprehensive test reports\n   - Track test coverage metrics\n   - Document any identified issues or limitations\n\nThe test suite should be run as part of the CI/CD pipeline, with automated notifications for test failures. Regular manual review of test results should be scheduled to identify any patterns or issues that automated tests might miss.",
+      "status": "pending",
+      "dependencies": [
+        24,
+        25,
+        26,
+        27,
+        28
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 30,
+      "title": "Task #30: Implement Utility Functions for Parsing Structured AI Responses",
+      "description": "Develop a set of utility functions in the shared directory for parsing, validating, and handling structured AI responses, with specific focus on parseRiskAssessmentResponse and parseOptimizationResponse including validation and fallback mechanisms.",
+      "details": "Create a new file `shared/utils/aiResponseParsers.ts` that will contain utility functions for parsing structured AI responses. The implementation should include:\n\n1. **parseRiskAssessmentResponse**: \n   - Function signature: `parseRiskAssessmentResponse(response: unknown): RiskAssessment`\n   - Validate that the input matches the RiskAssessment interface from Task #21\n   - Implement type guards to ensure proper structure\n   - Include fallback mechanisms for missing or malformed fields\n   - Handle edge cases like null values or unexpected formats\n\n2. **parseOptimizationResponse**:\n   - Function signature: `parseOptimizationResponse(response: unknown): OptimizationResult`\n   - Validate against the appropriate interface from Task #21\n   - Implement robust type checking\n   - Include fallback values for missing properties\n   - Handle partial responses gracefully\n\n3. **Common utilities**:\n   - Create a base `parseAIResponse<T>` generic function that can be used by specific parsers\n   - Implement validation helpers for common AI response structures\n   - Integrate with the error handling system from Task #23\n   - Use AIAnalysisError for validation failures\n\n4. **Documentation**:\n   - Add JSDoc comments for all functions\n   - Include examples of usage\n   - Document fallback behaviors and validation rules\n\nThe implementation should be defensive, assuming that AI responses may not always conform perfectly to expected formats. Each parser should return properly typed data that adheres to the interfaces defined in Task #21, while using the error handling mechanisms from Task #23 to report parsing issues.",
+      "testStrategy": "Testing for this task should be comprehensive and include:\n\n1. **Unit Tests**:\n   - Create a dedicated test file `shared/utils/__tests__/aiResponseParsers.test.ts`\n   - Test each parser function with valid inputs to ensure correct parsing\n   - Test with malformed inputs to verify fallback mechanisms work properly\n   - Test with completely invalid inputs to ensure appropriate errors are thrown\n   - Test edge cases: empty objects, null values, missing required fields\n\n2. **Mock Data**:\n   - Create a set of mock AI responses in `shared/utils/__tests__/mockData.ts`\n   - Include examples of perfect responses, partially valid responses, and invalid responses\n   - Use these consistently across tests\n\n3. **Integration Testing**:\n   - Create tests that verify integration with the error handling system from Task #23\n   - Ensure AIAnalysisError is properly thrown and contains useful context\n\n4. **Coverage Requirements**:\n   - Aim for 100% code coverage for these utility functions\n   - Verify all conditional branches are tested\n\n5. **Documentation Verification**:\n   - Verify that all functions have proper JSDoc comments\n   - Ensure examples in documentation match actual implementation\n\n6. **Manual Testing Checklist**:\n   - Create a checklist for manual verification of parser behavior\n   - Include verification of integration with actual AI service responses if possible\n\nThe test suite should be run as part of the CI pipeline and all tests must pass before the task is considered complete.",
+      "status": "pending",
+      "dependencies": [
+        21,
+        23
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 31,
+      "title": "Task #31: Create MCP Service Structure with AI-Enhanced Tools Integration",
+      "description": "Develop the MCP service structure (/mcp/encore.service.ts) that unifies and integrates all AI-enhanced trading tools with the existing MCP protocol implementation to enable seamless AI assistant integration.",
+      "details": "This task involves creating a comprehensive service layer that will serve as the central integration point for all AI-enhanced trading tools developed in previous tasks (#24, #26, #27, #28).\n\nKey implementation details:\n1. Create the base service file structure at /mcp/encore.service.ts that will act as the orchestration layer for all AI capabilities.\n2. Implement service methods that interface with each of the previously developed endpoints:\n   - aiMarketAnalysis(depth: 'quick' | 'standard' | 'comprehensive' | 'deep'): Promise<AnalysisResult>\n   - riskAssessment(portfolio: Portfolio): Promise<RiskAssessmentResult>\n   - strategyOptimizer(strategy: Strategy, exchangeParams: MEXCParams): Promise<OptimizedStrategy>\n   - tradingTools(tool: 'positionSizing' | 'technicalAnalysis' | 'marketConditions', params: ToolParams): Promise<ToolResult>\n\n3. Develop a unified error handling mechanism that standardizes error responses across all AI tool integrations.\n4. Implement proper authentication and authorization checks to ensure secure access to AI capabilities.\n5. Create a caching layer to optimize performance for frequently requested AI analyses.\n6. Develop logging mechanisms to track AI tool usage and performance metrics.\n7. Ensure the service is properly exported and can be easily imported by other components of the application.\n8. Add comprehensive TypeScript interfaces and type definitions for all service methods and their parameters/return values.\n9. Implement rate limiting to prevent abuse of AI-powered endpoints.\n10. Create documentation for the service methods including example usage patterns.\n\nThe service should maintain backward compatibility with existing MCP protocol implementations while extending functionality with new AI capabilities.",
+      "testStrategy": "The testing strategy for this task will involve multiple layers of verification:\n\n1. Unit Tests:\n   - Create unit tests for each service method to verify they correctly interface with their respective endpoints\n   - Test error handling by simulating various error conditions from the underlying endpoints\n   - Verify type safety using TypeScript compilation checks\n   - Test authentication and authorization mechanisms\n\n2. Integration Tests:\n   - Create integration tests that verify the service can successfully communicate with each AI endpoint\n   - Test the caching mechanism to ensure it correctly stores and retrieves results\n   - Verify that rate limiting functions as expected\n\n3. End-to-End Tests:\n   - Create a test client that consumes the encore.service.ts\n   - Perform full workflow tests that simulate real-world usage patterns\n   - Verify that all AI tools can be accessed through the service layer\n\n4. Performance Testing:\n   - Measure response times for various service methods\n   - Test the service under load to ensure it remains responsive\n   - Verify that caching improves performance for repeated requests\n\n5. Documentation Verification:\n   - Ensure all service methods are properly documented\n   - Verify that example usage patterns are correct and functional\n\n6. Manual Testing:\n   - Perform manual tests using a test environment to verify the service behaves as expected\n   - Test edge cases that may be difficult to automate\n\nAll tests should be automated where possible and integrated into the CI/CD pipeline to ensure ongoing reliability.",
+      "status": "pending",
+      "dependencies": [
+        24,
+        26,
+        27,
+        28
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 32,
+      "title": "Task #32: Implement AI Health Check Endpoint with Comprehensive Service Monitoring",
+      "description": "Create a new health check endpoint at /mcp/health that tests Gemini API connectivity, MEXC integration, and overall AI service status with detailed monitoring capabilities.",
+      "details": "The implementation should include:\n\n1. Create a new endpoint at /mcp/health that returns a comprehensive health status of the AI service\n2. Implement connectivity tests for Gemini API:\n   - Test authentication with API key\n   - Verify model availability (Gemini 2.5 Flash)\n   - Measure response time for a simple prompt\n   - Include quota/rate limit information if available\n\n3. Implement MEXC integration tests:\n   - Verify API connectivity\n   - Test market data retrieval functionality\n   - Validate data freshness (timestamp checks)\n   - Include error handling for MEXC service disruptions\n\n4. Overall AI service status checks:\n   - Verify encore.service.ts is properly initialized\n   - Check caching mechanisms are functioning\n   - Validate thinking budget management system\n   - Test market analysis capabilities with minimal resource usage\n\n5. Response format:\n   - Return a JSON object with detailed status information\n   - Include status codes (OK, WARNING, ERROR) for each component\n   - Provide timestamps for each check\n   - Include performance metrics where applicable\n   - Add detailed error messages when components fail checks\n\n6. Logging and monitoring:\n   - Log all health check results\n   - Implement alerting for critical failures\n   - Store historical health data for trend analysis\n\n7. Security considerations:\n   - Implement rate limiting for the health endpoint\n   - Consider authentication requirements for detailed health information\n   - Ensure sensitive configuration details are not exposed\n\n8. Dependencies:\n   - Utilize the AI Service Structure from Task #20\n   - Leverage components from the AI Market Analysis API (Task #24)\n   - Ensure compatibility with existing monitoring systems",
+      "testStrategy": "Testing should verify the health check endpoint functions correctly and provides accurate status information:\n\n1. Unit Tests:\n   - Test each component of the health check individually\n   - Mock Gemini API responses for various scenarios (healthy, degraded, offline)\n   - Mock MEXC integration responses for different states\n   - Verify correct status code generation for each component\n   - Test error handling and recovery mechanisms\n\n2. Integration Tests:\n   - Test the complete health check endpoint with actual services when possible\n   - Verify all components are properly checked\n   - Validate the JSON response structure matches specifications\n   - Test with different environment configurations\n\n3. Performance Tests:\n   - Measure response time of the health check endpoint\n   - Ensure health checks don't consume excessive resources\n   - Verify the endpoint can handle concurrent requests\n\n4. Failure Scenario Tests:\n   - Simulate Gemini API failures and verify correct reporting\n   - Test with MEXC integration unavailable\n   - Verify partial system failures are properly reported\n   - Test recovery detection when services come back online\n\n5. Security Tests:\n   - Verify rate limiting is functioning\n   - Test authentication mechanisms if implemented\n   - Ensure no sensitive information is leaked\n\n6. Monitoring Integration Tests:\n   - Verify health check data is properly logged\n   - Test alerting mechanisms for critical failures\n   - Validate integration with existing monitoring dashboards\n\n7. Manual Verification:\n   - Review the health check response format for clarity and completeness\n   - Verify all required components are being monitored\n   - Check that error messages are helpful for troubleshooting\n\n8. Documentation:\n   - Document the endpoint usage and response format\n   - Create runbooks for addressing common failure scenarios\n   - Update monitoring documentation with new health check information",
+      "status": "pending",
+      "dependencies": [
+        20,
+        24
+      ],
+      "priority": "low",
+      "subtasks": []
+    },
+    {
+      "id": 33,
+      "title": "Task #33: Create Comprehensive AI Integration Documentation for Project",
+      "description": "Update project documentation with detailed guides for AI integration, API endpoints, configuration setup for Gemini API keys, and usage examples for all AI-enhanced features.",
+      "details": "The documentation update should include:\n\n1. **AI Integration Guide**:\n   - Overview of the AI capabilities integrated into the project\n   - Architecture diagrams showing how AI components interact with existing systems\n   - Step-by-step integration instructions for developers\n   - Best practices for AI feature implementation\n   - Limitations and considerations when using AI features\n\n2. **API Endpoints Documentation**:\n   - Complete documentation for all AI-related endpoints\n   - Request/response formats with JSON examples\n   - Authentication requirements\n   - Rate limiting information\n   - Error codes and troubleshooting\n   - Special focus on the health check endpoint (/mcp/health) from Task #32\n\n3. **Configuration Setup Guide**:\n   - Detailed instructions for obtaining Gemini API keys\n   - Environment variable configuration\n   - Security best practices for API key management\n   - Configuration options for different environments (dev, staging, production)\n   - Troubleshooting common configuration issues\n\n4. **Usage Examples**:\n   - Code snippets demonstrating how to use each AI-enhanced feature\n   - Complete working examples for common use cases\n   - Integration examples with the MCP service structure from Task #31\n   - Sample implementations for market analysis and trading tools\n   - Examples of handling AI service responses and errors\n\n5. **Testing Documentation**:\n   - Guide on how to use the AI integration test suite from Task #29\n   - Instructions for writing additional tests\n   - Test coverage expectations\n\nThe documentation should be written in Markdown format and organized in a logical structure within the project's docs directory. All code examples should be properly formatted and tested to ensure accuracy.",
+      "testStrategy": "The documentation will be verified through the following steps:\n\n1. **Documentation Review**:\n   - Conduct a peer review with at least two team members to ensure accuracy and completeness\n   - Verify all sections (Integration Guide, API Endpoints, Configuration Setup, Usage Examples) are present and comprehensive\n   - Check that all dependencies on Tasks #29, #31, and #32 are properly documented\n\n2. **Technical Accuracy Verification**:\n   - Test all code examples to ensure they work as documented\n   - Verify API endpoint documentation matches actual implementation\n   - Confirm configuration instructions result in a working setup\n   - Validate that all AI-enhanced features are properly documented\n\n3. **User Testing**:\n   - Have a developer unfamiliar with the AI integration attempt to set up and use the features following only the documentation\n   - Document any points of confusion or missing information\n   - Incorporate feedback to improve clarity\n\n4. **Documentation Build Test**:\n   - Ensure documentation renders correctly in the project's documentation system\n   - Check that all links between documentation sections work properly\n   - Verify code syntax highlighting works correctly\n\n5. **Completeness Check**:\n   - Create a checklist of all AI features implemented in Tasks #29, #31, and #32\n   - Verify each feature has corresponding documentation\n   - Ensure the health check endpoint from Task #32 is fully documented\n   - Confirm the MCP service structure from Task #31 is properly explained\n\nThe task will be considered complete when all verification steps pass and the documentation is merged into the main branch.",
+      "status": "pending",
+      "dependencies": [
+        29,
+        31,
+        32
+      ],
+      "priority": "low",
       "subtasks": []
     }
   ]
