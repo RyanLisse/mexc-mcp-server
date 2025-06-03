@@ -1,6 +1,6 @@
 # Task ID: 2
 # Title: Configure Secrets Management
-# Status: pending
+# Status: in-progress
 # Dependencies: 1
 # Priority: high
 # Description: Implement secure storage and retrieval of MEXC API keys using Encore.ts secrets.

@@ -1,39 +1,74 @@
-import { config } from "../shared/config.js";
-import { retryWithBackoff } from "../shared/utils/index.js";
-import type { TickerData, OrderBookData, Stats24hData } from "./tools.js";
+import type { OrderBookData, Stats24hData, TickerData } from './tools.js';
+
+import { config } from '../shared/config.js';
+import { getMexcCredentials } from '../shared/secrets.js';
+import { retryWithBackoff } from '../shared/utils/index.js';
+
+// MEXC API response types
+interface MEXCApiResponse {
+  code?: number;
+  msg?: string;
+}
+
+interface MEXCTickerResponse extends MEXCApiResponse {
+  symbol: string;
+  lastPrice: string;
+  priceChange: string;
+  priceChangePercent: string;
+  volume: string;
+  quoteVolume: string;
+  openPrice: string;
+  highPrice: string;
+  lowPrice: string;
+  count: number | null;
+}
+
+interface MEXCOrderBookResponse extends MEXCApiResponse {
+  bids: string[][];
+  asks: string[][];
+}
+
+interface MEXCExchangeInfo extends MEXCApiResponse {
+  symbols: Array<{
+    symbol: string;
+    status: string;
+  }>;
+}
+
+interface MEXCTimeResponse extends MEXCApiResponse {
+  serverTime: number;
+}
 
 /**
  * MEXC API Client for interacting with the MEXC exchange
  */
 export class MEXCApiClient {
-  private baseUrl: string;
-  private apiKey: string;
-  private secretKey: string;
+  private readonly baseUrl: string;
+  private readonly apiKey: string;
+  private readonly secretKey: string;
 
   constructor() {
     this.baseUrl = config.mexc.baseUrl;
-    this.apiKey = config.mexc.apiKey;
-    this.secretKey = config.mexc.secretKey;
+    const credentials = getMexcCredentials();
+    this.apiKey = credentials.apiKey;
+    this.secretKey = credentials.secretKey;
   }
 
   /**
    * Generate HMAC signature for authenticated requests
    */
   private generateSignature(queryString: string): string {
-    const crypto = require('crypto');
-    return crypto
-      .createHmac('sha256', this.secretKey)
-      .update(queryString)
-      .digest('hex');
+    const crypto = require('node:crypto');
+    return crypto.createHmac('sha256', this.secretKey).update(queryString).digest('hex');
   }
 
   /**
    * Create query string from parameters
    */
-  private createQueryString(params: Record<string, any>): string {
+  private createQueryString(params: Record<string, string | number>): string {
     return Object.keys(params)
-      .sort()
-      .map(key => `${key}=${encodeURIComponent(params[key])}`)
+      .sort((a, b) => a.localeCompare(b))
+      .map((key) => `${key}=${encodeURIComponent(params[key])}`)
       .join('&');
   }
 
@@ -41,8 +76,8 @@ export class MEXCApiClient {
    * Make HTTP request to MEXC API
    */
   private async makeRequest<T>(
-    endpoint: string, 
-    params: Record<string, any> = {},
+    endpoint: string,
+    params: Record<string, string | number> = {},
     requireAuth = false
   ): Promise<T> {
     try {
@@ -65,7 +100,7 @@ export class MEXCApiClient {
         const signatureParams = { ...params, timestamp };
         const signatureQuery = this.createQueryString(signatureParams);
         const signature = this.generateSignature(signatureQuery);
-        
+
         url += `${queryString ? '&' : '?'}timestamp=${timestamp}&signature=${signature}`;
       }
 
@@ -79,16 +114,18 @@ export class MEXCApiClient {
         throw new Error(`MEXC API error ${response.status}: ${errorText}`);
       }
 
-      const data = await response.json();
-      
+      const data = (await response.json()) as MEXCApiResponse;
+
       // Handle MEXC API error responses
       if (data.code && data.code !== 200) {
-        throw new Error(`MEXC API error: ${data.msg || 'Unknown error'}`);
+        throw new Error(`MEXC API error: ${data.msg ?? 'Unknown error'}`);
       }
 
-      return data;
+      return data as T;
     } catch (error) {
-      throw new Error(`Failed to call MEXC API: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to call MEXC API: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -97,8 +134,8 @@ export class MEXCApiClient {
    */
   async getTicker(symbol: string): Promise<TickerData> {
     try {
-      const response = await retryWithBackoff(() => 
-        this.makeRequest<any>('/api/v3/ticker/24hr', { symbol })
+      const response = await retryWithBackoff(() =>
+        this.makeRequest<MEXCTickerResponse>('/api/v3/ticker/24hr', { symbol })
       );
 
       // Transform MEXC response to our format
@@ -112,11 +149,13 @@ export class MEXCApiClient {
         open: response.openPrice,
         high: response.highPrice,
         low: response.lowPrice,
-        count: response.count,
+        count: response.count ?? 0,
         timestamp: Date.now(),
       };
     } catch (error) {
-      throw new Error(`Failed to get ticker for ${symbol}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to get ticker for ${symbol}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -125,8 +164,8 @@ export class MEXCApiClient {
    */
   async getOrderBook(symbol: string, limit: number): Promise<OrderBookData> {
     try {
-      const response = await retryWithBackoff(() => 
-        this.makeRequest<any>('/api/v3/depth', { symbol, limit })
+      const response = await retryWithBackoff(() =>
+        this.makeRequest<MEXCOrderBookResponse>('/api/v3/depth', { symbol, limit })
       );
 
       // Transform MEXC response to our format
@@ -137,7 +176,9 @@ export class MEXCApiClient {
         timestamp: Date.now(),
       };
     } catch (error) {
-      throw new Error(`Failed to get order book for ${symbol}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to get order book for ${symbol}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -146,15 +187,15 @@ export class MEXCApiClient {
    */
   async get24hStats(symbol?: string): Promise<Stats24hData[]> {
     try {
-      const params = symbol ? { symbol } : {};
-      const response = await retryWithBackoff(() => 
-        this.makeRequest<any>('/api/v3/ticker/24hr', params)
+      const params: Record<string, string> = symbol ? { symbol } : {};
+      const response = await retryWithBackoff(() =>
+        this.makeRequest<MEXCTickerResponse | MEXCTickerResponse[]>('/api/v3/ticker/24hr', params)
       );
 
       // Handle both single symbol and multiple symbols responses
       const data = Array.isArray(response) ? response : [response];
 
-      return data.map((item: any) => ({
+      return data.map((item: MEXCTickerResponse) => ({
         symbol: item.symbol,
         volume: item.volume,
         volumeQuote: item.quoteVolume,
@@ -162,24 +203,28 @@ export class MEXCApiClient {
         priceChangePercent: item.priceChangePercent,
         high: item.highPrice,
         low: item.lowPrice,
-        trades: item.count,
+        trades: item.count ?? 0,
         timestamp: Date.now(),
       }));
     } catch (error) {
-      throw new Error(`Failed to get 24h stats: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to get 24h stats: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   /**
    * Get account information (requires authentication)
    */
-  async getAccountInfo(): Promise<any> {
+  async getAccountInfo(): Promise<Record<string, unknown>> {
     try {
-      return await retryWithBackoff(() => 
-        this.makeRequest<any>('/api/v3/account', {}, true)
+      return await retryWithBackoff(() =>
+        this.makeRequest<Record<string, unknown>>('/api/v3/account', {}, true)
       );
     } catch (error) {
-      throw new Error(`Failed to get account info: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to get account info: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -190,28 +235,28 @@ export class MEXCApiClient {
     try {
       // Test public endpoint
       await this.makeRequest('/api/v3/ping');
-      
+
       // Test server time
-      const timeResponse = await this.makeRequest<{ serverTime: number }>('/api/v3/time');
+      const timeResponse = await this.makeRequest<MEXCTimeResponse>('/api/v3/time');
       const serverTime = timeResponse.serverTime;
       const localTime = Date.now();
       const timeDiff = Math.abs(serverTime - localTime);
-      
+
       if (timeDiff > 5000) {
         return {
           success: false,
-          message: `Server time difference too large: ${timeDiff}ms`
+          message: `Server time difference too large: ${timeDiff}ms`,
         };
       }
 
       return {
         success: true,
-        message: 'Connectivity test successful'
+        message: 'Connectivity test successful',
       };
     } catch (error) {
       return {
         success: false,
-        message: `Connectivity test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Connectivity test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -224,12 +269,12 @@ export class MEXCApiClient {
       await this.getAccountInfo();
       return {
         success: true,
-        message: 'Authentication test successful'
+        message: 'Authentication test successful',
       };
     } catch (error) {
       return {
         success: false,
-        message: `Authentication test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Authentication test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -237,13 +282,15 @@ export class MEXCApiClient {
   /**
    * Get exchange information
    */
-  async getExchangeInfo(): Promise<any> {
+  async getExchangeInfo(): Promise<MEXCExchangeInfo> {
     try {
-      return await retryWithBackoff(() => 
-        this.makeRequest<any>('/api/v3/exchangeInfo')
+      return await retryWithBackoff(() =>
+        this.makeRequest<MEXCExchangeInfo>('/api/v3/exchangeInfo')
       );
     } catch (error) {
-      throw new Error(`Failed to get exchange info: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to get exchange info: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -253,11 +300,11 @@ export class MEXCApiClient {
   async getActiveSymbols(): Promise<string[]> {
     try {
       const exchangeInfo = await this.getExchangeInfo();
-      return exchangeInfo.symbols
-        .filter((s: any) => s.status === 'TRADING')
-        .map((s: any) => s.symbol);
+      return exchangeInfo.symbols.filter((s) => s.status === 'TRADING').map((s) => s.symbol);
     } catch (error) {
-      throw new Error(`Failed to get active symbols: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to get active symbols: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 }

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Common MCP types
 export const MCPToolSchema = z.object({
@@ -15,7 +15,7 @@ export const MCPResourceSchema = z.object({
 });
 
 // MEXC API types - Updated to match MEXC format (no underscore)
-export const MEXCSymbolSchema = z.string().regex(/^[A-Z0-9]+$/, "Invalid trading symbol format");
+export const MEXCSymbolSchema = z.string().regex(/^[A-Z0-9]+$/, 'Invalid trading symbol format');
 
 export const MEXCTickerSchema = z.object({
   symbol: MEXCSymbolSchema,
@@ -49,6 +49,40 @@ export type MEXCSymbol = z.infer<typeof MEXCSymbolSchema>;
 export type MEXCTicker = z.infer<typeof MEXCTickerSchema>;
 export type MEXCOrder = z.infer<typeof MEXCOrderSchema>;
 export type APIError = z.infer<typeof APIErrorSchema>;
+
+// Additional types for market data tools
+export interface TickerData {
+  symbol: string;
+  price: string;
+  priceChange: string;
+  priceChangePercent: string;
+  volume: string;
+  quoteVolume: string;
+  open: string;
+  high: string;
+  low: string;
+  count: number;
+  timestamp: number;
+}
+
+export interface OrderBookData {
+  symbol: string;
+  bids: Array<[string, string]>; // [price, quantity]
+  asks: Array<[string, string]>; // [price, quantity]
+  timestamp: number;
+}
+
+export interface Stats24hData {
+  symbol: string;
+  volume: string;
+  volumeQuote: string;
+  priceChange: string;
+  priceChangePercent: string;
+  high: string;
+  low: string;
+  trades: number;
+  timestamp: number;
+}
 
 // Authentication types
 export interface AuthenticatedUser {
@@ -110,7 +144,7 @@ export interface Position {
 // Common trading symbols for MEXC (without underscores)
 export const COMMON_MEXC_SYMBOLS = [
   'BTCUSDT',
-  'ETHUSDT', 
+  'ETHUSDT',
   'BNBUSDT',
   'ADAUSDT',
   'DOTUSDT',
@@ -121,7 +155,7 @@ export const COMMON_MEXC_SYMBOLS = [
   'XLMUSDT',
 ] as const;
 
-export type CommonMEXCSymbol = typeof COMMON_MEXC_SYMBOLS[number];
+export type CommonMEXCSymbol = (typeof COMMON_MEXC_SYMBOLS)[number];
 
 // Helper function to validate MEXC symbols
 export function isValidMEXCSymbol(symbol: string): boolean {
@@ -132,14 +166,14 @@ export function isValidMEXCSymbol(symbol: string): boolean {
 export function formatSymbolForDisplay(symbol: string): string {
   // Try to intelligently split common patterns
   const commonQuotes = ['USDT', 'USDC', 'BTC', 'ETH', 'BNB'];
-  
+
   for (const quote of commonQuotes) {
     if (symbol.endsWith(quote)) {
       const base = symbol.slice(0, -quote.length);
       return `${base}_${quote}`;
     }
   }
-  
+
   return symbol; // Return as-is if we can't split it
 }
 

@@ -8,7 +8,7 @@
       "testStrategy": "Verify project structure, dependencies, and initial linting/formatting pass. Run `bun test` for basic smoke tests.",
       "priority": "high",
       "dependencies": [],
-      "status": "pending",
+      "status": "done",
       "subtasks": []
     },
     {
@@ -18,10 +18,8 @@
       "details": "Use Encore.ts secrets API for storing and retrieving MEXC API keys. Example: `encore.secret('MEXC_API_KEY')`. Ensure secrets are never logged or exposed in code. Document secret management process.",
       "testStrategy": "Test secret retrieval in a local environment. Verify secrets are not exposed in logs or error messages.",
       "priority": "high",
-      "dependencies": [
-        1
-      ],
-      "status": "pending",
+      "dependencies": [1],
+      "status": "in-progress",
       "subtasks": []
     },
     {
@@ -31,9 +29,7 @@
       "details": "Create middleware using Encore.ts to validate API keys on each request. Use Zod for input validation. Example: `z.string().min(32)` for API key format. Reject unauthorized requests with clear error messages.",
       "testStrategy": "Test with valid/invalid API keys. Verify error messages and logging. Check for rate limiting integration.",
       "priority": "high",
-      "dependencies": [
-        2
-      ],
+      "dependencies": [2],
       "status": "pending",
       "subtasks": []
     },
@@ -44,10 +40,7 @@
       "details": "Use PostgreSQL via Encore.ts SQL to log all API requests, responses, and errors. Include timestamp, user/API key, operation, and outcome. Example: `INSERT INTO audit_logs (...) VALUES (...)`. Ensure logs are queryable and secure.",
       "testStrategy": "Test logging of various operations. Verify log integrity and queryability.",
       "priority": "medium",
-      "dependencies": [
-        1,
-        2
-      ],
+      "dependencies": [1, 2],
       "status": "pending",
       "subtasks": []
     },
@@ -58,10 +51,7 @@
       "details": "Use Encore.ts middleware to track and limit requests per API key. Store counters in Redis (via Encore.ts). Example: `redis.incr(key)` and check against limit. Return 429 on exceedance.",
       "testStrategy": "Test with rapid requests. Verify rate limiting and error responses.",
       "priority": "medium",
-      "dependencies": [
-        2,
-        3
-      ],
+      "dependencies": [2, 3],
       "status": "pending",
       "subtasks": []
     },
@@ -72,10 +62,7 @@
       "details": "Create REST endpoints using Encore.ts. Fetch data from MEXC REST API. Cache responses in Redis. Example: `fetch('https://api.mexc.com/api/v3/ticker/price')`. Use Zod for response validation.",
       "testStrategy": "Test data retrieval, caching, and validation. Verify response times <200ms.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5
-      ],
+      "dependencies": [3, 5],
       "status": "pending",
       "subtasks": []
     },
@@ -86,11 +73,7 @@
       "details": "Create POST endpoints for order placement. Validate inputs with Zod. Example: `z.object({ symbol: z.string(), side: z.enum(['BUY', 'SELL']), ... })`. Call MEXC REST API for execution. Log all orders.",
       "testStrategy": "Test order placement with valid/invalid inputs. Verify logging and error handling.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        6
-      ],
+      "dependencies": [3, 5, 6],
       "status": "pending",
       "subtasks": []
     },
@@ -101,11 +84,7 @@
       "details": "Create DELETE endpoint for order cancellation. Track order status in PostgreSQL. Example: `DELETE /orders/:id`. Validate permissions and log actions.",
       "testStrategy": "Test cancellation with valid/invalid IDs. Verify status updates and logging.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        7
-      ],
+      "dependencies": [3, 5, 7],
       "status": "pending",
       "subtasks": []
     },
@@ -116,11 +95,7 @@
       "details": "Create GET endpoints for order and transaction history. Store data in PostgreSQL. Example: `GET /orders?status=completed`. Use Zod for query validation.",
       "testStrategy": "Test history retrieval with various filters. Verify data integrity and performance.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        7
-      ],
+      "dependencies": [3, 5, 7],
       "status": "pending",
       "subtasks": []
     },
@@ -131,11 +106,7 @@
       "details": "Create GET endpoint for account balances. Fetch from MEXC REST API. Convert to USD using latest rates. Cache balances in Redis. Example: `GET /portfolio/balance`.",
       "testStrategy": "Test balance retrieval and conversion. Verify caching and response times.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        6
-      ],
+      "dependencies": [3, 5, 6],
       "status": "pending",
       "subtasks": []
     },
@@ -146,11 +117,7 @@
       "details": "Create GET endpoint for positions. Calculate P&L using current prices and entry points. Store in PostgreSQL. Example: `GET /portfolio/positions`.",
       "testStrategy": "Test position retrieval and P&L calculation. Verify accuracy and performance.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        10
-      ],
+      "dependencies": [3, 5, 10],
       "status": "pending",
       "subtasks": []
     },
@@ -161,11 +128,7 @@
       "details": "Create GET endpoints for transaction history. Support CSV/JSON export. Store in PostgreSQL. Example: `GET /transactions?format=csv`.",
       "testStrategy": "Test history retrieval and export. Verify data integrity and format.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        9
-      ],
+      "dependencies": [3, 5, 9],
       "status": "pending",
       "subtasks": []
     },
@@ -176,11 +139,7 @@
       "details": "Extend order placement API to support advanced types. Validate inputs with Zod. Example: `type: 'STOP_LOSS'`. Call MEXC REST API accordingly.",
       "testStrategy": "Test advanced order placement. Verify validation and execution.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        7
-      ],
+      "dependencies": [3, 5, 7],
       "status": "pending",
       "subtasks": []
     },
@@ -191,12 +150,7 @@
       "details": "Create POST/DELETE endpoints for batch operations. Validate batch requests with Zod. Example: `POST /orders/batch`. Log all batch actions.",
       "testStrategy": "Test batch operations with valid/invalid inputs. Verify logging and error handling.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        7,
-        13
-      ],
+      "dependencies": [3, 5, 7, 13],
       "status": "pending",
       "subtasks": []
     },
@@ -207,11 +161,7 @@
       "details": "Use Bun's WebSocket support to connect to MEXC WebSocket API. Manage subscriptions and broadcast updates to clients. Example: `new WebSocket('wss://api.mexc.com/ws')`.",
       "testStrategy": "Test WebSocket connection, subscription, and data broadcast. Verify resilience and reconnection.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        6
-      ],
+      "dependencies": [3, 5, 6],
       "status": "pending",
       "subtasks": []
     },
@@ -222,11 +172,7 @@
       "details": "Create endpoints for subscription management. Track subscriptions in PostgreSQL. Broadcast updates via WebSocket. Example: `POST /subscribe`.",
       "testStrategy": "Test subscription lifecycle. Verify update delivery and unsubscription.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        15
-      ],
+      "dependencies": [3, 5, 15],
       "status": "pending",
       "subtasks": []
     },
@@ -237,12 +183,7 @@
       "details": "Implement MCP protocol handlers using JSON-RPC over HTTP/SSE. Use Zod for request/response validation. Example: `{ jsonrpc: '2.0', method: 'getPrice', params: {...} }`.",
       "testStrategy": "Test MCP protocol compliance. Verify request/response validation and error handling.",
       "priority": "medium",
-      "dependencies": [
-        3,
-        5,
-        6,
-        15
-      ],
+      "dependencies": [3, 5, 6, 15],
       "status": "pending",
       "subtasks": []
     },
@@ -253,10 +194,7 @@
       "details": "Create `/health` endpoint. Integrate Encore.ts observability for metrics and logging. Example: `GET /health` returns service status. Monitor uptime and performance.",
       "testStrategy": "Test health check endpoint. Verify observability integration and alerting.",
       "priority": "medium",
-      "dependencies": [
-        1,
-        4
-      ],
+      "dependencies": [1, 4],
       "status": "pending",
       "subtasks": []
     }

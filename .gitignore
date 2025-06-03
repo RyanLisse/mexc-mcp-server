@@ -53,3 +53,8 @@ dev-debug.log
 # Task files - commented out to include in version control for team collaboration
 # tasks.json
 # tasks/
+
+# Added by Claude Task Master
+# Task files
+tasks.json
+tasks/ 

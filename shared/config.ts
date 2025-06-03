@@ -74,19 +74,19 @@ export const config = loadConfig();
 // Validation functions
 export function validateMexcCredentials(): boolean {
   const { apiKey, secretKey } = config.mexc;
-  
+
   // Validate API key format
   const apiKeyRegex = /^mx0v[a-zA-Z0-9]+$/;
   if (!apiKeyRegex.test(apiKey)) {
     return false;
   }
-  
+
   // Validate secret key (should be hex string)
   const secretKeyRegex = /^[a-f0-9]{32,}$/i;
   if (!secretKeyRegex.test(secretKey)) {
     return false;
   }
-  
+
   return true;
 }
 

@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import type { z } from 'zod';
 
 /**
  * Validates data against a Zod schema and throws an error if invalid
@@ -14,7 +14,10 @@ export function validateOrThrow<T>(schema: z.ZodSchema<T>, data: unknown): T {
 /**
  * Safely validates data against a Zod schema
  */
-export function safeValidate<T>(schema: z.ZodSchema<T>, data: unknown): {
+export function safeValidate<T>(
+  schema: z.ZodSchema<T>,
+  data: unknown
+): {
   success: boolean;
   data?: T;
   error?: string;
@@ -29,7 +32,11 @@ export function safeValidate<T>(schema: z.ZodSchema<T>, data: unknown): {
 /**
  * Creates a standardized error response
  */
-export function createErrorResponse(code: number, message: string, details?: Record<string, unknown>) {
+export function createErrorResponse(
+  code: number,
+  message: string,
+  details?: Record<string, unknown>
+) {
   return {
     error: {
       code,
@@ -55,7 +62,7 @@ export function createSuccessResponse<T>(data: T, cached = false) {
  * Delays execution for the specified number of milliseconds
  */
 export function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -67,22 +74,22 @@ export async function retryWithBackoff<T>(
   baseDelay = 1000
 ): Promise<T> {
   let lastError: Error | undefined;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       if (attempt === maxRetries) {
         break;
       }
-      
+
       const delayMs = baseDelay * 2 ** attempt;
       await delay(delayMs);
     }
   }
-  
+
   if (lastError) {
     throw lastError;
   }
@@ -100,12 +107,15 @@ export function formatNumber(value: string | number, decimals = 8): string {
 /**
  * Calculates percentage change between two values
  */
-export function calculatePercentageChange(oldValue: string | number, newValue: string | number): string {
+export function calculatePercentageChange(
+  oldValue: string | number,
+  newValue: string | number
+): string {
   const old = typeof oldValue === 'string' ? Number.parseFloat(oldValue) : oldValue;
   const current = typeof newValue === 'string' ? Number.parseFloat(newValue) : newValue;
-  
+
   if (old === 0) return '0.00';
-  
+
   const change = ((current - old) / old) * 100;
   return change.toFixed(2);
 }

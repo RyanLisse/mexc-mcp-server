@@ -1,10 +1,11 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Zod schema for API credentials validation
 export const APICredentialsSchema = z.object({
-  apiKey: z.string().regex(/^mx0v[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/, 
-    "Invalid MEXC API key format"),
-  secretKey: z.string().min(32, "Secret key must be at least 32 characters"),
+  apiKey: z
+    .string()
+    .regex(/^mx0v[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/, 'Invalid MEXC API key format'),
+  secretKey: z.string().min(32, 'Secret key must be at least 32 characters'),
 });
 
 export type APICredentials = z.infer<typeof APICredentialsSchema>;
@@ -22,7 +23,10 @@ export interface ApiKeyValidationResult {
 }
 
 export class AuthenticationError extends Error {
-  constructor(message: string, public code = 401) {
+  constructor(
+    message: string,
+    public code = 401
+  ) {
     super(message);
     this.name = 'AuthenticationError';
   }
@@ -34,32 +38,32 @@ export async function validateApiKey(apiKey: string): Promise<ApiKeyValidationRe
     if (!apiKey || typeof apiKey !== 'string') {
       return {
         isValid: false,
-        error: 'Invalid MEXC API key format'
+        error: 'Invalid MEXC API key format',
       };
     }
 
     // Validate API key format using Zod
     const validationResult = APICredentialsSchema.partial().safeParse({ apiKey });
-    
+
     if (!validationResult.success) {
       return {
         isValid: false,
-        error: 'Invalid MEXC API key format'
+        error: 'Invalid MEXC API key format',
       };
     }
 
     // For now, simulate a successful validation
     // In production, this would verify against MEXC's API or your user database
     const userId = extractUserIdFromApiKey(apiKey);
-    
+
     return {
       isValid: true,
-      userId: userId
+      userId: userId,
     };
   } catch (error) {
     return {
       isValid: false,
-      error: error instanceof Error ? error.message : 'Unknown validation error'
+      error: error instanceof Error ? error.message : 'Unknown validation error',
     };
   }
 }
@@ -76,7 +80,7 @@ export async function authenticateUser(authHeader: string): Promise<Authenticate
   }
 
   const apiKey = authHeader.substring(7); // Remove 'Bearer ' prefix
-  
+
   // Validate API key format
   const result = await validateApiKey(apiKey);
   if (!result.isValid) {
@@ -99,7 +103,7 @@ export async function authenticateUser(authHeader: string): Promise<Authenticate
 // Rate limiting functionality
 export class RateLimiter {
   private requests: Map<string, number[]> = new Map();
-  
+
   constructor(
     private maxRequests = 100,
     private windowMs = 60000 // 1 minute
@@ -108,32 +112,32 @@ export class RateLimiter {
   isAllowed(identifier: string): boolean {
     const now = Date.now();
     const windowStart = now - this.windowMs;
-    
+
     // Get existing requests for this identifier
     let requests = this.requests.get(identifier) || [];
-    
+
     // Filter out old requests
-    requests = requests.filter(timestamp => timestamp > windowStart);
-    
+    requests = requests.filter((timestamp) => timestamp > windowStart);
+
     // Check if we're within limits
     if (requests.length >= this.maxRequests) {
       return false;
     }
-    
+
     // Add this request
     requests.push(now);
     this.requests.set(identifier, requests);
-    
+
     return true;
   }
 
   getRemainingRequests(identifier: string): number {
     const now = Date.now();
     const windowStart = now - this.windowMs;
-    
+
     const requests = this.requests.get(identifier) || [];
-    const recentRequests = requests.filter(timestamp => timestamp > windowStart);
-    
+    const recentRequests = requests.filter((timestamp) => timestamp > windowStart);
+
     return Math.max(0, this.maxRequests - recentRequests.length);
   }
 }

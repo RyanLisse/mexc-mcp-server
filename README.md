@@ -1,231 +1,260 @@
-# MEXC MCP Server ✅ **LIVE API INTEGRATION**
+# MEXC MCP Server
 
-A modern, production-ready Model Context Protocol (MCP) server for MEXC cryptocurrency exchange, built with TypeScript, Bun, and Encore.ts following vertical slice architecture principles.
+A Model Context Protocol (MCP) server implementation for MEXC cryptocurrency exchange integration using Encore.ts.
 
-## 🎉 **MILESTONE ACHIEVED: Real MEXC API Integration**
+## 🚀 Features
 
-**49/49 tests passing** with live market data from MEXC exchange!
+- **Real-time Market Data**: Live ticker prices, order books, and 24h statistics from MEXC exchange
+- **Secure API Management**: Encore.ts secrets management for API keys
+- **Rate Limiting & Caching**: Built-in protection and performance optimization
+- **Type Safety**: Full TypeScript implementation with Zod validation
+- **Test-Driven Development**: Comprehensive test suite with >90% coverage
+- **CI/CD Pipeline**: Automated testing, linting, and deployment
+- **Pre-commit Hooks**: Automated code quality checks
 
-## 🚀 Features Implemented
+## 📋 Prerequisites
 
-### ✅ Slice 1: Authentication & API Key Management (COMPLETE)
-- **API Key Validation**: Real MEXC API key validation with live credentials
-- **Rate Limiting**: Production-grade rate limiting (100 req/min)
-- **Security**: Bearer token authentication with comprehensive error handling
-- **Test Coverage**: 100% coverage with 21 passing tests
+- [Bun](https://bun.sh/) >= 1.0.0
+- [Node.js](https://nodejs.org/) >= 18.0.0
+- [Encore CLI](https://encore.dev/docs/install) (for deployment)
+- MEXC API credentials
 
-### ✅ Slice 2: Market Data MCP Tools (COMPLETE + LIVE API)
-- **Live Ticker Data**: Real-time BTC/USDT pricing ($104,792+)
-- **Live Order Books**: Real bid/ask data with configurable depth
-- **24h Statistics**: Live volume (140k+ ETH), high/low, price changes
-- **API Health Checks**: Connectivity and authentication testing
-- **Intelligent Caching**: TTL-based caching reducing API calls by 50%+
-- **Test Coverage**: 96.30% coverage with 28 passing tests using real data
+## 🛠️ Local Development Setup
 
-## 🛠️ Technology Stack
-
-- **Runtime**: [Bun](https://bun.sh) v1.2.5+ (3x faster than Node.js)
-- **Framework**: [Encore.ts](https://encore.dev) for microservices
-- **Language**: TypeScript 5.0+ with strict type checking
-- **Validation**: [Zod](https://zod.dev) for runtime type safety
-- **Linting**: [Biome.js](https://biomejs.dev) (35x faster than ESLint)
-- **Testing**: Bun's built-in test runner with coverage
-- **API**: Real MEXC REST API integration with HMAC authentication
-
-## 📁 Project Structure
-
-```
-mexc-mcp-server/
-├── auth/                    # ✅ Authentication & API key management
-├── market-data/             # ✅ Market data MCP tools + LIVE API
-│   ├── tools.ts            # MCP tool implementations
-│   ├── mexc-client.ts      # Real MEXC API client
-│   └── tools.test.ts       # Comprehensive test suite
-├── tools/                   # 🚧 MCP tools implementation
-├── resources/               # 🚧 MCP resources
-├── trading/                 # 🚧 Trading operations
-├── portfolio/               # 🚧 Portfolio management
-├── webhooks/                # 🚧 Real-time updates
-├── compliance/              # 🚧 Rate limiting & security
-├── shared/
-│   ├── types/              # ✅ Common TypeScript types
-│   ├── utils/              # ✅ Utility functions
-│   ├── config.ts           # ✅ Environment configuration
-│   └── validation/         # 🚧 Validation schemas
-└── tests/                  # ✅ Test setup and utilities
-```
-
-## 🏃‍♂️ Quick Start
-
-### Prerequisites
+### 1. Clone and Install
 
 ```bash
-# Install Bun
-curl -fsSL https://bun.sh/install | bash
-
-# Install Encore CLI
-curl -L https://encore.dev/install.sh | bash
-```
-
-### Installation & Setup
-
-```bash
-git clone <repository-url>
+git clone https://github.com/RyanLisse/mexc-mcp-server.git
 cd mexc-mcp-server
-
-# Install dependencies
 bun install
-
-# Configure environment (add your MEXC credentials)
-cp .env.example .env
-# Edit .env with your MEXC API credentials
 ```
 
-### Development Commands
+### 2. Environment Configuration
+
+Create a `.env` file in the project root:
 
 ```bash
-# Test real MEXC API integration
-bun run test:mexc
+# MEXC API Credentials
+MEXC_API_KEY=your_mexc_api_key_here
+MEXC_SECRET_KEY=your_mexc_secret_key_here
+```
 
-# Run full test suite
-bun test
+### 3. Development Workflow
 
+```bash
 # Start development server
 bun run dev
 
+# Run tests (with watch mode)
+bun run test:watch
+
+# Run all quality checks
+bun run check
+
 # Format and lint code
-bun run format && bun run lint
+bun run format
+bun run lint:fix
 ```
 
-## 🧪 Testing & API Integration
-
-### Test Results (All Passing! 🎉)
+## 🧪 Testing
 
 ```bash
-✅ Authentication Module: 21/21 tests passing (100% coverage)
-✅ Market Data Module: 28/28 tests passing (live API data)
-✅ Total: 49/49 tests passing
-```
+# Run all tests
+bun test
 
-### Live API Integration Examples
+# Run tests with coverage
+bun run test:coverage
 
-```bash
-# Test connectivity to MEXC
+# Run specific test file
+bun test auth/auth.test.ts
+
+# Test MEXC API connectivity
 bun run test:mexc
-
-# Expected output:
-🚀 Testing MEXC API Integration...
-✅ Connectivity: PASS
-✅ Authentication: PASS  
-✅ BTC/USDT Ticker: $104,792.61 (-0.0034%)
-✅ Order Book: Live bid/ask spreads
-✅ ETH 24h Stats: 140,179 ETH volume
-✅ Health Check: All systems healthy
 ```
 
-## 🔧 API Examples
+## 🔧 Available MCP Tools
 
-### Market Data (Live MEXC Data)
+| Tool Name | Description | Input Parameters |
+|-----------|-------------|------------------|
+| `mexc_get_ticker` | Get current ticker price and 24h statistics | `symbol: string, convert?: string` |
+| `mexc_get_order_book` | Get current order book (bids/asks) | `symbol: string, limit?: number` |
+| `mexc_get_24h_stats` | Get 24-hour trading statistics | `symbol?: string` |
+| `mexc_test_connectivity` | Test API connectivity and server time | None |
+| `mexc_test_authentication` | Test API authentication | None |
+| `mexc_get_active_symbols` | Get all active trading symbols | `limit?: number` |
+
+## 🚀 Deployment
+
+### Encore Cloud Deployment
+
+1. **Install Encore CLI**:
+   ```bash
+   curl -L https://encore.dev/install.sh | bash
+   ```
+
+2. **Authenticate**:
+   ```bash
+   encore auth login
+   ```
+
+3. **Set up secrets**:
+   ```bash
+   # For staging environment
+   encore secret set --env=staging MEXC_API_KEY "your_api_key"
+   encore secret set --env=staging MEXC_SECRET_KEY "your_secret_key"
+   
+   # For production environment
+   encore secret set --env=production MEXC_API_KEY "your_api_key"
+   encore secret set --env=production MEXC_SECRET_KEY "your_secret_key"
+   ```
+
+4. **Deploy**:
+   ```bash
+   # Deploy to staging
+   encore deploy --env=staging
+
+   # Deploy to production
+   encore deploy --env=production
+   ```
+
+### Automated Deployment
+
+The project includes GitHub Actions workflows for automated deployment:
+
+- **CI Pipeline** (`.github/workflows/ci.yml`): Runs on all PRs and pushes
+  - Type checking
+  - Linting and formatting
+  - Test execution
+  - Security scanning
+  - Build verification
+
+- **Deployment Pipeline** (`.github/workflows/deploy.yml`): Deploys to Encore Cloud
+  - Triggered on main branch pushes
+  - Manual deployment with environment selection
+  - Automated health checks
+  - Secret management
+
+### Required GitHub Secrets
+
+Configure these secrets in your GitHub repository settings:
+
+```bash
+ENCORE_AUTH_TOKEN=your_encore_auth_token
+ENCORE_INSTALL_ID=your_encore_install_id
+MEXC_API_KEY=your_mexc_api_key
+MEXC_SECRET_KEY=your_mexc_secret_key
+CODECOV_TOKEN=your_codecov_token  # Optional, for coverage reports
+```
+
+## 🔒 Security & Secrets Management
+
+### Encore.ts Secrets
+
+This project uses Encore.ts built-in secrets management:
 
 ```typescript
-// Get real-time ticker data
-const ticker = await executeGetTicker({ symbol: "BTCUSDT" });
-console.log(`BTC Price: $${ticker.data.price}`); // $104,792.61
-console.log(`24h Change: ${ticker.data.priceChangePercent}%`); // -0.0034%
+import { secret } from "encore.dev/config";
 
-// Get live order book
-const orderBook = await executeGetOrderBook({ 
-  symbol: "BTCUSDT", 
-  limit: 50 
-});
-console.log(`Best Bid: $${orderBook.data.bids[0][0]}`); // $104,792.61
-console.log(`Best Ask: $${orderBook.data.asks[0][0]}`); // $104,792.62
-
-// Get 24h trading statistics
-const stats = await executeGet24hStats({ symbol: "ETHUSDT" });
-console.log(`ETH Volume: ${stats.data[0].volume} ETH`); // 140,179 ETH
+const mexcApiKey = secret("MEXC_API_KEY");
+const mexcSecretKey = secret("MEXC_SECRET_KEY");
 ```
 
-### Authentication (Production-Ready)
+### Best Practices
 
-```typescript
-// Validate MEXC API key
-const result = await validateApiKey("mx0vglsgdd7flAhfqq");
-console.log(result.isValid); // true
+- ✅ Never commit API keys to version control
+- ✅ Use environment-specific secrets (staging/production)
+- ✅ Rotate API keys regularly
+- ✅ Monitor API usage and rate limits
+- ✅ Use least-privilege access principles
 
-// Test connectivity
-const connectivity = await mexcClient.testConnectivity();
-console.log(connectivity.success); // true
+## 🔄 CI/CD Pipeline
 
-// Test authentication  
-const auth = await mexcClient.testAuthentication();
-console.log(auth.success); // true
+### Pre-commit Hooks
+
+Husky pre-commit hooks ensure code quality:
+
+```bash
+# Automatically runs on git commit
+- Lint-staged (format & lint staged files)
+- Type checking
+- Test execution
 ```
 
-## 📊 Performance Metrics (Real API)
+### GitHub Actions
 
-- **API Response Time**: 250-350ms (real MEXC data)
-- **Cache Hit Rate**: 50%+ for repeated requests
-- **Test Execution**: <13 seconds for full suite
-- **Concurrent Requests**: Handles 3+ simultaneous API calls
-- **Error Rate**: 0% in test suite
+#### CI Workflow (`.github/workflows/ci.yml`)
+- Triggers: Pull requests and pushes to main/develop
+- Steps: Install → Type Check → Lint → Test → Security Scan → Build
 
-## 🔐 Security Features
+#### Deploy Workflow (`.github/workflows/deploy.yml`)
+- Triggers: Push to main or manual dispatch
+- Steps: Quality Checks → Deploy → Health Check → Notify
 
-- Real MEXC API key validation with regex patterns
-- HMAC-SHA256 signature generation for authenticated requests
-- Rate limiting with configurable windows (100 req/min)
-- Input sanitization and comprehensive validation
-- Bearer token authentication with proper error handling
+## 📊 API Endpoints
 
-## 📋 Next Development Phase
+### Health & Info
+- `GET /health` - Service health check
+- `GET /mcp/info` - MCP protocol information
+- `GET /` - API overview
 
-### 🚧 Remaining Slices (Weeks 3-8)
+### Authentication
+- `POST /auth/validate` - Validate API key
+- `GET /auth/status` - Authentication status
+- `POST /auth/rate-limit` - Rate limit status
 
-1. **Slice 3**: MCP Tools Implementation
-2. **Slice 4**: Portfolio & Balance Resources  
-3. **Slice 5**: Trading Operations Tools
-4. **Slice 6**: Advanced Trading Features
-5. **Slice 7**: WebSocket Integration
-6. **Slice 8**: Production Readiness
+### Market Data
+- `POST /market-data/ticker` - Get ticker data
+- `POST /market-data/order-book` - Get order book
+- `POST /market-data/24h-stats` - Get 24h statistics
+- `GET /market-data/test-connectivity` - Test connectivity
+- `GET /market-data/test-auth` - Test authentication
+- `POST /market-data/active-symbols` - Get active symbols
 
-## 🏗️ Architecture Highlights
+## 🧩 Architecture
 
-- **Vertical Slice Architecture**: Complete, testable features
-- **Test-Driven Development**: 49 comprehensive tests
-- **Type Safety**: Full TypeScript + Zod validation
-- **Performance First**: Bun + Biome.js optimal DX
-- **Real API Integration**: Live MEXC market data
-- **Production Ready**: Error handling, caching, monitoring
+### Encore.ts Services
 
-## 🎯 Success Metrics Achieved
-
-- **Technical**: 96.30% test coverage, <350ms response time
-- **Development**: All tests passing, real API integration
-- **Quality**: 100% code formatting compliance, zero test failures
-- **Live Data**: $104k+ BTC pricing, 140k+ ETH volume, real order books
+```
+mexc-mcp-server/
+├── encore.service.ts        # Main service definition
+├── api.ts                   # Root API endpoints
+├── auth/
+│   ├── encore.service.ts    # Auth service
+│   ├── api.ts              # Auth endpoints
+│   └── auth.ts             # Auth logic
+└── market-data/
+    ├── encore.service.ts    # Market data service
+    ├── api.ts              # Market data endpoints
+    ├── tools.ts            # MCP tools implementation
+    └── mexc-client.ts      # MEXC API client
+```
 
 ## 🤝 Contributing
 
-This project follows TDD principles with live API testing:
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes following the coding standards
+4. Run tests: `bun test`
+5. Commit with conventional commits: `git commit -m "feat: add amazing feature"`
+6. Push to your branch: `git push origin feature/amazing-feature`
+7. Open a Pull Request
 
-1. **Feature Branches**: `feature/slice-X-description`
-2. **Real API Testing**: `bun run test:mexc` before commits
-3. **Pull Requests**: Complete slices with live data validation
-4. **Definition of Done**: All tests passing + real API integration
+### Development Standards
 
-## 🏆 Current Achievement
+- ✅ TypeScript with strict mode
+- ✅ Test-driven development (TDD)
+- ✅ Files under 500 lines
+- ✅ Zod validation for all inputs
+- ✅ Conventional commits
+- ✅ 100% test coverage for new features
 
-**We've successfully built a production-ready MEXC MCP Server with:**
-- ✅ Real MEXC API integration
-- ✅ Live cryptocurrency market data
-- ✅ 49/49 tests passing
-- ✅ Modern TypeScript architecture
-- ✅ Comprehensive error handling
-- ✅ Ready for production deployment
+## 📝 License
 
----
+MIT License - see [LICENSE](LICENSE) file for details.
 
-Built with ❤️ using cutting-edge TypeScript tooling and **real MEXC exchange data**.
+## 🆘 Support
 
-**🎉 Milestone: First two vertical slices complete with live API integration!**
+- 📖 [Documentation](https://encore.dev/docs)
+- 🐛 [Issues](https://github.com/RyanLisse/mexc-mcp-server/issues)
+- 💬 [Discussions](https://github.com/RyanLisse/mexc-mcp-server/discussions)
+- 📧 Email: ryan@ryanlisse.com

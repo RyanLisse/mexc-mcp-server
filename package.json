@@ -16,7 +16,8 @@
     "lint:fix": "bunx @biomejs/biome check --write .",
     "format": "bunx @biomejs/biome format --write .",
     "type-check": "bunx tsc --noEmit",
-    "setup": "./setup.sh"
+    "setup": "./setup.sh",
+    "prepare": "husky"
   },
   "keywords": [
     "mexc",
@@ -30,16 +31,23 @@
   "author": "Ryan Lisse <ryan@ryanlisse.com>",
   "license": "MIT",
   "dependencies": {
+    "encore.dev": "1.48.3",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.5.0",
     "@types/bun": "^1.0.0",
-    "husky": "^8.0.3",
-    "lint-staged": "^15.0.0"
+    "husky": "9.1.7",
+    "lint-staged": "16.1.0"
   },
   "engines": {
     "bun": ">=1.0.0",
     "node": ">=18.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,js,json}": [
+      "bunx @biomejs/biome format --write",
+      "bunx @biomejs/biome check --write --unsafe"
+    ]
   }
 }
