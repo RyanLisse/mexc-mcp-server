@@ -1,0 +1,20 @@
+[install]
+# Install packages from npm registry
+registry = "https://registry.npmjs.org/"
+
+# Always install exact versions
+exact = true
+
+# Use cache for faster installs
+cache = true
+
+[test]
+# Test configuration
+preload = ["./tests/setup.ts"]
+coverage = true
+
+[build]
+# Build configuration for production
+minify = true
+sourcemap = true
+target = "node"

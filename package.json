@@ -1,0 +1,45 @@
+{
+  "name": "mexc-mcp-server",
+  "version": "1.0.0",
+  "description": "MEXC cryptocurrency exchange MCP server implementation using Encore.ts",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "encore run",
+    "build": "encore build",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "test:mexc": "bun run test-mexc-api.ts",
+    "check": "bun run lint && bun run type-check",
+    "lint": "bunx @biomejs/biome check .",
+    "lint:fix": "bunx @biomejs/biome check --write .",
+    "format": "bunx @biomejs/biome format --write .",
+    "type-check": "bunx tsc --noEmit",
+    "setup": "./setup.sh"
+  },
+  "keywords": [
+    "mexc",
+    "cryptocurrency",
+    "trading",
+    "mcp",
+    "model-context-protocol",
+    "encore",
+    "typescript"
+  ],
+  "author": "Ryan Lisse <ryan@ryanlisse.com>",
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.5.0",
+    "@types/bun": "^1.0.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.0.0"
+  },
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": ">=18.0.0"
+  }
+}
