@@ -400,6 +400,24 @@ Determine trend direction and strength.`;
     };
   }
 
+  // Alias for getConfig to match test expectations
+  getModelConfig(): AnalyzerConfig & { model: string; temperature: number } {
+    return {
+      ...this.config,
+      model: 'gemini-2.5-flash-preview-05-20',
+      temperature: this.config.temperature,
+    };
+  }
+
+  // Alias methods to match test expectations
+  async analyzeTechnical(marketData: any): Promise<MarketAnalysis> {
+    return this.performTechnicalAnalysis(marketData);
+  }
+
+  async analyzeRisk(position: any): Promise<AnalysisResult> {
+    return this.assessRisk(position);
+  }
+
   updateConfig(newConfig: Partial<AnalyzerConfig>): void {
     this.config = { ...this.config, ...newConfig };
     this.validateConfig();

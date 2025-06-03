@@ -27,7 +27,7 @@ describe('Enhanced Market Data Tools', () => {
     it('should validate interval values', () => {
       const validIntervals = ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w', '1M'];
       const testInterval = '1h';
-      
+
       expect(validIntervals).toContain(testInterval);
       expect(validIntervals.length).toBe(9);
     });
@@ -59,7 +59,7 @@ describe('Enhanced Market Data Tools', () => {
     it('should validate metrics array', () => {
       const validMetrics = ['price', 'volume', 'volatility', 'correlation'];
       const testMetrics = ['price', 'volume'];
-      
+
       for (const metric of testMetrics) {
         expect(validMetrics).toContain(metric);
       }
@@ -67,7 +67,7 @@ describe('Enhanced Market Data Tools', () => {
 
     it('should handle correlation calculations', () => {
       const correlation = Math.random() * 2 - 1; // [-1, 1]
-      
+
       expect(correlation).toBeGreaterThanOrEqual(-1);
       expect(correlation).toBeLessThanOrEqual(1);
     });
@@ -77,14 +77,14 @@ describe('Enhanced Market Data Tools', () => {
     it('should validate subscription actions', () => {
       const validActions = ['subscribe', 'unsubscribe', 'list'];
       const testAction = 'subscribe';
-      
+
       expect(validActions).toContain(testAction);
     });
 
     it('should validate subscription types', () => {
       const validTypes = ['ticker', 'orderbook', 'trades'];
       const testType = 'ticker';
-      
+
       expect(validTypes).toContain(testType);
     });
 
@@ -129,7 +129,7 @@ describe('Enhanced Market Data Tools', () => {
     it('should validate health status values', () => {
       const validStatuses = ['healthy', 'degraded', 'unhealthy'];
       const testStatus = 'healthy';
-      
+
       expect(validStatuses).toContain(testStatus);
     });
 
@@ -142,15 +142,16 @@ describe('Enhanced Market Data Tools', () => {
       };
 
       const unhealthyCount = Object.values(components).filter(
-        comp => comp.status === 'unhealthy'
+        (comp) => comp.status === 'unhealthy'
       ).length;
 
       const totalComponents = Object.keys(components).length;
-      const overallStatus = unhealthyCount === 0 
-        ? 'healthy' 
-        : unhealthyCount < totalComponents / 2 
-          ? 'degraded' 
-          : 'unhealthy';
+      const overallStatus =
+        unhealthyCount === 0
+          ? 'healthy'
+          : unhealthyCount < totalComponents / 2
+            ? 'degraded'
+            : 'unhealthy';
 
       expect(overallStatus).toBe('healthy');
     });
@@ -160,7 +161,7 @@ describe('Enhanced Market Data Tools', () => {
     it('should validate market status values', () => {
       const validStatuses = ['open', 'closed', 'pre_open', 'post_close'];
       const testStatus = 'open';
-      
+
       expect(validStatuses).toContain(testStatus);
     });
 
@@ -185,8 +186,8 @@ describe('Enhanced Market Data Tools', () => {
       ];
 
       const total = symbols.length;
-      const active = symbols.filter(s => s.status === 'TRADING').length;
-      const suspended = symbols.filter(s => s.status !== 'TRADING').length;
+      const active = symbols.filter((s) => s.status === 'TRADING').length;
+      const suspended = symbols.filter((s) => s.status !== 'TRADING').length;
 
       expect(total).toBe(3);
       expect(active).toBe(2);
@@ -198,7 +199,7 @@ describe('Enhanced Market Data Tools', () => {
   describe('WebSocket Configuration', () => {
     it('should validate WebSocket URL format', () => {
       const wsUrl = 'wss://wbs.mexc.com/ws';
-      
+
       expect(wsUrl).toMatch(/^wss?:\/\//);
       expect(wsUrl).toContain('mexc.com');
     });
@@ -246,8 +247,15 @@ describe('Enhanced Market Data Tools', () => {
         timestamp: Date.now(),
       };
 
-      const requiredFields = ['symbol', 'price', 'priceChange', 'priceChangePercent', 'volume', 'timestamp'];
-      
+      const requiredFields = [
+        'symbol',
+        'price',
+        'priceChange',
+        'priceChangePercent',
+        'volume',
+        'timestamp',
+      ];
+
       for (const field of requiredFields) {
         expect(tickerData).toHaveProperty(field);
       }
@@ -256,8 +264,14 @@ describe('Enhanced Market Data Tools', () => {
     it('should validate order book structure', () => {
       const orderBook = {
         symbol: 'BTCUSDT',
-        bids: [['49000.00', '0.5'], ['48900.00', '1.0']],
-        asks: [['49100.00', '0.3'], ['49200.00', '0.8']],
+        bids: [
+          ['49000.00', '0.5'],
+          ['48900.00', '1.0'],
+        ],
+        asks: [
+          ['49100.00', '0.3'],
+          ['49200.00', '0.8'],
+        ],
         lastUpdateId: Date.now(),
       };
 
@@ -282,7 +296,7 @@ describe('Enhanced Market Data Tools', () => {
       };
 
       const requiredFields = ['openTime', 'open', 'high', 'low', 'close', 'volume', 'closeTime'];
-      
+
       for (const field of requiredFields) {
         expect(dataPoint).toHaveProperty(field);
       }
@@ -320,14 +334,15 @@ describe('Enhanced Market Data Tools', () => {
 
     it('should handle malformed input gracefully', () => {
       const malformedInputs = [null, undefined, '', 123, [], {}];
-      
+
       for (const input of malformedInputs) {
-        const isValidInput = input !== null && 
+        const isValidInput =
+          input !== null &&
           input !== undefined &&
-          typeof input === 'object' && 
-          'symbol' in input && 
+          typeof input === 'object' &&
+          'symbol' in input &&
           typeof input.symbol === 'string';
-        
+
         expect(isValidInput).toBe(false);
       }
     });

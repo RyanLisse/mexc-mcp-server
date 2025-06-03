@@ -4,15 +4,17 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import type { ServiceHealth, SystemHealthResponse, MetricsResponse } from './api';
+import type { MetricsResponse, ServiceHealth, SystemHealthResponse } from './api';
 
 // Mock global fetch
-const mockFetch = mock(() => Promise.resolve({
-  ok: true,
-  status: 200,
-  statusText: 'OK',
-  json: () => Promise.resolve({ status: 'healthy', success: true }),
-}));
+const mockFetch = mock(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    json: () => Promise.resolve({ status: 'healthy', success: true }),
+  })
+);
 global.fetch = mockFetch as any;
 
 // Mock process methods
@@ -129,7 +131,7 @@ describe('Health Check and Observability - Task #18', () => {
   describe('Service Health Checks', () => {
     it('should check MCP service health', async () => {
       const mcpHealth = createMockServiceHealth('healthy');
-      
+
       expect(mcpHealth.status).toBe('healthy');
       expect(mcpHealth.lastCheck).toBeLessThanOrEqual(Date.now());
       expect(mcpHealth.responseTime).toBeGreaterThan(0);
@@ -137,21 +139,21 @@ describe('Health Check and Observability - Task #18', () => {
 
     it('should check auth service health', async () => {
       const authHealth = createMockServiceHealth('healthy');
-      
+
       expect(authHealth.status).toBe('healthy');
       expect(authHealth.lastCheck).toBeLessThanOrEqual(Date.now());
     });
 
     it('should check market data service health', async () => {
       const marketDataHealth = createMockServiceHealth('healthy');
-      
+
       expect(marketDataHealth.status).toBe('healthy');
       expect(marketDataHealth.responseTime).toBeGreaterThan(0);
     });
 
     it('should handle service failures gracefully', async () => {
       const failedHealth = createMockServiceHealth('unhealthy');
-      
+
       expect(failedHealth.status).toBe('unhealthy');
       expect(failedHealth.errors).toBeInstanceOf(Array);
       expect(failedHealth.errors!.length).toBeGreaterThan(0);
@@ -159,7 +161,7 @@ describe('Health Check and Observability - Task #18', () => {
 
     it('should track response times for services', async () => {
       const healthWithTiming = createMockServiceHealth('healthy', 150);
-      
+
       expect(healthWithTiming.responseTime).toBe(150);
       expect(healthWithTiming.responseTime).toBeGreaterThan(0);
       expect(healthWithTiming.responseTime).toBeLessThan(5000);
@@ -169,7 +171,7 @@ describe('Health Check and Observability - Task #18', () => {
   describe('Metrics Collection', () => {
     it('should collect request metrics', async () => {
       const mockMetrics = createMockMetrics();
-      
+
       expect(mockMetrics.application.requests).toMatchObject({
         totalRequests: expect.any(Number),
         requestsPerSecond: expect.any(Number),
@@ -183,7 +185,7 @@ describe('Health Check and Observability - Task #18', () => {
 
     it('should collect error metrics', async () => {
       const mockMetrics = createMockMetrics();
-      
+
       // Validate the structure exists
       expect(mockMetrics.application.errors).toBeDefined();
       expect(mockMetrics.application.errors.totalErrors).toBe(50);
@@ -195,7 +197,7 @@ describe('Health Check and Observability - Task #18', () => {
 
     it('should collect resource metrics', async () => {
       const mockMetrics = createMockMetrics();
-      
+
       expect(mockMetrics.resources).toMatchObject({
         memory: {
           heapUsed: expect.any(Number),
@@ -217,7 +219,7 @@ describe('Health Check and Observability - Task #18', () => {
 
     it('should collect business metrics', async () => {
       const mockMetrics = createMockMetrics();
-      
+
       expect(mockMetrics.business).toMatchObject({
         aiAnalysis: {
           totalAnalyses: expect.any(Number),
@@ -244,9 +246,9 @@ describe('Health Check and Observability - Task #18', () => {
 
     it('should track endpoint-specific metrics', async () => {
       const mockMetrics = createMockMetrics();
-      
+
       expect(mockMetrics.application.endpoints).toBeInstanceOf(Object);
-      
+
       const endpoints = Object.values(mockMetrics.application.endpoints);
       if (endpoints.length > 0) {
         expect(endpoints[0]).toMatchObject({
@@ -271,7 +273,7 @@ describe('Health Check and Observability - Task #18', () => {
           configuration: true,
         },
       };
-      
+
       expect(readiness.ready).toBe(true);
       expect(readiness.details.database).toBe(true);
       expect(readiness.details.cache).toBe(true);
@@ -285,7 +287,7 @@ describe('Health Check and Observability - Task #18', () => {
         timestamp: Date.now(),
         responseTime: 5,
       };
-      
+
       expect(liveness.alive).toBe(true);
       expect(liveness.responseTime).toBeGreaterThan(0);
       expect(liveness.responseTime).toBeLessThan(1000);
@@ -302,7 +304,7 @@ describe('Health Check and Observability - Task #18', () => {
           configuration: true,
         },
       };
-      
+
       expect(readiness.ready).toBe(false);
       expect(readiness.details.cache).toBe(false);
     });
@@ -312,7 +314,7 @@ describe('Health Check and Observability - Task #18', () => {
     it('should track response times by endpoint', async () => {
       const mockSystemHealth = createMockSystemHealth('healthy');
       const performance = mockSystemHealth.performance;
-      
+
       expect(performance.responseTimesByEndpoint).toBeInstanceOf(Object);
       expect(performance.slowestEndpoints).toBeInstanceOf(Array);
       expect(performance.cachePerformance).toMatchObject({
@@ -325,10 +327,10 @@ describe('Health Check and Observability - Task #18', () => {
     it('should identify slowest endpoints', async () => {
       const mockSystemHealth = createMockSystemHealth('healthy');
       const slowestEndpoints = mockSystemHealth.performance.slowestEndpoints;
-      
+
       expect(slowestEndpoints).toBeInstanceOf(Array);
       expect(slowestEndpoints.length).toBeLessThanOrEqual(10);
-      
+
       // Check sorting (slowest first)
       if (slowestEndpoints.length > 1) {
         expect(slowestEndpoints[0].averageResponseTime).toBeGreaterThanOrEqual(
@@ -340,7 +342,7 @@ describe('Health Check and Observability - Task #18', () => {
     it('should calculate cache performance metrics', async () => {
       const mockSystemHealth = createMockSystemHealth('healthy');
       const cachePerformance = mockSystemHealth.performance.cachePerformance;
-      
+
       expect(cachePerformance.hitRate).toBeGreaterThanOrEqual(0);
       expect(cachePerformance.hitRate).toBeLessThanOrEqual(1);
       expect(cachePerformance.missRate).toBeGreaterThanOrEqual(0);
@@ -352,7 +354,7 @@ describe('Health Check and Observability - Task #18', () => {
   describe('Dashboard Data', () => {
     it('should provide dashboard overview', async () => {
       const dashboardData = createMockDashboardData();
-      
+
       expect(dashboardData.overview).toMatchObject({
         status: expect.any(String),
         uptime: expect.any(Number),
@@ -364,10 +366,10 @@ describe('Health Check and Observability - Task #18', () => {
 
     it('should provide service status for dashboard', async () => {
       const dashboardData = createMockDashboardData();
-      
+
       expect(dashboardData.services).toBeInstanceOf(Array);
       expect(dashboardData.services.length).toBeGreaterThan(0);
-      
+
       const service = dashboardData.services[0];
       expect(service).toMatchObject({
         name: expect.any(String),
@@ -379,7 +381,7 @@ describe('Health Check and Observability - Task #18', () => {
 
     it('should provide chart data for dashboard', async () => {
       const dashboardData = createMockDashboardData();
-      
+
       expect(dashboardData).toBeDefined();
       expect(dashboardData.charts).toBeDefined();
       expect(Array.isArray(dashboardData.charts.requestsOverTime)).toBe(true);
@@ -392,9 +394,9 @@ describe('Health Check and Observability - Task #18', () => {
 
     it('should generate appropriate alerts', async () => {
       const dashboardData = createMockDashboardData();
-      
+
       expect(dashboardData.alerts).toBeInstanceOf(Array);
-      
+
       if (dashboardData.alerts.length > 0) {
         const alert = dashboardData.alerts[0];
         expect(alert).toMatchObject({
@@ -420,7 +422,7 @@ describe('Health Check and Observability - Task #18', () => {
         statusText: 'Internal Server Error',
         json: () => Promise.resolve({}),
       } as any);
-      
+
       const failedHealth = createMockServiceHealth('unhealthy');
       expect(failedHealth.status).toBe('unhealthy');
     });
@@ -434,9 +436,9 @@ describe('Health Check and Observability - Task #18', () => {
         { error: 'validation error', statusCode: undefined },
         { error: 'auth error', statusCode: 401 },
       ];
-      
+
       const categorized = categorizeTestErrors(errors);
-      
+
       expect(categorized.timeout).toBe(1);
       expect(categorized.network).toBe(1);
       expect(categorized.client).toBe(2); // 400 and 401 are both client errors
@@ -449,33 +451,33 @@ describe('Health Check and Observability - Task #18', () => {
   describe('Configuration Validation', () => {
     it('should validate required configuration', () => {
       const originalEnv = process.env;
-      
+
       process.env = {
         ...originalEnv,
         MEXC_API_KEY: 'test-key',
         MEXC_SECRET_KEY: 'test-secret',
         GOOGLE_API_KEY: 'test-google-key',
       };
-      
+
       const configValid = checkTestConfiguration();
       expect(configValid).toBe(true);
-      
+
       process.env = originalEnv;
     });
 
     it('should detect missing configuration', () => {
       const originalEnv = process.env;
-      
+
       process.env = {
         ...originalEnv,
         MEXC_API_KEY: undefined,
         MEXC_SECRET_KEY: undefined,
         GOOGLE_API_KEY: undefined,
       };
-      
+
       const configValid = checkTestConfiguration();
       expect(configValid).toBe(false);
-      
+
       process.env = originalEnv;
     });
   });
@@ -485,9 +487,12 @@ describe('Health Check and Observability - Task #18', () => {
 // Test Helper Functions
 // =============================================================================
 
-function createMockSystemHealth(status: 'healthy' | 'degraded' | 'unhealthy'): SystemHealthResponse {
-  const serviceStatus = status === 'healthy' ? 'healthy' : status === 'degraded' ? 'degraded' : 'unhealthy';
-  
+function createMockSystemHealth(
+  status: 'healthy' | 'degraded' | 'unhealthy'
+): SystemHealthResponse {
+  const serviceStatus =
+    status === 'healthy' ? 'healthy' : status === 'degraded' ? 'degraded' : 'unhealthy';
+
   return {
     status,
     timestamp: Date.now(),
@@ -554,7 +559,7 @@ function createMockSystemHealth(status: 'healthy' | 'degraded' | 'unhealthy'): S
 
 function createMockServiceHealth(
   status: 'healthy' | 'degraded' | 'unhealthy',
-  responseTime: number = 50
+  responseTime = 50
 ): ServiceHealth {
   return {
     status,
@@ -637,7 +642,7 @@ function createMockMetrics(): MetricsResponse {
         failedAnalyses: 5,
         averageConfidence: 0.85,
         tokenUsage: 50000,
-        costUSD: 2.50,
+        costUSD: 2.5,
       },
       marketData: {
         apiCalls: 1000,
@@ -694,7 +699,9 @@ function createMockDashboardData() {
   };
 }
 
-function categorizeTestErrors(errors: Array<{ error: string; statusCode?: number }>): Record<string, number> {
+function categorizeTestErrors(
+  errors: Array<{ error: string; statusCode?: number }>
+): Record<string, number> {
   const categories: Record<string, number> = {
     client: 0,
     server: 0,
@@ -729,9 +736,5 @@ function categorizeTestErrors(errors: Array<{ error: string; statusCode?: number
 }
 
 function checkTestConfiguration(): boolean {
-  return !!(
-    process.env.MEXC_API_KEY &&
-    process.env.MEXC_SECRET_KEY &&
-    process.env.GOOGLE_API_KEY
-  );
+  return !!(process.env.MEXC_API_KEY && process.env.MEXC_SECRET_KEY && process.env.GOOGLE_API_KEY);
 }

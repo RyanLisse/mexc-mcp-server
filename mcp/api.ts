@@ -586,6 +586,280 @@ export const getAnalysisDepths = api(
 );
 
 // =============================================================================
+// Strategy Optimizer Endpoint (Task #27)
+// =============================================================================
+
+/**
+ * MEXC Strategy Optimizer Request with Encore.ts validation
+ */
+export interface StrategyOptimizerRequest {
+  /** Portfolio assets for optimization */
+  portfolio: Array<{
+    /** Asset symbol */
+    symbol: string & MinLen<1>;
+    /** Current allocation weight (0-1) */
+    currentWeight: number & Min<0> & Max<1>;
+    /** Historical returns data */
+    historicalReturns?: number[];
+  }>;
+  /** Optimization objective function */
+  objectiveFunction: 'sharpe_ratio' | 'max_return' | 'min_risk' | 'min_drawdown' | 'custom';
+  /** Optimization constraints */
+  constraints: {
+    /** Maximum risk tolerance (0-1) */
+    maxRisk?: number & Min<0> & Max<1>;
+    /** Minimum expected return */
+    minReturn?: number & Min<0>;
+    /** Maximum drawdown tolerance */
+    maxDrawdown?: number & Min<0> & Max<1>;
+    /** Maximum position size per asset */
+    maxPositionSize?: number & Min<0> & Max<1>;
+    /** Minimum position size per asset */
+    minPositionSize?: number & Min<0> & Max<0.5>;
+  };
+  /** Investment time horizon */
+  timeHorizon?: 'short' | 'medium' | 'long';
+  /** Rebalancing frequency */
+  rebalanceFrequency?: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  /** MEXC-specific parameters */
+  mexcParameters?: {
+    /** Utilize 0% fee advantage */
+    utilize0Fees?: boolean;
+    /** Consider high leverage options */
+    considerLeverage?: boolean;
+    /** Maximum leverage ratio */
+    maxLeverage?: number & Min<1> & Max<125>;
+  };
+  /** Analysis depth level */
+  analysisDepth?: 'quick' | 'standard' | 'comprehensive' | 'deep';
+}
+
+/**
+ * Strategy Optimization Response
+ */
+export interface StrategyOptimizerResponse {
+  /** Whether optimization succeeded */
+  success: boolean;
+  /** Optimization results */
+  data?: {
+    /** Optimization type performed */
+    optimizationType: string;
+    /** Confidence in optimization results (0-1) */
+    confidence: number;
+    /** Optimized portfolio metrics */
+    optimizedMetrics: {
+      /** Expected annual return */
+      expectedReturn: number;
+      /** Portfolio volatility (risk) */
+      volatility: number;
+      /** Sharpe ratio */
+      sharpeRatio: number;
+      /** Maximum drawdown */
+      maxDrawdown: number;
+      /** Information ratio */
+      informationRatio?: number;
+    };
+    /** Optimized asset allocations */
+    allocations: Array<{
+      /** Asset symbol */
+      symbol: string;
+      /** Current allocation weight (0-1) */
+      currentWeight: number;
+      /** Optimized allocation weight (0-1) */
+      optimizedWeight: number;
+      /** Recommended adjustment */
+      adjustment: number;
+      /** Reason for adjustment */
+      reasoning: string;
+    }>;
+    /** MEXC-specific advantages utilized */
+    mexcAdvantages?: {
+      /** Cost savings from 0% fees */
+      feeSavingsUSD?: number;
+      /** Leverage opportunities identified */
+      leverageOpportunities?: Array<{
+        symbol: string;
+        recommendedLeverage: number;
+        expectedBoost: number;
+      }>;
+    };
+    /** Backtest results */
+    backtestResults?: {
+      /** Backtest period in months */
+      periodMonths: number;
+      /** Total return achieved */
+      totalReturn: number;
+      /** Annualized return */
+      annualizedReturn: number;
+      /** Maximum drawdown */
+      maxDrawdown: number;
+      /** Win rate percentage */
+      winRate: number;
+      /** Comparison vs benchmark */
+      vsBaseline: {
+        /** Baseline return */
+        baselineReturn: number;
+        /** Outperformance */
+        outperformance: number;
+      };
+    };
+    /** Optimization recommendations */
+    recommendations: Array<{
+      /** Recommendation type */
+      type: 'allocation_change' | 'rebalance' | 'risk_reduction' | 'leverage_opportunity';
+      /** Priority level */
+      priority: 'low' | 'medium' | 'high';
+      /** Recommendation description */
+      description: string;
+      /** Expected impact */
+      expectedImpact?: string;
+    }>;
+  };
+  /** Error message if failed */
+  error?: string;
+  /** Analysis metadata */
+  metadata?: {
+    analysisDepth: string;
+    processingTimeMs: number;
+    timestamp: number;
+    modelVersion?: string;
+    tokenUsage?: {
+      promptTokens: number;
+      completionTokens: number;
+      totalTokens: number;
+      estimatedCostUSD?: number;
+    };
+  };
+}
+
+/**
+ * MEXC Strategy Optimizer Endpoint
+ * AI-powered portfolio optimization leveraging MEXC's unique features
+ */
+export const strategyOptimizer = api(
+  { method: 'POST', path: '/mcp/strategy-optimizer', expose: true },
+  async ({
+    portfolio,
+    objectiveFunction,
+    constraints,
+    timeHorizon = 'medium',
+    rebalanceFrequency = 'monthly',
+    mexcParameters,
+    analysisDepth = 'standard',
+  }: StrategyOptimizerRequest): Promise<StrategyOptimizerResponse> => {
+    const startTime = Date.now();
+
+    try {
+      // Validate input
+      if (!portfolio || portfolio.length === 0) {
+        return {
+          success: false,
+          error: 'Portfolio must contain at least one asset',
+          metadata: {
+            analysisDepth,
+            processingTimeMs: Date.now() - startTime,
+            timestamp: startTime,
+          },
+        };
+      }
+
+      // Validate portfolio weights sum to approximately 1
+      const totalWeight = portfolio.reduce((sum, asset) => sum + asset.currentWeight, 0);
+      if (Math.abs(totalWeight - 1) > 0.01) {
+        return {
+          success: false,
+          error: 'Portfolio weights must sum to approximately 1.0',
+          metadata: {
+            analysisDepth,
+            processingTimeMs: Date.now() - startTime,
+            timestamp: startTime,
+          },
+        };
+      }
+
+      // Check risk operation allowance
+      const riskLevel =
+        analysisDepth === 'quick' ? 'low' : analysisDepth === 'deep' ? 'high' : 'medium';
+      if (!isAIOperationAllowed(riskLevel)) {
+        return {
+          success: false,
+          error: `Strategy optimization not allowed for risk level: ${riskLevel}`,
+          metadata: {
+            analysisDepth,
+            processingTimeMs: Date.now() - startTime,
+            timestamp: startTime,
+          },
+        };
+      }
+
+      // Perform strategy optimization using the MCP service
+      const result = await mcpService.performStrategyOptimization(
+        {
+          portfolio,
+          objectiveFunction,
+          constraints,
+          timeHorizon,
+          rebalanceFrequency,
+          mexcParameters,
+        },
+        analysisDepth
+      );
+
+      // Validate confidence
+      const confidenceValidated = result.confidence !== undefined && result.confidence >= 0.7;
+
+      if (!confidenceValidated && result.success) {
+        logAndNotify(new Error(`Low confidence strategy optimization: ${result.confidence}`), {
+          portfolioSize: portfolio.length,
+          objectiveFunction,
+          analysisDepth,
+          confidence: result.confidence,
+        });
+      }
+
+      return {
+        success: result.success,
+        data: result.success
+          ? {
+              optimizationType: result.optimizationType || objectiveFunction,
+              confidence: result.confidence || 0,
+              optimizedMetrics: result.optimizedMetrics || {
+                expectedReturn: 0,
+                volatility: 0,
+                sharpeRatio: 0,
+                maxDrawdown: 0,
+              },
+              allocations: result.allocations || [],
+              mexcAdvantages: result.mexcAdvantages,
+              backtestResults: result.backtestResults,
+              recommendations: result.recommendations || [],
+            }
+          : undefined,
+        error: result.error,
+        metadata: {
+          analysisDepth,
+          processingTimeMs: Date.now() - startTime,
+          timestamp: startTime,
+          modelVersion: result.modelVersion,
+          tokenUsage: result.tokenUsage,
+        },
+      };
+    } catch (error) {
+      const errorResponse = createErrorResponse(error as Error);
+      return {
+        success: false,
+        error: errorResponse.error.message,
+        metadata: {
+          analysisDepth,
+          processingTimeMs: Date.now() - startTime,
+          timestamp: startTime,
+        },
+      };
+    }
+  }
+);
+
+// =============================================================================
 // Risk Assessment Endpoint
 // =============================================================================
 
@@ -835,3 +1109,302 @@ export const portfolioRiskAssessment = api(
     }
   }
 );
+
+// =============================================================================
+// Trading Tools Endpoint (Task #28)
+// =============================================================================
+
+/**
+ * Trading Tools Request with Encore.ts validation
+ */
+export interface TradingToolsRequest {
+  /** Trading tool action to perform */
+  action: 'position_sizing' | 'stop_loss' | 'take_profit' | 'risk_reward' | 'technical_analysis' | 'market_conditions';
+  /** Trading symbol */
+  symbol: string & MinLen<1>;
+  /** Account balance in USD */
+  accountBalance?: number & Min<0>;
+  /** Risk per trade as percentage (0-1) */
+  riskPerTrade?: number & Min<0> & Max<1>;
+  /** Entry price */
+  entryPrice?: number & Min<0>;
+  /** Current market price */
+  currentPrice?: number & Min<0>;
+  /** Stop loss price */
+  stopLossPrice?: number & Min<0>;
+  /** Take profit price */
+  takeProfitPrice?: number & Min<0>;
+  /** Position size */
+  positionSize?: number & Min<0>;
+  /** Risk tolerance level */
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
+  /** Trading timeframe */
+  timeframe?: '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
+  /** Market volatility */
+  marketVolatility?: number & Min<0> & Max<1>;
+  /** Price history for analysis */
+  priceHistory?: number[];
+  /** Trading volume */
+  volume?: number & Min<0>;
+  /** Technical indicators */
+  indicators?: {
+    rsi?: number & Min<0> & Max<100>;
+    macd?: number;
+    bollinger?: {
+      upper: number & Min<0>;
+      middle: number & Min<0>;
+      lower: number & Min<0>;
+    };
+  };
+  /** Market data */
+  marketData?: {
+    volatilityIndex?: number & Min<0> & Max<100>;
+    tradingVolume?: number & Min<0>;
+    openInterest?: number & Min<0>;
+    fundingRate?: number;
+  };
+  /** MEXC-specific features */
+  mexcFeatures?: {
+    utilize0Fees?: boolean;
+    considerLeverage?: boolean;
+    maxLeverage?: number & Min<1> & Max<125>;
+  };
+  /** Analysis depth level */
+  analysisDepth?: 'quick' | 'standard' | 'comprehensive' | 'deep';
+}
+
+/**
+ * Trading Tools Response
+ */
+export interface TradingToolsResponse {
+  /** Whether analysis succeeded */
+  success: boolean;
+  /** Trading tools results */
+  data?: {
+    /** Tool type that was executed */
+    toolType: string;
+    /** Confidence in results (0-1) */
+    confidence: number;
+    /** Position sizing results */
+    positionSizing?: {
+      recommendedSize: number;
+      riskAmount: number;
+      riskPercentage: number;
+      leverageRecommendation: number;
+    };
+    /** Risk management results */
+    riskManagement?: {
+      stopLossPrice: number;
+      takeProfitPrice: number;
+      riskRewardRatio: number;
+      riskAmount?: number;
+      potentialProfit?: number;
+    };
+    /** Technical analysis results */
+    technicalAnalysis?: {
+      trendDirection: 'bullish' | 'bearish' | 'neutral' | 'sideways';
+      strength: number;
+      signals: Array<{
+        type: string;
+        strength: number;
+        description: string;
+      }>;
+      supportLevels: number[];
+      resistanceLevels: number[];
+      timeframeBias?: string;
+    };
+    /** Market conditions results */
+    marketConditions?: {
+      sentiment: 'bullish' | 'bearish' | 'neutral';
+      volatilityLevel: 'low' | 'medium' | 'high' | 'extreme';
+      liquidityScore: number;
+      trendStrength: number;
+      timeframeBias: string;
+    };
+    /** Recommendations */
+    recommendations: Array<{
+      type: string;
+      priority: 'low' | 'medium' | 'high';
+      description: string;
+      expectedImpact?: string;
+    }>;
+    /** MEXC-specific advantages */
+    mexcAdvantages?: {
+      feeSavingsImpact?: number;
+      leverageOpportunities?: Array<{
+        symbol: string;
+        recommendedLeverage: number;
+        expectedBoost: number;
+      }>;
+    };
+  };
+  /** Error message if failed */
+  error?: string;
+  /** Analysis metadata */
+  metadata?: {
+    analysisDepth: string;
+    processingTimeMs: number;
+    timestamp: number;
+    modelVersion?: string;
+    tokenUsage?: {
+      promptTokens: number;
+      completionTokens: number;
+      totalTokens: number;
+      estimatedCostUSD?: number;
+    };
+  };
+}
+
+/**
+ * AI-Enhanced Trading Tools Endpoint
+ * Provides advanced trading tools with AI-powered analysis
+ */
+export const tradingTools = api(
+  { method: 'POST', path: '/mcp/trading-tools', expose: true },
+  async ({
+    action,
+    symbol,
+    accountBalance,
+    riskPerTrade,
+    entryPrice,
+    currentPrice,
+    stopLossPrice,
+    takeProfitPrice,
+    positionSize,
+    riskTolerance,
+    timeframe,
+    marketVolatility,
+    priceHistory,
+    volume,
+    indicators,
+    marketData,
+    mexcFeatures,
+    analysisDepth = 'standard',
+  }: TradingToolsRequest): Promise<TradingToolsResponse> => {
+    const startTime = Date.now();
+
+    try {
+      // Validate input
+      if (\!symbol || \!action) {
+        return {
+          success: false,
+          error: 'Symbol and action are required',
+          metadata: {
+            analysisDepth,
+            processingTimeMs: Date.now() - startTime,
+            timestamp: startTime,
+          },
+        };
+      }
+
+      if (accountBalance \!== undefined && accountBalance <= 0) {
+        return {
+          success: false,
+          error: 'Account balance must be positive',
+          metadata: {
+            analysisDepth,
+            processingTimeMs: Date.now() - startTime,
+            timestamp: startTime,
+          },
+        };
+      }
+
+      if (riskPerTrade \!== undefined && (riskPerTrade <= 0 || riskPerTrade > 1)) {
+        return {
+          success: false,
+          error: 'Risk per trade must be between 0 and 1',
+          metadata: {
+            analysisDepth,
+            processingTimeMs: Date.now() - startTime,
+            timestamp: startTime,
+          },
+        };
+      }
+
+      // Check risk operation allowance
+      const riskLevel = analysisDepth === 'quick' ? 'low' : analysisDepth === 'deep' ? 'high' : 'medium';
+      if (\!isAIOperationAllowed(riskLevel)) {
+        return {
+          success: false,
+          error: `Trading tools analysis not allowed for risk level: ${riskLevel}`,
+          metadata: {
+            analysisDepth,
+            processingTimeMs: Date.now() - startTime,
+            timestamp: startTime,
+          },
+        };
+      }
+
+      // Perform trading tools analysis using the MCP service
+      const result = await mcpService.performTradingToolsAnalysis(
+        {
+          action,
+          symbol: symbol.toUpperCase().trim(),
+          accountBalance,
+          riskPerTrade,
+          entryPrice,
+          currentPrice,
+          stopLossPrice,
+          takeProfitPrice,
+          positionSize,
+          riskTolerance,
+          timeframe,
+          marketVolatility,
+          priceHistory,
+          volume,
+          indicators,
+          marketData,
+        },
+        analysisDepth
+      );
+
+      // Validate confidence
+      const confidenceValidated = result.confidence \!== undefined && result.confidence >= 0.7;
+
+      if (\!confidenceValidated && result.success) {
+        logAndNotify(new Error(`Low confidence trading tools analysis: ${result.confidence}`), {
+          action,
+          symbol,
+          analysisDepth,
+          confidence: result.confidence,
+        });
+      }
+
+      return {
+        success: result.success,
+        data: result.success
+          ? {
+              toolType: result.toolType || action,
+              confidence: result.confidence || 0,
+              positionSizing: result.positionSizing,
+              riskManagement: result.riskManagement,
+              technicalAnalysis: result.technicalAnalysis,
+              marketConditions: result.marketConditions,
+              recommendations: result.recommendations || [],
+              mexcAdvantages: result.mexcAdvantages,
+            }
+          : undefined,
+        error: result.error,
+        metadata: {
+          analysisDepth,
+          processingTimeMs: Date.now() - startTime,
+          timestamp: startTime,
+          modelVersion: result.modelVersion,
+          tokenUsage: result.tokenUsage,
+        },
+      };
+    } catch (error) {
+      const errorResponse = createErrorResponse(error as Error);
+      return {
+        success: false,
+        error: errorResponse.error.message,
+        metadata: {
+          analysisDepth,
+          processingTimeMs: Date.now() - startTime,
+          timestamp: startTime,
+        },
+      };
+    }
+  }
+);
+EOF < /dev/null

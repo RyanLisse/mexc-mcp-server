@@ -26,7 +26,7 @@ describe('Rate Limiting Middleware - Task #5', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     mockReq = {
       url: '/test-endpoint',
       method: 'GET',
@@ -67,7 +67,8 @@ describe('Rate Limiting Middleware - Task #5', () => {
       mockReq.headers.authorization = 'Bearer mx_test_key_123456789';
 
       // Act - Make many requests to exceed limit
-      for (let i = 0; i < 1005; i++) { // Exceed authenticated limit of 1000
+      for (let i = 0; i < 1005; i++) {
+        // Exceed authenticated limit of 1000
         await rateLimitMiddleware(mockReq as any, mockRes as any, nextSpy);
       }
 
@@ -84,10 +85,10 @@ describe('Rate Limiting Middleware - Task #5', () => {
     it('should apply different limits for authenticated vs unauthenticated users', async () => {
       // Arrange
       const { rateLimitMiddleware } = await import('./rate-limit');
-      
+
       // Test with unauthenticated user first (lower limit)
       mockReq.headers['x-forwarded-for'] = '192.168.1.100';
-      
+
       // Act - Make 101 requests as unauthenticated user (should exceed 100 limit)
       let unauthBlocked = false;
       for (let i = 0; i < 101; i++) {
@@ -110,7 +111,7 @@ describe('Rate Limiting Middleware - Task #5', () => {
       // Test with authenticated user (higher limit)
       mockReq.headers.authorization = 'Bearer mx_different_test_key_567';
       delete mockReq.headers['x-forwarded-for'];
-      
+
       // Act - Make 150 requests (should be allowed for auth user)
       let authBlocked = false;
       for (let i = 0; i < 150; i++) {
@@ -204,7 +205,7 @@ describe('Rate Limiting Middleware - Task #5', () => {
     it('should assign correct weights to different endpoints', async () => {
       // Arrange
       const { mexcRateLimitMiddleware } = await import('./rate-limit');
-      
+
       // Test different endpoints and their expected weights
       const endpointTests = [
         { url: '/ticker', expectedWeight: 1 },
@@ -216,10 +217,10 @@ describe('Rate Limiting Middleware - Task #5', () => {
 
       for (const test of endpointTests) {
         mockReq.url = test.url;
-        
+
         // Act
         await mexcRateLimitMiddleware(mockReq as any, mockRes as any, nextSpy);
-        
+
         // The weight is verified indirectly by checking rate limit behavior
         // This is a simplified test - in practice we'd need to inspect internal state
         expect(nextSpy).toHaveBeenCalled();
@@ -349,7 +350,7 @@ describe('Rate Limiting Middleware - Task #5', () => {
     it('should initialize cleanup interval', async () => {
       // Arrange
       const { initializeRateLimitCleanup } = await import('./rate-limit');
-      
+
       // Mock setInterval to avoid actual timer
       const setIntervalSpy = vi.spyOn(global, 'setInterval').mockImplementation(() => 123 as any);
 
@@ -358,7 +359,7 @@ describe('Rate Limiting Middleware - Task #5', () => {
 
       // Assert
       expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 5 * 60 * 1000); // 5 minutes
-      
+
       // Cleanup
       setIntervalSpy.mockRestore();
     });

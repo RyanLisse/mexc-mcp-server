@@ -61,8 +61,8 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
       }
 
       // Assert
-      expect(results.slice(0, 10).every(r => r.allowed)).toBe(true);
-      expect(results.slice(10).every(r => !r.allowed)).toBe(true);
+      expect(results.slice(0, 10).every((r) => r.allowed)).toBe(true);
+      expect(results.slice(10).every((r) => !r.allowed)).toBe(true);
       expect(results[11].retryAfter).toBeGreaterThan(0);
     });
 
@@ -85,7 +85,7 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
       expect(result1.allowed).toBe(false);
 
       // Wait for window to expire
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Assert - Should be allowed now (window expired)
       const result2 = await rateLimiter.checkLimit('test-user', 'general');
@@ -162,7 +162,7 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
       }
 
       // Assert
-      expect(results.slice(0, 5).every(r => r.allowed)).toBe(true);
+      expect(results.slice(0, 5).every((r) => r.allowed)).toBe(true);
       expect(results[5].allowed).toBe(false);
     });
 
@@ -186,7 +186,7 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
       }
 
       // Assert
-      expect(results.slice(0, 2).every(r => r.allowed)).toBe(true);
+      expect(results.slice(0, 2).every((r) => r.allowed)).toBe(true);
       expect(results[2].allowed).toBe(false);
     });
 
@@ -205,12 +205,13 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
 
       // Act - Make requests with different weights
       const heavyRequests: RateLimitResult[] = [];
-      for (let i = 0; i < 26; i++) { // 26 * 20 = 520 weight
+      for (let i = 0; i < 26; i++) {
+        // 26 * 20 = 520 weight
         heavyRequests.push(await rateLimiter.checkWeightLimit('test-user', 'endpoint1', 20));
       }
 
       // Assert
-      expect(heavyRequests.slice(0, 25).every(r => r.allowed)).toBe(true); // 25 * 20 = 500 weight
+      expect(heavyRequests.slice(0, 25).every((r) => r.allowed)).toBe(true); // 25 * 20 = 500 weight
       expect(heavyRequests[25].allowed).toBe(false); // Would exceed 500 weight limit
     });
 
@@ -234,7 +235,7 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
       }
 
       // Assert
-      expect(results.slice(0, 100).every(r => r.allowed)).toBe(true);
+      expect(results.slice(0, 100).every((r) => r.allowed)).toBe(true);
       expect(results[100].allowed).toBe(false);
     });
 
@@ -258,7 +259,7 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
       }
 
       // Assert
-      expect(results.slice(0, 30).every(r => r.allowed)).toBe(true);
+      expect(results.slice(0, 30).every((r) => r.allowed)).toBe(true);
       expect(results[30].allowed).toBe(false);
     });
   });
@@ -363,9 +364,9 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
       }
 
       // Assert
-      expect(authResults.every(r => r.allowed)).toBe(true); // All 15 allowed for auth user
-      expect(unauthResults.slice(0, 10).every(r => r.allowed)).toBe(true);
-      expect(unauthResults.slice(10).every(r => !r.allowed)).toBe(true); // Last 5 denied for unauth user
+      expect(authResults.every((r) => r.allowed)).toBe(true); // All 15 allowed for auth user
+      expect(unauthResults.slice(0, 10).every((r) => r.allowed)).toBe(true);
+      expect(unauthResults.slice(10).every((r) => !r.allowed)).toBe(true); // Last 5 denied for unauth user
     });
   });
 
@@ -388,7 +389,7 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
       const sizeBefore = rateLimiter.getStorageSize();
 
       // Wait for entries to expire
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Trigger cleanup
       await rateLimiter.cleanup();
@@ -415,7 +416,7 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
       const results = await Promise.all(promises);
 
       // Assert - All should be allowed and remaining count should be consistent
-      expect(results.every(r => r.allowed)).toBe(true);
+      expect(results.every((r) => r.allowed)).toBe(true);
       expect(results[results.length - 1].remaining).toBe(50); // 100 - 50 = 50
     });
 
@@ -481,8 +482,8 @@ describe('Enhanced Rate Limiting System - Task #5', () => {
       }
 
       // Assert - First 10 should be allowed (burst), next 2 should be denied
-      expect(burstResults.slice(0, 10).every(r => r.allowed)).toBe(true);
-      expect(burstResults.slice(10).every(r => !r.allowed)).toBe(true);
+      expect(burstResults.slice(0, 10).every((r) => r.allowed)).toBe(true);
+      expect(burstResults.slice(10).every((r) => !r.allowed)).toBe(true);
     });
   });
 });

@@ -461,21 +461,23 @@ export async function executeGetHistoricalData(args: {
   limit?: number;
   startTime?: number;
   endTime?: number;
-}): Promise<MarketDataResponse<{
-  symbol: string;
-  interval: string;
-  data: Array<{
-    openTime: number;
-    open: string;
-    high: string;
-    low: string;
-    close: string;
-    volume: string;
-    closeTime: number;
-    quoteAssetVolume: string;
-    count: number;
-  }>;
-}>> {
+}): Promise<
+  MarketDataResponse<{
+    symbol: string;
+    interval: string;
+    data: Array<{
+      openTime: number;
+      open: string;
+      high: string;
+      low: string;
+      close: string;
+      volume: string;
+      closeTime: number;
+      quoteAssetVolume: string;
+      count: number;
+    }>;
+  }>
+> {
   try {
     const cacheKey = `historical:${args.symbol}:${args.interval}:${args.limit || 500}`;
     const cached = marketDataCache.get<any>(cacheKey);
@@ -489,13 +491,13 @@ export async function executeGetHistoricalData(args: {
       symbol: args.symbol,
       interval: args.interval,
       data: Array.from({ length: args.limit || 100 }, (_, i) => ({
-        openTime: Date.now() - (i * 60000),
+        openTime: Date.now() - i * 60000,
         open: (Math.random() * 50000 + 45000).toFixed(2),
         high: (Math.random() * 50000 + 46000).toFixed(2),
         low: (Math.random() * 50000 + 44000).toFixed(2),
         close: (Math.random() * 50000 + 45000).toFixed(2),
         volume: (Math.random() * 1000).toFixed(6),
-        closeTime: Date.now() - (i * 60000) + 59999,
+        closeTime: Date.now() - i * 60000 + 59999,
         quoteAssetVolume: (Math.random() * 50000000).toFixed(2),
         count: Math.floor(Math.random() * 1000),
       })),
@@ -513,19 +515,21 @@ export async function executeGetHistoricalData(args: {
 export async function executeGetMarketDepth(args: {
   symbol: string;
   limit?: number;
-}): Promise<MarketDataResponse<{
-  symbol: string;
-  bids: Array<[string, string]>;
-  asks: Array<[string, string]>;
-  lastUpdateId: number;
-  analysis: {
-    bidTotal: string;
-    askTotal: string;
-    spread: string;
-    spreadPercent: string;
-    imbalance: number;
-  };
-}>> {
+}): Promise<
+  MarketDataResponse<{
+    symbol: string;
+    bids: Array<[string, string]>;
+    asks: Array<[string, string]>;
+    lastUpdateId: number;
+    analysis: {
+      bidTotal: string;
+      askTotal: string;
+      spread: string;
+      spreadPercent: string;
+      imbalance: number;
+    };
+  }>
+> {
   try {
     const limit = args.limit || 100;
     const cacheKey = `market-depth:${args.symbol}:${limit}`;
@@ -537,24 +541,27 @@ export async function executeGetMarketDepth(args: {
 
     // Get order book and add analysis
     const orderBookData = await mexcClient.getOrderBook(args.symbol, limit);
-    
-    const bids = orderBookData.bids?.map(bid => [bid.price, bid.quantity] as [string, string]) || [];
-    const asks = orderBookData.asks?.map(ask => [ask.price, ask.quantity] as [string, string]) || [];
-    
+
+    const bids =
+      orderBookData.bids?.map((bid) => [bid.price, bid.quantity] as [string, string]) || [];
+    const asks =
+      orderBookData.asks?.map((ask) => [ask.price, ask.quantity] as [string, string]) || [];
+
     // Calculate analysis
-    const bidTotal = bids.reduce((sum, [, qty]) => sum + parseFloat(qty), 0).toFixed(6);
-    const askTotal = asks.reduce((sum, [, qty]) => sum + parseFloat(qty), 0).toFixed(6);
-    
-    const bestBid = parseFloat(bids[0]?.[0] || '0');
-    const bestAsk = parseFloat(asks[0]?.[0] || '0');
+    const bidTotal = bids.reduce((sum, [, qty]) => sum + Number.parseFloat(qty), 0).toFixed(6);
+    const askTotal = asks.reduce((sum, [, qty]) => sum + Number.parseFloat(qty), 0).toFixed(6);
+
+    const bestBid = Number.parseFloat(bids[0]?.[0] || '0');
+    const bestAsk = Number.parseFloat(asks[0]?.[0] || '0');
     const spread = (bestAsk - bestBid).toFixed(6);
-    const spreadPercent = bestBid > 0 ? ((bestAsk - bestBid) / bestBid * 100).toFixed(4) : '0';
-    
-    const totalBidValue = parseFloat(bidTotal);
-    const totalAskValue = parseFloat(askTotal);
-    const imbalance = totalBidValue + totalAskValue > 0 
-      ? (totalBidValue - totalAskValue) / (totalBidValue + totalAskValue)
-      : 0;
+    const spreadPercent = bestBid > 0 ? (((bestAsk - bestBid) / bestBid) * 100).toFixed(4) : '0';
+
+    const totalBidValue = Number.parseFloat(bidTotal);
+    const totalAskValue = Number.parseFloat(askTotal);
+    const imbalance =
+      totalBidValue + totalAskValue > 0
+        ? (totalBidValue - totalAskValue) / (totalBidValue + totalAskValue)
+        : 0;
 
     const analysisData = {
       symbol: args.symbol,
@@ -583,17 +590,22 @@ export async function executeGetPriceAggregation(args: {
   symbols: string[];
   timeframes: string[];
   metrics: ('price' | 'volume' | 'volatility' | 'correlation')[];
-}): Promise<MarketDataResponse<{
-  symbols: string[];
-  timeframes: string[];
-  aggregatedData: Record<string, {
-    price?: number;
-    volume24h?: number;
-    volatility?: number;
-    correlations?: Record<string, number>;
-  }>;
-  generatedAt: number;
-}>> {
+}): Promise<
+  MarketDataResponse<{
+    symbols: string[];
+    timeframes: string[];
+    aggregatedData: Record<
+      string,
+      {
+        price?: number;
+        volume24h?: number;
+        volatility?: number;
+        correlations?: Record<string, number>;
+      }
+    >;
+    generatedAt: number;
+  }>
+> {
   try {
     const cacheKey = `price-aggregation:${args.symbols.join(',')}:${args.metrics.join(',')}`;
     const cached = marketDataCache.get<any>(cacheKey);
@@ -607,36 +619,39 @@ export async function executeGetPriceAggregation(args: {
     // Gather data for each symbol
     for (const symbol of args.symbols) {
       const data: any = {};
-      
+
       if (args.metrics.includes('price')) {
         const ticker = await mexcClient.getTicker(symbol);
-        data.price = parseFloat(ticker.price);
+        data.price = Number.parseFloat(ticker.price);
       }
-      
+
       if (args.metrics.includes('volume')) {
         const stats = await mexcClient.get24hStats(symbol);
-        data.volume24h = parseFloat(stats[0]?.volume || '0');
+        data.volume24h = Number.parseFloat(stats[0]?.volume || '0');
       }
-      
+
       if (args.metrics.includes('volatility')) {
         // Simple volatility calculation (high-low)/price
         const ticker = await mexcClient.getTicker(symbol);
-        const high = parseFloat(ticker.high);
-        const low = parseFloat(ticker.low);
-        const price = parseFloat(ticker.price);
+        const high = Number.parseFloat(ticker.high);
+        const low = Number.parseFloat(ticker.low);
+        const price = Number.parseFloat(ticker.price);
         data.volatility = price > 0 ? (high - low) / price : 0;
       }
-      
+
       if (args.metrics.includes('correlation')) {
         // Simplified correlation (would need historical data for real correlation)
-        data.correlations = args.symbols.reduce((corr, otherSymbol) => {
-          if (otherSymbol !== symbol) {
-            corr[otherSymbol] = Math.random() * 2 - 1; // Mock correlation [-1, 1]
-          }
-          return corr;
-        }, {} as Record<string, number>);
+        data.correlations = args.symbols.reduce(
+          (corr, otherSymbol) => {
+            if (otherSymbol !== symbol) {
+              corr[otherSymbol] = Math.random() * 2 - 1; // Mock correlation [-1, 1]
+            }
+            return corr;
+          },
+          {} as Record<string, number>
+        );
       }
-      
+
       aggregatedData[symbol] = data;
     }
 
@@ -661,15 +676,17 @@ export async function executeManageSubscription(args: {
   symbol?: string;
   type?: 'ticker' | 'orderbook' | 'trades';
   interval?: string;
-}): Promise<MarketDataResponse<{
-  action: string;
-  subscriptions: Array<{
-    symbol: string;
-    type: string;
-    interval?: string;
-    subscribed: boolean;
-  }>;
-}>> {
+}): Promise<
+  MarketDataResponse<{
+    action: string;
+    subscriptions: Array<{
+      symbol: string;
+      type: string;
+      interval?: string;
+      subscribed: boolean;
+    }>;
+  }>
+> {
   try {
     // Mock subscription management (would integrate with WebSocket in production)
     const mockSubscriptions = [
@@ -699,29 +716,31 @@ export async function executeManageSubscription(args: {
   }
 }
 
-export async function getPerformanceMetrics(): Promise<MarketDataResponse<{
-  cacheStats: {
-    hits: number;
-    misses: number;
-    hitRate: number;
-    totalRequests: number;
-  };
-  responseTimeStats: {
-    average: number;
-    p95: number;
-    p99: number;
-  };
-  apiCallStats: {
-    mexcCalls: number;
-    errorRate: number;
-    rateLimitHits: number;
-  };
-  systemStats: {
-    uptime: number;
-    memoryUsage: number;
-    activeConnections: number;
-  };
-}>> {
+export async function getPerformanceMetrics(): Promise<
+  MarketDataResponse<{
+    cacheStats: {
+      hits: number;
+      misses: number;
+      hitRate: number;
+      totalRequests: number;
+    };
+    responseTimeStats: {
+      average: number;
+      p95: number;
+      p99: number;
+    };
+    apiCallStats: {
+      mexcCalls: number;
+      errorRate: number;
+      rateLimitHits: number;
+    };
+    systemStats: {
+      uptime: number;
+      memoryUsage: number;
+      activeConnections: number;
+    };
+  }>
+> {
   try {
     // Mock performance metrics (would be real metrics in production)
     const metrics = {
@@ -742,7 +761,7 @@ export async function getPerformanceMetrics(): Promise<MarketDataResponse<{
         rateLimitHits: Math.floor(Math.random() * 10),
       },
       systemStats: {
-        uptime: Date.now() - (Math.random() * 86400000), // Random uptime up to 1 day
+        uptime: Date.now() - Math.random() * 86400000, // Random uptime up to 1 day
         memoryUsage: Math.random() * 100,
         activeConnections: Math.floor(Math.random() * 50),
       },
@@ -755,17 +774,19 @@ export async function getPerformanceMetrics(): Promise<MarketDataResponse<{
   }
 }
 
-export async function executeEnhancedHealthCheck(): Promise<MarketDataResponse<{
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  components: {
-    mexcApi: { status: string; responseTime?: number; error?: string };
-    cache: { status: string; hitRate?: number; size?: number };
-    database: { status: string; connectionTime?: number; error?: string };
-    rateLimit: { status: string; remaining?: number; resetTime?: number };
-  };
-  timestamp: number;
-  version: string;
-}>> {
+export async function executeEnhancedHealthCheck(): Promise<
+  MarketDataResponse<{
+    status: 'healthy' | 'degraded' | 'unhealthy';
+    components: {
+      mexcApi: { status: string; responseTime?: number; error?: string };
+      cache: { status: string; hitRate?: number; size?: number };
+      database: { status: string; connectionTime?: number; error?: string };
+      rateLimit: { status: string; remaining?: number; resetTime?: number };
+    };
+    timestamp: number;
+    version: string;
+  }>
+> {
   try {
     const start = Date.now();
     const components: any = {};
@@ -816,12 +837,13 @@ export async function executeEnhancedHealthCheck(): Promise<MarketDataResponse<{
     const unhealthyComponents = Object.values(components).filter(
       (comp: any) => comp.status === 'unhealthy'
     ).length;
-    
-    const overallStatus = unhealthyComponents === 0 
-      ? 'healthy' 
-      : unhealthyComponents < Object.keys(components).length / 2 
-        ? 'degraded' 
-        : 'unhealthy';
+
+    const overallStatus =
+      unhealthyComponents === 0
+        ? 'healthy'
+        : unhealthyComponents < Object.keys(components).length / 2
+          ? 'degraded'
+          : 'unhealthy';
 
     const result = {
       status: overallStatus as 'healthy' | 'degraded' | 'unhealthy',
@@ -837,25 +859,27 @@ export async function executeEnhancedHealthCheck(): Promise<MarketDataResponse<{
   }
 }
 
-export async function executeGetMarketStatus(): Promise<MarketDataResponse<{
-  status: 'open' | 'closed' | 'pre_open' | 'post_close';
-  serverTime: number;
-  exchangeInfo: {
-    timezone: string;
+export async function executeGetMarketStatus(): Promise<
+  MarketDataResponse<{
+    status: 'open' | 'closed' | 'pre_open' | 'post_close';
     serverTime: number;
-    rateLimits: Array<{
-      rateLimitType: string;
-      interval: string;
-      intervalNum: number;
-      limit: number;
-    }>;
-  };
-  symbols: {
-    total: number;
-    active: number;
-    suspended: number;
-  };
-}>> {
+    exchangeInfo: {
+      timezone: string;
+      serverTime: number;
+      rateLimits: Array<{
+        rateLimitType: string;
+        interval: string;
+        intervalNum: number;
+        limit: number;
+      }>;
+    };
+    symbols: {
+      total: number;
+      active: number;
+      suspended: number;
+    };
+  }>
+> {
   try {
     const serverTime = await mexcClient.getServerTime();
     const exchangeInfo = await mexcClient.getExchangeInfo();
@@ -874,8 +898,8 @@ export async function executeGetMarketStatus(): Promise<MarketDataResponse<{
       },
       symbols: {
         total: exchangeInfo.symbols?.length || 0,
-        active: exchangeInfo.symbols?.filter(s => s.status === 'TRADING').length || 0,
-        suspended: exchangeInfo.symbols?.filter(s => s.status !== 'TRADING').length || 0,
+        active: exchangeInfo.symbols?.filter((s) => s.status === 'TRADING').length || 0,
+        suspended: exchangeInfo.symbols?.filter((s) => s.status !== 'TRADING').length || 0,
       },
     };
 

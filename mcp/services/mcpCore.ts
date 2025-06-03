@@ -113,10 +113,12 @@ export function getAnalysisDepthConfig(depth: string): AnalysisDepthConfig {
  * @returns Whether confidence meets threshold
  */
 export function validateConfidence(confidence: number, minThreshold = 0.7): boolean {
-  return typeof confidence === 'number' && 
-         !isNaN(confidence) && 
-         confidence >= minThreshold && 
-         confidence <= 1;
+  return (
+    typeof confidence === 'number' &&
+    !isNaN(confidence) &&
+    confidence >= minThreshold &&
+    confidence <= 1
+  );
 }
 
 /**
@@ -127,7 +129,7 @@ export function validateConfidence(confidence: number, minThreshold = 0.7): bool
 export function getServiceHealth(): ServiceHealthResponse {
   try {
     const startTime = Date.now();
-    
+
     // Collect health metrics from various components
     const budgetStatus = geminiAnalyzer.getBudgetStatus();
     const cacheStats = geminiAnalyzer.getCacheStats();
@@ -193,7 +195,9 @@ export function resetAnalysisEnvironment(): EnvironmentResetResponse {
       geminiAnalyzer.resetBudgetWindow();
       resetOperations.push('Budget window reset');
     } catch (error) {
-      resetOperations.push(`Budget reset failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      resetOperations.push(
+        `Budget reset failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       success = false;
     }
 
@@ -202,7 +206,9 @@ export function resetAnalysisEnvironment(): EnvironmentResetResponse {
       geminiAnalyzer.clearCache();
       resetOperations.push('Analysis cache cleared');
     } catch (error) {
-      resetOperations.push(`Cache clear failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      resetOperations.push(
+        `Cache clear failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       success = false;
     }
 
@@ -240,7 +246,7 @@ export function configureAnalyzerForDepth(
   customParams?: Partial<AnalysisDepthConfig>
 ): void {
   const depthConfig = getAnalysisDepthConfig(depth);
-  
+
   // Merge custom parameters if provided
   const finalConfig = customParams ? { ...depthConfig, ...customParams } : depthConfig;
 
@@ -260,10 +266,10 @@ export function configureAnalyzerForDepth(
  */
 function getCacheTTLForDepth(depth: string): number {
   const cacheTTLMap: Record<string, number> = {
-    quick: 5,      // 5 minutes for quick analysis
-    standard: 15,  // 15 minutes for standard analysis
+    quick: 5, // 5 minutes for quick analysis
+    standard: 15, // 15 minutes for standard analysis
     comprehensive: 30, // 30 minutes for comprehensive analysis
-    deep: 60,      // 60 minutes for deep analysis
+    deep: 60, // 60 minutes for deep analysis
   };
 
   return cacheTTLMap[depth] || cacheTTLMap.standard;

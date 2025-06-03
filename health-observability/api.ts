@@ -134,12 +134,15 @@ export interface MetricsResponse {
       }>;
     };
     /** Endpoint-specific metrics */
-    endpoints: Record<string, {
-      requestCount: number;
-      averageResponseTime: number;
-      errorCount: number;
-      successRate: number;
-    }>;
+    endpoints: Record<
+      string,
+      {
+        requestCount: number;
+        averageResponseTime: number;
+        errorCount: number;
+        successRate: number;
+      }
+    >;
   };
   /** Resource usage metrics */
   resources: {
@@ -221,7 +224,13 @@ export const getSystemHealth = api(
         systemMetrics: {
           memory: { used: 0, free: 0, total: 0, usagePercentage: 0 },
           cpu: { loadAverage: [] },
-          requests: { total: 0, successful: 0, failed: 0, averageResponseTime: 0, requestsPerMinute: 0 },
+          requests: {
+            total: 0,
+            successful: 0,
+            failed: 0,
+            averageResponseTime: 0,
+            requestsPerMinute: 0,
+          },
           errors: { last24Hours: 0, lastHour: 0, criticalErrors: 0, errorRate: 0 },
         },
         performance: {
@@ -312,7 +321,7 @@ export const getLivenessCheck = api(
     const startTime = Date.now();
     try {
       // Simple responsive check
-      await new Promise(resolve => setTimeout(resolve, 1));
+      await new Promise((resolve) => setTimeout(resolve, 1));
       return {
         alive: true,
         timestamp: Date.now(),

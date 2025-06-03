@@ -3,7 +3,7 @@
  * Contains test fixtures for various AI response scenarios
  */
 
-import type { RiskAssessment, OptimizationResult } from '../../types/ai-types';
+import type { OptimizationResult, RiskAssessment } from '../../types/ai-types';
 
 // =============================================================================
 // Risk Assessment Mock Data
@@ -21,27 +21,27 @@ export const validRiskAssessmentResponse: RiskAssessment = {
     recommendations: [
       'Consider reducing position size by 20%',
       'Set stop-loss at 2% below entry',
-      'Monitor market volatility closely'
+      'Monitor market volatility closely',
     ],
     riskFactors: {
       volatilityRisk: 0.65,
-      liquidityRisk: 0.30,
+      liquidityRisk: 0.3,
       positionSizeRisk: 0.45,
-      correlationRisk: 0.25
+      correlationRisk: 0.25,
     },
     lossScenarios: [
       {
         scenario: 'Moderate market downturn',
         probability: 0.35,
-        potentialLoss: 0.15
+        potentialLoss: 0.15,
       },
       {
         scenario: 'Severe market crash',
-        probability: 0.10,
-        potentialLoss: 0.40
-      }
-    ]
-  }
+        probability: 0.1,
+        potentialLoss: 0.4,
+      },
+    ],
+  },
 };
 
 export const partialRiskAssessmentResponse = {
@@ -50,9 +50,9 @@ export const partialRiskAssessmentResponse = {
   data: {
     riskLevel: 'high',
     confidence: 0.72,
-    recommendations: ['Reduce exposure immediately']
+    recommendations: ['Reduce exposure immediately'],
     // Missing optional fields: riskFactors, lossScenarios
-  }
+  },
 };
 
 export const malformedRiskAssessmentResponse = {
@@ -61,13 +61,13 @@ export const malformedRiskAssessmentResponse = {
   data: {
     riskLevel: 'extreme', // Invalid value
     confidence: 1.5, // Out of range
-    recommendations: 'not an array' // Should be array
-  }
+    recommendations: 'not an array', // Should be array
+  },
 };
 
 export const invalidRiskAssessmentResponse = {
   invalid: 'structure',
-  missing: 'required fields'
+  missing: 'required fields',
 };
 
 // =============================================================================
@@ -87,41 +87,41 @@ export const validOptimizationResponse: OptimizationResult = {
       expectedReturn: 0.12,
       riskReduction: 0.25,
       sharpeRatio: 1.45,
-      maxDrawdown: 0.08
+      maxDrawdown: 0.08,
     },
     recommendations: [
       'Increase BTC allocation to 40%',
       'Reduce ETH exposure to 25%',
-      'Add SOL position at 10%'
+      'Add SOL position at 10%',
     ],
     allocations: [
       {
         symbol: 'BTC',
         currentWeight: 0.35,
-        optimizedWeight: 0.40,
-        adjustment: 0.05
+        optimizedWeight: 0.4,
+        adjustment: 0.05,
       },
       {
         symbol: 'ETH',
-        currentWeight: 0.30,
+        currentWeight: 0.3,
         optimizedWeight: 0.25,
-        adjustment: -0.05
+        adjustment: -0.05,
       },
       {
         symbol: 'SOL',
-        currentWeight: 0.00,
-        optimizedWeight: 0.10,
-        adjustment: 0.10
-      }
+        currentWeight: 0.0,
+        optimizedWeight: 0.1,
+        adjustment: 0.1,
+      },
     ],
     backtestResults: {
       periodMonths: 12,
       totalReturn: 0.28,
       volatility: 0.22,
       maxDrawdown: 0.12,
-      winRate: 0.65
-    }
-  }
+      winRate: 0.65,
+    },
+  },
 };
 
 export const partialOptimizationResponse = {
@@ -131,11 +131,11 @@ export const partialOptimizationResponse = {
     optimizationType: 'risk',
     confidence: 0.75,
     optimizedMetrics: {
-      riskReduction: 0.18
+      riskReduction: 0.18,
     },
-    recommendations: ['Diversify holdings']
+    recommendations: ['Diversify holdings'],
     // Missing optional fields
-  }
+  },
 };
 
 export const malformedOptimizationResponse = {
@@ -145,8 +145,8 @@ export const malformedOptimizationResponse = {
     optimizationType: 'invalid-type',
     confidence: -0.5, // Invalid range
     optimizedMetrics: 'should be object',
-    recommendations: null // Should be array
-  }
+    recommendations: null, // Should be array
+  },
 };
 
 export const invalidOptimizationResponse = null;
@@ -167,14 +167,14 @@ export const arrayResponse = ['not', 'an', 'object'];
 
 export const responseWithoutSuccess = {
   confidence: 0.8,
-  data: { some: 'data' }
+  data: { some: 'data' },
   // Missing required 'success' field
 };
 
 export const responseWithInvalidSuccess = {
   success: 'not-boolean',
   confidence: 0.8,
-  data: { some: 'data' }
+  data: { some: 'data' },
 };
 
 // =============================================================================
@@ -186,15 +186,15 @@ export const responseWithNestedNulls = {
   confidence: null,
   data: {
     riskLevel: null,
-    recommendations: [null, undefined, '']
-  }
+    recommendations: [null, undefined, ''],
+  },
 };
 
 export const responseWithCircularReference = (() => {
   const obj: any = {
     success: true,
     confidence: 0.8,
-    data: {}
+    data: {},
   };
   obj.data.circular = obj; // Creates circular reference
   return obj;
@@ -206,6 +206,6 @@ export const hugeResponse = {
   data: {
     riskLevel: 'low',
     recommendations: Array(10000).fill('recommendation'), // Very large array
-    largeString: 'x'.repeat(100000) // Very large string
-  }
+    largeString: 'x'.repeat(100000), // Very large string
+  },
 };

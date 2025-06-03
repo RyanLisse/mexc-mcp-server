@@ -27,9 +27,9 @@ import { auth } from '../auth/api.js';
 
 // Enhanced ticker endpoint with auth and rate limiting
 export const getTickerEnhanced = api(
-  { 
-    expose: true, 
-    method: 'POST', 
+  {
+    expose: true,
+    method: 'POST',
     path: '/market-data/v2/ticker',
     auth: auth,
   },
@@ -40,9 +40,9 @@ export const getTickerEnhanced = api(
 
 // Enhanced order book endpoint with auth and rate limiting
 export const getOrderBookEnhanced = api(
-  { 
-    expose: true, 
-    method: 'POST', 
+  {
+    expose: true,
+    method: 'POST',
     path: '/market-data/v2/order-book',
     auth: auth,
   },
@@ -53,9 +53,9 @@ export const getOrderBookEnhanced = api(
 
 // Enhanced 24h stats endpoint with auth and rate limiting
 export const get24hStatsEnhanced = api(
-  { 
-    expose: true, 
-    method: 'POST', 
+  {
+    expose: true,
+    method: 'POST',
     path: '/market-data/v2/24h-stats',
     auth: auth,
   },
@@ -74,35 +74,39 @@ export const getTickerPublic = api(
 
 // Bulk ticker endpoint for multiple symbols
 export const getBulkTickers = api(
-  { 
-    expose: true, 
-    method: 'POST', 
+  {
+    expose: true,
+    method: 'POST',
     path: '/market-data/v2/tickers/bulk',
     auth: auth,
   },
-  async (req: { symbols: string[]; convert?: string }): Promise<MarketDataResponse<TickerData[]>> => {
+  async (req: { symbols: string[]; convert?: string }): Promise<
+    MarketDataResponse<TickerData[]>
+  > => {
     if (!req.symbols || req.symbols.length === 0) {
       throw new Error('At least one symbol is required');
     }
-    
+
     if (req.symbols.length > 100) {
       throw new Error('Maximum 100 symbols allowed per request');
     }
 
     // Execute requests concurrently for better performance
-    const tickerPromises = req.symbols.map(symbol => 
+    const tickerPromises = req.symbols.map((symbol) =>
       executeGetTicker({ symbol, convert: req.convert })
     );
-    
+
     const results = await Promise.allSettled(tickerPromises);
     const tickers: TickerData[] = [];
     const errors: string[] = [];
-    
+
     results.forEach((result, index) => {
       if (result.status === 'fulfilled' && result.value.success) {
         tickers.push(result.value.data!);
       } else {
-        errors.push(`Symbol ${req.symbols[index]}: ${result.status === 'rejected' ? result.reason : result.value.error}`);
+        errors.push(
+          `Symbol ${req.symbols[index]}: ${result.status === 'rejected' ? result.reason : result.value.error}`
+        );
       }
     });
 
@@ -130,21 +134,23 @@ export const getHistoricalData = api(
     limit?: number;
     startTime?: number;
     endTime?: number;
-  }): Promise<MarketDataResponse<{
-    symbol: string;
-    interval: string;
-    data: Array<{
-      openTime: number;
-      open: string;
-      high: string;
-      low: string;
-      close: string;
-      volume: string;
-      closeTime: number;
-      quoteAssetVolume: string;
-      count: number;
-    }>;
-  }>> => {
+  }): Promise<
+    MarketDataResponse<{
+      symbol: string;
+      interval: string;
+      data: Array<{
+        openTime: number;
+        open: string;
+        high: string;
+        low: string;
+        close: string;
+        volume: string;
+        closeTime: number;
+        quoteAssetVolume: string;
+        count: number;
+      }>;
+    }>
+  > => {
     const { executeGetHistoricalData } = await import('./tools.js');
     return await executeGetHistoricalData(req);
   }
@@ -158,19 +164,21 @@ export const getMarketDepth = api(
     path: '/market-data/v2/market-depth',
     auth: auth,
   },
-  async (req: { symbol: string; limit?: number }): Promise<MarketDataResponse<{
-    symbol: string;
-    bids: Array<[string, string]>;
-    asks: Array<[string, string]>;
-    lastUpdateId: number;
-    analysis: {
-      bidTotal: string;
-      askTotal: string;
-      spread: string;
-      spreadPercent: string;
-      imbalance: number;
-    };
-  }>> => {
+  async (req: { symbol: string; limit?: number }): Promise<
+    MarketDataResponse<{
+      symbol: string;
+      bids: Array<[string, string]>;
+      asks: Array<[string, string]>;
+      lastUpdateId: number;
+      analysis: {
+        bidTotal: string;
+        askTotal: string;
+        spread: string;
+        spreadPercent: string;
+        imbalance: number;
+      };
+    }>
+  > => {
     const { executeGetMarketDepth } = await import('./tools.js');
     return await executeGetMarketDepth(req);
   }
@@ -184,21 +192,26 @@ export const getPriceAggregation = api(
     path: '/market-data/v2/price-aggregation',
     auth: auth,
   },
-  async (req: { 
-    symbols: string[]; 
-    timeframes: string[];
-    metrics: ('price' | 'volume' | 'volatility' | 'correlation')[];
-  }): Promise<MarketDataResponse<{
+  async (req: {
     symbols: string[];
     timeframes: string[];
-    aggregatedData: Record<string, {
-      price?: number;
-      volume24h?: number;
-      volatility?: number;
-      correlations?: Record<string, number>;
-    }>;
-    generatedAt: number;
-  }>> => {
+    metrics: ('price' | 'volume' | 'volatility' | 'correlation')[];
+  }): Promise<
+    MarketDataResponse<{
+      symbols: string[];
+      timeframes: string[];
+      aggregatedData: Record<
+        string,
+        {
+          price?: number;
+          volume24h?: number;
+          volatility?: number;
+          correlations?: Record<string, number>;
+        }
+      >;
+      generatedAt: number;
+    }>
+  > => {
     const { executeGetPriceAggregation } = await import('./tools.js');
     return await executeGetPriceAggregation(req);
   }
@@ -217,15 +230,17 @@ export const manageSubscription = api(
     symbol?: string;
     type?: 'ticker' | 'orderbook' | 'trades';
     interval?: string;
-  }): Promise<MarketDataResponse<{
-    action: string;
-    subscriptions: Array<{
-      symbol: string;
-      type: string;
-      interval?: string;
-      subscribed: boolean;
-    }>;
-  }>> => {
+  }): Promise<
+    MarketDataResponse<{
+      action: string;
+      subscriptions: Array<{
+        symbol: string;
+        type: string;
+        interval?: string;
+        subscribed: boolean;
+      }>;
+    }>
+  > => {
     const { executeManageSubscription } = await import('./tools.js');
     return await executeManageSubscription(req);
   }
@@ -239,29 +254,31 @@ export const getPerformanceMetrics = api(
     path: '/market-data/v2/metrics',
     auth: auth,
   },
-  async (): Promise<MarketDataResponse<{
-    cacheStats: {
-      hits: number;
-      misses: number;
-      hitRate: number;
-      totalRequests: number;
-    };
-    responseTimeStats: {
-      average: number;
-      p95: number;
-      p99: number;
-    };
-    apiCallStats: {
-      mexcCalls: number;
-      errorRate: number;
-      rateLimitHits: number;
-    };
-    systemStats: {
-      uptime: number;
-      memoryUsage: number;
-      activeConnections: number;
-    };
-  }>> => {
+  async (): Promise<
+    MarketDataResponse<{
+      cacheStats: {
+        hits: number;
+        misses: number;
+        hitRate: number;
+        totalRequests: number;
+      };
+      responseTimeStats: {
+        average: number;
+        p95: number;
+        p99: number;
+      };
+      apiCallStats: {
+        mexcCalls: number;
+        errorRate: number;
+        rateLimitHits: number;
+      };
+      systemStats: {
+        uptime: number;
+        memoryUsage: number;
+        activeConnections: number;
+      };
+    }>
+  > => {
     const { getPerformanceMetrics } = await import('./tools.js');
     return await getPerformanceMetrics();
   }
@@ -270,17 +287,19 @@ export const getPerformanceMetrics = api(
 // Enhanced health check with detailed component status
 export const healthCheckEnhanced = api(
   { expose: true, method: 'GET', path: '/market-data/v2/health' },
-  async (): Promise<MarketDataResponse<{
-    status: 'healthy' | 'degraded' | 'unhealthy';
-    components: {
-      mexcApi: { status: string; responseTime?: number; error?: string };
-      cache: { status: string; hitRate?: number; size?: number };
-      database: { status: string; connectionTime?: number; error?: string };
-      rateLimit: { status: string; remaining?: number; resetTime?: number };
-    };
-    timestamp: number;
-    version: string;
-  }>> => {
+  async (): Promise<
+    MarketDataResponse<{
+      status: 'healthy' | 'degraded' | 'unhealthy';
+      components: {
+        mexcApi: { status: string; responseTime?: number; error?: string };
+        cache: { status: string; hitRate?: number; size?: number };
+        database: { status: string; connectionTime?: number; error?: string };
+        rateLimit: { status: string; remaining?: number; resetTime?: number };
+      };
+      timestamp: number;
+      version: string;
+    }>
+  > => {
     const { executeEnhancedHealthCheck } = await import('./tools.js');
     return await executeEnhancedHealthCheck();
   }
@@ -293,25 +312,27 @@ export const getMarketStatus = api(
     method: 'GET',
     path: '/market-data/v2/market-status',
   },
-  async (): Promise<MarketDataResponse<{
-    status: 'open' | 'closed' | 'pre_open' | 'post_close';
-    serverTime: number;
-    exchangeInfo: {
-      timezone: string;
+  async (): Promise<
+    MarketDataResponse<{
+      status: 'open' | 'closed' | 'pre_open' | 'post_close';
       serverTime: number;
-      rateLimits: Array<{
-        rateLimitType: string;
-        interval: string;
-        intervalNum: number;
-        limit: number;
-      }>;
-    };
-    symbols: {
-      total: number;
-      active: number;
-      suspended: number;
-    };
-  }>> => {
+      exchangeInfo: {
+        timezone: string;
+        serverTime: number;
+        rateLimits: Array<{
+          rateLimitType: string;
+          interval: string;
+          intervalNum: number;
+          limit: number;
+        }>;
+      };
+      symbols: {
+        total: number;
+        active: number;
+        suspended: number;
+      };
+    }>
+  > => {
     const { executeGetMarketStatus } = await import('./tools.js');
     return await executeGetMarketStatus();
   }
@@ -325,21 +346,23 @@ export const getWebSocketInfo = api(
     path: '/market-data/v2/websocket-info',
     auth: auth,
   },
-  async (): Promise<MarketDataResponse<{
-    baseUrl: string;
-    streams: {
-      ticker: string;
-      orderbook: string;
-      trades: string;
-      klines: string;
-    };
-    connectionLimits: {
-      maxConnections: number;
-      maxStreamsPerConnection: number;
-      heartbeatInterval: number;
-    };
-    authRequired: boolean;
-  }>> => {
+  async (): Promise<
+    MarketDataResponse<{
+      baseUrl: string;
+      streams: {
+        ticker: string;
+        orderbook: string;
+        trades: string;
+        klines: string;
+      };
+      connectionLimits: {
+        maxConnections: number;
+        maxStreamsPerConnection: number;
+        heartbeatInterval: number;
+      };
+      authRequired: boolean;
+    }>
+  > => {
     return {
       success: true,
       data: {

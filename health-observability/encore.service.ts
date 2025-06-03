@@ -4,7 +4,7 @@
  */
 
 import { Service } from 'encore.dev/service';
-import type { ServiceHealth, SystemHealthResponse, MetricsResponse } from './api';
+import type { MetricsResponse, ServiceHealth, SystemHealthResponse } from './api';
 
 // =============================================================================
 // Service Definition
@@ -21,11 +21,14 @@ class MetricsCollector {
   private successfulRequests = 0;
   private failedRequests = 0;
   private responseTimes: number[] = [];
-  private endpointMetrics = new Map<string, {
-    count: number;
-    totalTime: number;
-    errors: number;
-  }>();
+  private endpointMetrics = new Map<
+    string,
+    {
+      count: number;
+      totalTime: number;
+      errors: number;
+    }
+  >();
   private errors: Array<{
     timestamp: number;
     error: string;
@@ -53,7 +56,11 @@ class MetricsCollector {
       this.responseTimes = this.responseTimes.slice(-1000);
     }
 
-    const endpointData = this.endpointMetrics.get(endpoint) || { count: 0, totalTime: 0, errors: 0 };
+    const endpointData = this.endpointMetrics.get(endpoint) || {
+      count: 0,
+      totalTime: 0,
+      errors: 0,
+    };
     endpointData.count++;
     endpointData.totalTime += responseTime;
     if (!success) endpointData.errors++;
@@ -61,13 +68,14 @@ class MetricsCollector {
 
     // Keep only recent errors (last 24 hours)
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    this.errors = this.errors.filter(error => error.timestamp > oneDayAgo);
+    this.errors = this.errors.filter((error) => error.timestamp > oneDayAgo);
   }
 
   getMetrics() {
-    const averageResponseTime = this.responseTimes.length > 0 
-      ? this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length 
-      : 0;
+    const averageResponseTime =
+      this.responseTimes.length > 0
+        ? this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length
+        : 0;
 
     const uptime = Date.now() - this.startTime;
     const requestsPerMinute = this.requestCount / (uptime / 60000);
@@ -158,15 +166,19 @@ export const healthService = {
       },
       errors: {
         last24Hours: metrics.errors.length,
-        lastHour: metrics.errors.filter(e => e.timestamp > Date.now() - 60 * 60 * 1000).length,
-        criticalErrors: metrics.errors.filter(e => e.statusCode && e.statusCode >= 500).length,
+        lastHour: metrics.errors.filter((e) => e.timestamp > Date.now() - 60 * 60 * 1000).length,
+        criticalErrors: metrics.errors.filter((e) => e.statusCode && e.statusCode >= 500).length,
         errorRate: metrics.requestCount > 0 ? metrics.failedRequests / metrics.requestCount : 0,
       },
     };
 
     // Calculate performance metrics
     const responseTimesByEndpoint: Record<string, number> = {};
-    const slowestEndpoints: Array<{ endpoint: string; averageResponseTime: number; requestCount: number }> = [];
+    const slowestEndpoints: Array<{
+      endpoint: string;
+      averageResponseTime: number;
+      requestCount: number;
+    }> = [];
 
     for (const [endpoint, data] of Object.entries(metrics.endpoints)) {
       responseTimesByEndpoint[endpoint] = data.averageResponseTime;
@@ -192,9 +204,9 @@ export const healthService = {
 
     // Calculate health summary
     const serviceStatuses = Object.values(services);
-    const healthyServices = serviceStatuses.filter(s => s.status === 'healthy').length;
-    const degradedServices = serviceStatuses.filter(s => s.status === 'degraded').length;
-    const unhealthyServices = serviceStatuses.filter(s => s.status === 'unhealthy').length;
+    const healthyServices = serviceStatuses.filter((s) => s.status === 'healthy').length;
+    const degradedServices = serviceStatuses.filter((s) => s.status === 'degraded').length;
+    const unhealthyServices = serviceStatuses.filter((s) => s.status === 'unhealthy').length;
 
     let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
     if (unhealthyServices > 0 || degradedServices > serviceStatuses.length / 2) {
@@ -590,8 +602,8 @@ export const healthService = {
   async checkExternalAPIs(): Promise<boolean> {
     try {
       // Check MEXC API connectivity
-      const response = await fetch('https://api.mexc.com/api/v3/ping', { 
-        signal: AbortSignal.timeout(5000) 
+      const response = await fetch('https://api.mexc.com/api/v3/ping', {
+        signal: AbortSignal.timeout(5000),
       });
       return response.ok;
     } catch {

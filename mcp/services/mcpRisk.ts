@@ -170,12 +170,9 @@ export async function performRiskAssessment(
     });
 
     // Perform the risk analysis with retry logic
-    const result = await retryWithBackoff(
-      async () => {
-        return await performAdvancedRiskAnalysis(data, depthConfig);
-      },
-      retryConfig
-    );
+    const result = await retryWithBackoff(async () => {
+      return await performAdvancedRiskAnalysis(data, depthConfig);
+    }, retryConfig);
 
     // Add metadata to the result
     const enhancedResult: RiskAssessmentResponse = {

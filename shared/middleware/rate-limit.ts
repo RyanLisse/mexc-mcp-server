@@ -3,17 +3,17 @@
  * Task #5: Comprehensive rate limiting with MEXC API integration
  */
 
+import crypto from 'node:crypto';
 import type { Request, Response } from 'encore.dev/api';
 import { config } from '../config';
-import { 
-  EnhancedRateLimiter, 
-  MexcRateLimiter, 
+import {
   AuthAwareRateLimiter,
-  generateRateLimitHeaders,
+  EnhancedRateLimiter,
+  MexcRateLimiter,
+  type RateLimitResult,
   createRateLimitError,
-  type RateLimitResult 
+  generateRateLimitHeaders,
 } from '../rate-limit';
-import crypto from 'node:crypto';
 
 // Global rate limiters
 const globalRateLimiter = new EnhancedRateLimiter(config.rateLimit);
@@ -29,14 +29,14 @@ const authAwareRateLimiter = new AuthAwareRateLimiter({
 function extractUserIdentifier(req: Request): { userId: string; isAuthenticated: boolean } {
   const authHeader = req.headers.authorization;
   const isAuthenticated = !!authHeader && authHeader.startsWith('Bearer ');
-  
+
   if (isAuthenticated && authHeader) {
     // Create a hash of the API key for user identification
     const apiKey = authHeader.replace('Bearer ', '');
     const userId = crypto.createHash('sha256').update(apiKey).digest('hex').slice(0, 16);
     return { userId, isAuthenticated: true };
   }
-  
+
   // Use IP address for unauthenticated users
   const clientIp = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
   const userId = crypto.createHash('sha256').update(clientIp.toString()).digest('hex').slice(0, 16);
@@ -58,17 +58,21 @@ function applyRateLimitHeaders(res: Response, result: RateLimitResult, limit: nu
 /**
  * Basic rate limiting middleware
  */
-export async function rateLimitMiddleware(req: Request, res: Response, next: () => void): Promise<void> {
+export async function rateLimitMiddleware(
+  req: Request,
+  res: Response,
+  next: () => void
+): Promise<void> {
   const { userId, isAuthenticated } = extractUserIdentifier(req);
   const endpoint = req.url || 'unknown';
-  
+
   try {
     const result = await authAwareRateLimiter.checkLimit(userId, endpoint, isAuthenticated);
-    
+
     // Apply rate limit headers
     const limit = isAuthenticated ? 1000 : 100;
     applyRateLimitHeaders(res, result, limit);
-    
+
     if (!result.allowed) {
       const error = createRateLimitError(result, limit);
       res.status(429).send({
@@ -77,7 +81,7 @@ export async function rateLimitMiddleware(req: Request, res: Response, next: () 
       });
       return;
     }
-    
+
     next();
   } catch (error) {
     console.error('Rate limiting error:', error);
@@ -88,13 +92,17 @@ export async function rateLimitMiddleware(req: Request, res: Response, next: () 
 /**
  * MEXC API-specific rate limiting middleware
  */
-export async function mexcRateLimitMiddleware(req: Request, res: Response, next: () => void): Promise<void> {
+export async function mexcRateLimitMiddleware(
+  req: Request,
+  res: Response,
+  next: () => void
+): Promise<void> {
   const { userId } = extractUserIdentifier(req);
   const endpoint = req.url || 'unknown';
-  
+
   try {
     let result: RateLimitResult;
-    
+
     // Apply specific MEXC rate limits based on endpoint
     if (endpoint.includes('/orders') && req.method === 'POST') {
       if (endpoint.includes('/batch')) {
@@ -107,10 +115,10 @@ export async function mexcRateLimitMiddleware(req: Request, res: Response, next:
       const weight = getEndpointWeight(endpoint);
       result = await mexcRateLimiter.checkWeightLimit(userId, endpoint, weight);
     }
-    
+
     // Apply rate limit headers
     applyRateLimitHeaders(res, result, config.mexcRateLimit.maxWeight);
-    
+
     if (!result.allowed) {
       const error = createRateLimitError(result, config.mexcRateLimit.maxWeight);
       res.status(429).send({
@@ -121,7 +129,7 @@ export async function mexcRateLimitMiddleware(req: Request, res: Response, next:
       });
       return;
     }
-    
+
     next();
   } catch (error) {
     console.error('MEXC rate limiting error:', error);
@@ -141,25 +149,25 @@ function getEndpointWeight(endpoint: string): number {
     '/trades': 1,
     '/klines': 1,
     '/stats': 1,
-    
+
     // Account endpoints (heavier weight)
     '/account': 10,
     '/balance': 10,
     '/positions': 10,
-    
+
     // Trading endpoints (heaviest weight)
     '/orders': 20,
     '/cancel': 10,
     '/history': 5,
   };
-  
+
   // Find matching endpoint pattern
   for (const [pattern, weight] of Object.entries(endpointWeights)) {
     if (endpoint.includes(pattern)) {
       return weight;
     }
   }
-  
+
   return config.mexcRateLimit.defaultWeight;
 }
 
@@ -189,18 +197,21 @@ export function initializeRateLimitCleanup(): void {
 /**
  * Get rate limit status for monitoring
  */
-export async function getRateLimitStatus(userId: string, endpoint: string): Promise<{
+export async function getRateLimitStatus(
+  userId: string,
+  endpoint: string
+): Promise<{
   general: RateLimitResult;
   mexc?: RateLimitResult;
 }> {
   const general = await globalRateLimiter.checkLimit(userId, endpoint, 0);
-  
+
   // Don't actually consume the rate limit, just check
   general.allowed = true; // Reset since this is just a status check
-  
+
   const mexcWeight = getEndpointWeight(endpoint);
   const mexc = await mexcRateLimiter.checkWeightLimit(userId, endpoint, 0); // 0 weight for status check
   mexc.allowed = true; // Reset since this is just a status check
-  
+
   return { general, mexc };
 }

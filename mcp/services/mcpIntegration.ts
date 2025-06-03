@@ -5,21 +5,19 @@
  */
 
 import type { AnalysisParameters, AnalysisType } from '../../shared/types/ai-types';
-import { 
-  mcpAnalysisService,
+import { mcpService } from '../encore.service';
+import {
+  type EnhancedAnalysisResult,
   type MarketAnalysisData,
-  type EnhancedAnalysisResult
+  mcpAnalysisService,
 } from './mcpAnalysis';
 import {
-  mcpCoreService,
+  type EnvironmentResetResponse,
   type ServiceHealthResponse,
-  type EnvironmentResetResponse
+  mcpCoreService,
 } from './mcpCore';
-import {
-  mcpRiskService,
-  type PortfolioRiskData,
-  type RiskAssessmentResponse
-} from './mcpRisk';
+import { type PortfolioRiskData, type RiskAssessmentResponse, mcpRiskService } from './mcpRisk';
+import { mcpTradingToolsService } from './mcpTradingTools';
 
 // =============================================================================
 // Integration Service Types and Interfaces
@@ -125,7 +123,9 @@ export const mcpIntegrationService = {
    * @param request Market analysis request parameters
    * @returns Enhanced analysis results
    */
-  async aiMarketAnalysis(request: AIMarketAnalysisRequest): Promise<ServiceResponse<EnhancedAnalysisResult>> {
+  async aiMarketAnalysis(
+    request: AIMarketAnalysisRequest
+  ): Promise<ServiceResponse<EnhancedAnalysisResult>> {
     try {
       const startTime = Date.now();
 
@@ -135,6 +135,7 @@ export const mcpIntegrationService = {
           success: false,
           error: 'Symbol and analysis type are required',
           timestamp: startTime,
+          serviceVersion: 'mcp-integration-v1.0',
         };
       }
 
@@ -179,16 +180,23 @@ export const mcpIntegrationService = {
    * @param request Risk assessment request parameters
    * @returns Risk assessment results
    */
-  async riskAssessment(request: RiskAssessmentRequest): Promise<ServiceResponse<RiskAssessmentResponse>> {
+  async riskAssessment(
+    request: RiskAssessmentRequest
+  ): Promise<ServiceResponse<RiskAssessmentResponse>> {
     try {
       const startTime = Date.now();
 
       // Validate request parameters
-      if (!request.portfolio || !Array.isArray(request.portfolio) || request.portfolio.length === 0) {
+      if (
+        !request.portfolio ||
+        !Array.isArray(request.portfolio) ||
+        request.portfolio.length === 0
+      ) {
         return {
           success: false,
           error: 'Portfolio is required and must contain at least one asset',
           timestamp: startTime,
+          serviceVersion: 'mcp-integration-v1.0',
         };
       }
 
@@ -197,6 +205,7 @@ export const mcpIntegrationService = {
           success: false,
           error: 'Total value must be a positive number',
           timestamp: startTime,
+          serviceVersion: 'mcp-integration-v1.0',
         };
       }
 
@@ -234,35 +243,219 @@ export const mcpIntegrationService = {
   },
 
   /**
-   * Strategy Optimizer (Placeholder for Task #27)
-   * Will be implemented when Task #27 is completed
+   * Strategy Optimizer (Task #27 Implementation)
+   * AI-powered portfolio optimization leveraging MEXC's unique features
    * @param request Strategy optimization request parameters
-   * @returns Strategy optimization results (placeholder)
+   * @returns Strategy optimization results
    */
-  async strategyOptimizer(request: StrategyOptimizerRequest): Promise<ServiceResponse> {
-    return {
-      success: false,
-      error: 'Strategy optimizer not implemented - awaiting Task #27 completion',
-      message: 'This functionality will be available after implementing the MEXC Strategy Optimizer API (Task #27)',
-      timestamp: Date.now(),
-      serviceVersion: 'mcp-integration-v1.0',
-    };
+  async strategyOptimizer(request: StrategyOptimizerRequest): Promise<ServiceResponse<any>> {
+    try {
+      const startTime = Date.now();
+
+      // Validate request parameters
+      if (
+        !request.portfolio ||
+        !Array.isArray(request.portfolio) ||
+        request.portfolio.length === 0
+      ) {
+        return {
+          success: false,
+          error: 'Portfolio is required and must contain at least one asset',
+          timestamp: startTime,
+          serviceVersion: 'mcp-integration-v1.0',
+        };
+      }
+
+      if (!request.objectiveFunction) {
+        return {
+          success: false,
+          error: 'Objective function is required',
+          timestamp: startTime,
+          serviceVersion: 'mcp-integration-v1.0',
+        };
+      }
+
+      // Validate portfolio weights sum to approximately 1
+      const totalWeight = request.portfolio.reduce((sum, asset) => sum + asset.allocation, 0);
+      if (Math.abs(totalWeight - 1) > 0.01) {
+        return {
+          success: false,
+          error: 'Portfolio allocations must sum to approximately 1.0',
+          timestamp: startTime,
+          serviceVersion: 'mcp-integration-v1.0',
+        };
+      }
+
+      // Convert request format to match the core service expected format
+      const optimizationData = {
+        portfolio: request.portfolio.map((asset) => ({
+          symbol: asset.symbol,
+          currentWeight: asset.allocation,
+          historicalReturns: undefined, // Could be enhanced with real data in the future
+        })),
+        objectiveFunction: request.objectiveFunction,
+        constraints: request.constraints,
+        timeHorizon: request.timeHorizon,
+        rebalanceFrequency: request.rebalanceFrequency,
+        mexcParameters: {
+          utilize0Fees: true, // Always leverage MEXC's 0% fees
+          considerLeverage: request.objectiveFunction === 'max_return',
+          maxLeverage: 10, // Conservative default
+        },
+      };
+
+      // Use the core service for optimization
+      const result = await mcpService.performStrategyOptimization(
+        optimizationData,
+        'standard' // Default analysis depth
+      );
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error || 'Strategy optimization failed',
+          timestamp: startTime,
+          processingTimeMs: Date.now() - startTime,
+          serviceVersion: 'mcp-integration-v1.0',
+        };
+      }
+
+      // Transform the result to match integration service format
+      const optimizationResult = {
+        optimizationType: result.optimizationType || request.objectiveFunction,
+        confidence: result.confidence || 0,
+        optimizedMetrics: result.optimizedMetrics || {
+          expectedReturn: 0,
+          volatility: 0,
+          sharpeRatio: 0,
+          maxDrawdown: 0,
+        },
+        allocations: result.allocations || [],
+        mexcAdvantages: result.mexcAdvantages,
+        backtestResults: result.backtestResults,
+        recommendations: result.recommendations || [],
+        modelVersion: result.modelVersion,
+        tokenUsage: result.tokenUsage,
+      };
+
+      return {
+        success: true,
+        data: optimizationResult,
+        timestamp: startTime,
+        processingTimeMs: Date.now() - startTime,
+        serviceVersion: 'mcp-integration-v1.0',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Strategy optimization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: Date.now(),
+        serviceVersion: 'mcp-integration-v1.0',
+      };
+    }
   },
 
   /**
-   * Trading Tools (Placeholder for Task #28)
-   * Will be implemented when Task #28 is completed
+   * Trading Tools (Task #28 Implementation)
+   * AI-enhanced trading tools with position sizing, technical analysis, and market conditions
    * @param request Trading tools request parameters
-   * @returns Trading tools results (placeholder)
+   * @returns Trading tools analysis results
    */
-  async tradingTools(request: TradingToolsRequest): Promise<ServiceResponse> {
-    return {
-      success: false,
-      error: 'Trading tools not implemented - awaiting Task #28 completion',
-      message: 'This functionality will be available after implementing AI-Enhanced Trading Tools (Task #28)',
-      timestamp: Date.now(),
-      serviceVersion: 'mcp-integration-v1.0',
-    };
+  async tradingTools(request: TradingToolsRequest): Promise<ServiceResponse<any>> {
+    try {
+      const startTime = Date.now();
+
+      // Validate request parameters
+      if (!request.symbol || !request.action) {
+        return {
+          success: false,
+          error: 'Symbol and action are required',
+          timestamp: startTime,
+          serviceVersion: 'mcp-integration-v1.0',
+        };
+      }
+
+      if (typeof request.accountBalance === 'number' && request.accountBalance <= 0) {
+        return {
+          success: false,
+          error: 'Account balance must be a positive number',
+          timestamp: startTime,
+          serviceVersion: 'mcp-integration-v1.0',
+        };
+      }
+
+      if (
+        typeof request.riskPerTrade === 'number' &&
+        (request.riskPerTrade <= 0 || request.riskPerTrade > 1)
+      ) {
+        return {
+          success: false,
+          error: 'Risk per trade must be between 0 and 1 (0-100%)',
+          timestamp: startTime,
+          serviceVersion: 'mcp-integration-v1.0',
+        };
+      }
+
+      // Prepare trading tools data for analysis
+      const tradingToolsData = {
+        action: request.action,
+        symbol: request.symbol,
+        accountBalance: request.accountBalance,
+        riskPerTrade: request.riskPerTrade,
+        entryPrice: request.entryPrice,
+        currentPrice: request.currentPrice,
+        timeframe: request.timeframe,
+        // Add MEXC-specific features
+        ...((request as any).mexcFeatures && {
+          mexcFeatures: (request as any).mexcFeatures,
+        }),
+      };
+
+      // Use the trading tools service directly for analysis
+      const result = await mcpTradingToolsService.performTradingToolsAnalysis(
+        tradingToolsData,
+        'standard' // Default analysis depth
+      );
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error || 'Trading tools analysis failed',
+          timestamp: startTime,
+          processingTimeMs: Date.now() - startTime,
+          serviceVersion: 'mcp-integration-v1.0',
+        };
+      }
+
+      // Transform the result to match integration service format
+      const tradingToolsResult = {
+        toolType: result.toolType || request.action,
+        confidence: result.confidence || 0,
+        positionSizing: result.positionSizing,
+        riskManagement: result.riskManagement,
+        technicalAnalysis: result.technicalAnalysis,
+        marketConditions: result.marketConditions,
+        recommendations: result.recommendations || [],
+        mexcAdvantages: result.mexcAdvantages,
+        modelVersion: result.modelVersion,
+        tokenUsage: result.tokenUsage,
+      };
+
+      return {
+        success: true,
+        data: tradingToolsResult,
+        timestamp: startTime,
+        processingTimeMs: Date.now() - startTime,
+        serviceVersion: 'mcp-integration-v1.0',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Trading tools analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: Date.now(),
+        serviceVersion: 'mcp-integration-v1.0',
+      };
+    }
   },
 
   /**
@@ -296,9 +489,10 @@ export const mcpIntegrationService = {
       };
 
       // Perform multi-analysis using the analysis service
-      const depth = (request.depth === 'comprehensive' || request.depth === 'deep') 
-        ? request.depth 
-        : 'comprehensive';
+      const depth =
+        request.depth === 'comprehensive' || request.depth === 'deep'
+          ? request.depth
+          : 'comprehensive';
 
       const results = await mcpAnalysisService.performMultiAnalysis(
         marketData,
@@ -309,7 +503,7 @@ export const mcpIntegrationService = {
 
       // Calculate overall success
       const analysisTypes = Object.keys(results) as AnalysisType[];
-      const successfulAnalyses = analysisTypes.filter(type => results[type].success);
+      const successfulAnalyses = analysisTypes.filter((type) => results[type].success);
       const overallSuccess = successfulAnalyses.length > 0;
 
       return {
@@ -404,6 +598,8 @@ export const mcpIntegrationService = {
         availableEndpoints: [
           'aiMarketAnalysis',
           'riskAssessment',
+          'strategyOptimizer',
+          'tradingTools',
           'performMultiAnalysis',
           'getUnifiedHealth',
           'resetEnvironment',
@@ -412,17 +608,16 @@ export const mcpIntegrationService = {
         implementedFeatures: [
           'AI Market Analysis (Task #24)',
           'Risk Assessment (Task #26)',
+          'Strategy Optimizer (Task #27)',
+          'Trading Tools (Task #28)',
           'Multi-Analysis Support',
           'Service Health Monitoring',
           'Environment Management',
         ],
-        pendingFeatures: [
-          'Strategy Optimizer (Task #27)',
-          'Trading Tools (Task #28)',
-        ],
+        pendingFeatures: [],
         dependencies: [
           'mcpCoreService',
-          'mcpAnalysisService', 
+          'mcpAnalysisService',
           'mcpRiskService',
           'geminiAnalyzer',
           'geminiClient',

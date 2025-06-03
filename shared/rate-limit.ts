@@ -95,7 +95,7 @@ export class EnhancedRateLimiter {
     let userRequests = this.requests.get(key) || [];
 
     // Remove expired requests (sliding window)
-    userRequests = userRequests.filter(req => req.timestamp > windowStart);
+    userRequests = userRequests.filter((req) => req.timestamp > windowStart);
 
     // Calculate current usage
     const currentRequests = userRequests.length;
@@ -103,7 +103,7 @@ export class EnhancedRateLimiter {
 
     // Check burst limit if configured
     if (this.config.burstLimit) {
-      const recentRequests = userRequests.filter(req => req.timestamp > now - 1000); // Last 1 second
+      const recentRequests = userRequests.filter((req) => req.timestamp > now - 1000); // Last 1 second
       if (recentRequests.length >= this.config.burstLimit) {
         return this.createDeniedResult(currentRequests, maxRequests, now);
       }
@@ -163,7 +163,7 @@ export class EnhancedRateLimiter {
     const windowStart = now - this.config.windowMs;
 
     for (const [key, requests] of this.requests.entries()) {
-      const validRequests = requests.filter(req => req.timestamp > windowStart);
+      const validRequests = requests.filter((req) => req.timestamp > windowStart);
       if (validRequests.length === 0) {
         this.requests.delete(key);
       } else {
@@ -186,7 +186,7 @@ export class MexcRateLimiter {
 
   constructor(config: MexcRateLimitConfig) {
     this.config = config;
-    
+
     // Order rate limiter (5 orders/second)
     this.orderLimiter = new EnhancedRateLimiter({
       maxRequests: config.orderLimit,
@@ -223,13 +223,20 @@ export class MexcRateLimiter {
   /**
    * Check weight-based rate limit (500 weight per 10 seconds per endpoint)
    */
-  async checkWeightLimit(identifier: string, endpoint: string, weight: number): Promise<RateLimitResult> {
+  async checkWeightLimit(
+    identifier: string,
+    endpoint: string,
+    weight: number
+  ): Promise<RateLimitResult> {
     // Create or get weight limiter for this endpoint
     if (!this.weightLimiters.has(endpoint)) {
-      this.weightLimiters.set(endpoint, new WeightBasedRateLimiter({
-        maxRequests: this.config.maxWeight,
-        windowMs: 10000, // 10 seconds
-      }));
+      this.weightLimiters.set(
+        endpoint,
+        new WeightBasedRateLimiter({
+          maxRequests: this.config.maxWeight,
+          windowMs: 10000, // 10 seconds
+        })
+      );
     }
 
     const limiter = this.weightLimiters.get(endpoint)!;
@@ -246,9 +253,12 @@ export class MexcRateLimiter {
   /**
    * Check WebSocket stream limit (30 streams per connection)
    */
-  async checkWebSocketStreamLimit(connectionId: string, streamId: string): Promise<RateLimitResult> {
+  async checkWebSocketStreamLimit(
+    connectionId: string,
+    streamId: string
+  ): Promise<RateLimitResult> {
     const streams = this.websocketStreams.get(connectionId) || new Set();
-    
+
     if (streams.has(streamId)) {
       // Stream already exists for this connection
       return {
@@ -295,7 +305,7 @@ export class WeightBasedRateLimiter extends EnhancedRateLimiter {
     let userRequests = this.requests.get(key) || [];
 
     // Remove expired requests
-    userRequests = userRequests.filter(req => req.timestamp > windowStart);
+    userRequests = userRequests.filter((req) => req.timestamp > windowStart);
 
     // Calculate current weight usage
     const currentWeight = userRequests.reduce((sum, req) => sum + (req.weight || 1), 0);
@@ -351,9 +361,9 @@ export class AdaptiveRateLimiter extends EnhancedRateLimiter {
    */
   protected getEffectiveLimit(identifier: string): number {
     const baseLimit = this.config.maxRequests;
-    const loadMultiplier = 1 - (this.systemLoad * 0.5); // Reduce up to 50% under high load
+    const loadMultiplier = 1 - this.systemLoad * 0.5; // Reduce up to 50% under high load
     const adaptedLimit = Math.floor(baseLimit * loadMultiplier);
-    
+
     this.userLimits.set(identifier, adaptedLimit);
     return adaptedLimit;
   }
@@ -381,7 +391,11 @@ export class AuthAwareRateLimiter {
   /**
    * Check rate limit based on authentication status
    */
-  async checkLimit(identifier: string, endpoint: string, isAuthenticated: boolean): Promise<RateLimitResult> {
+  async checkLimit(
+    identifier: string,
+    endpoint: string,
+    isAuthenticated: boolean
+  ): Promise<RateLimitResult> {
     const limiter = isAuthenticated ? this.authenticatedLimiter : this.unauthenticatedLimiter;
     return limiter.checkLimit(identifier, endpoint);
   }
@@ -424,7 +438,7 @@ export function createAuthRateLimitMiddleware() {
     // Extract user ID from authorization header
     const authHeader = request.headers.authorization;
     const isAuthenticated = !!authHeader && authHeader.startsWith('Bearer ');
-    
+
     let userId = 'anonymous';
     if (isAuthenticated && authHeader) {
       // Extract API key for user identification

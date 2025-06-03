@@ -45,6 +45,8 @@ export interface MarketAnalysisData {
  * Enhanced analysis result with processing metadata
  */
 export interface EnhancedAnalysisResult extends AIAnalysisResult {
+  analysisType: AnalysisType; // Add analysisType field that tests expect
+  depth: 'quick' | 'standard' | 'comprehensive' | 'deep'; // Add depth field that tests expect
   timestamp: number;
   processingTimeMs: number;
   modelVersion: string;
@@ -72,19 +74,15 @@ export async function performMarketAnalysis(
 ): Promise<EnhancedAnalysisResult> {
   try {
     const startTime = Date.now();
-    
+
     // Validate input data
     const validation = validateAnalysisInput(data, ['symbol']);
     if (!validation.isValid) {
-      throw createAIAnalysisError(
-        `Invalid input: ${validation.errors.join(', ')}`,
-        analysisType,
-        {
-          severity: 'error',
-          recoverable: false,
-          inputDataRef: `${data.symbol}-${startTime}`,
-        }
-      );
+      throw createAIAnalysisError(`Invalid input: ${validation.errors.join(', ')}`, analysisType, {
+        severity: 'error',
+        recoverable: false,
+        inputDataRef: `${data.symbol}-${startTime}`,
+      });
     }
 
     // Get configuration for the requested depth
@@ -115,7 +113,7 @@ export async function performMarketAnalysis(
     // Validate confidence and potentially retry for deep analysis
     if (result.success && result.confidence !== undefined) {
       const minConfidence = config.ai.risk.minConfidenceThreshold;
-      
+
       if (!validateConfidence(result.confidence, minConfidence)) {
         console.warn(
           `⚠️  Low confidence analysis: ${result.confidence.toFixed(3)} < ${minConfidence.toFixed(3)}`
@@ -127,7 +125,7 @@ export async function performMarketAnalysis(
           configureAnalyzerForDepth(depth, {
             temperature: Math.min(1.5, analysisParams.temperature! + 0.3),
           });
-          
+
           result = await analysisOperation();
           retryCount = 1;
         }
@@ -138,6 +136,8 @@ export async function performMarketAnalysis(
     const processingTimeMs = Date.now() - startTime;
     const enhancedResult: EnhancedAnalysisResult = {
       ...result,
+      analysisType, // Add analysisType field that tests expect
+      depth, // Add depth field that tests expect
       timestamp: startTime,
       processingTimeMs,
       modelVersion: 'gemini-2.5-flash-preview-05-20',
@@ -185,11 +185,10 @@ async function executeAnalysisByType(
 
     case 'trend':
       if (!data.ohlcv) {
-        throw createAIAnalysisError(
-          'Trend analysis requires OHLCV historical data',
-          analysisType,
-          { severity: 'error', recoverable: false }
-        );
+        throw createAIAnalysisError('Trend analysis requires OHLCV historical data', analysisType, {
+          severity: 'error',
+          recoverable: false,
+        });
       }
       return await geminiAnalyzer.analyzeTrend({
         symbol: data.symbol,
@@ -197,11 +196,10 @@ async function executeAnalysisByType(
       });
 
     default:
-      throw createAIAnalysisError(
-        `Unsupported analysis type: ${analysisType}`,
-        analysisType,
-        { severity: 'error', recoverable: false }
-      );
+      throw createAIAnalysisError(`Unsupported analysis type: ${analysisType}`, analysisType, {
+        severity: 'error',
+        recoverable: false,
+      });
   }
 }
 
@@ -245,7 +243,7 @@ async function performSequentialAnalysis(
   parameters?: AnalysisParameters
 ): Promise<Record<AnalysisType, EnhancedAnalysisResult>> {
   const results: Record<AnalysisType, EnhancedAnalysisResult> = {} as any;
-  
+
   for (const analysisType of analysisTypes) {
     try {
       results[analysisType] = await performMarketAnalysis(data, analysisType, depth, parameters);
@@ -261,7 +259,7 @@ async function performSequentialAnalysis(
       };
     }
   }
-  
+
   return results;
 }
 
@@ -306,7 +304,7 @@ async function performParallelAnalysis(
   // Process results, handling both successful and failed analyses
   resolvedAnalyses.forEach((settledResult, index) => {
     const analysisType = analysisTypes[index];
-    
+
     if (settledResult.status === 'fulfilled') {
       results[analysisType] = settledResult.value.result;
     } else {
@@ -330,9 +328,7 @@ async function performParallelAnalysis(
  * @param results Analysis results to calculate metrics for
  * @returns Performance metrics summary
  */
-export function getAnalysisMetrics(
-  results: Record<AnalysisType, EnhancedAnalysisResult>
-): {
+export function getAnalysisMetrics(results: Record<AnalysisType, EnhancedAnalysisResult>): {
   totalAnalyses: number;
   successfulAnalyses: number;
   failedAnalyses: number;
@@ -342,21 +338,24 @@ export function getAnalysisMetrics(
 } {
   const analysisTypes = Object.keys(results) as AnalysisType[];
   const successfulResults = analysisTypes
-    .map(type => results[type])
-    .filter(result => result.success);
+    .map((type) => results[type])
+    .filter((result) => result.success);
 
-  const totalProcessingTime = analysisTypes
-    .reduce((sum, type) => sum + (results[type].processingTimeMs || 0), 0);
+  const totalProcessingTime = analysisTypes.reduce(
+    (sum, type) => sum + (results[type].processingTimeMs || 0),
+    0
+  );
 
   const averageProcessingTime = totalProcessingTime / analysisTypes.length;
 
   const confidenceScores = successfulResults
-    .map(result => result.confidence)
+    .map((result) => result.confidence)
     .filter((confidence): confidence is number => typeof confidence === 'number');
 
-  const averageConfidence = confidenceScores.length > 0
-    ? confidenceScores.reduce((sum, conf) => sum + conf, 0) / confidenceScores.length
-    : 0;
+  const averageConfidence =
+    confidenceScores.length > 0
+      ? confidenceScores.reduce((sum, conf) => sum + conf, 0) / confidenceScores.length
+      : 0;
 
   return {
     totalAnalyses: analysisTypes.length,

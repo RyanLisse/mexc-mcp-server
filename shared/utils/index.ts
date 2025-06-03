@@ -207,12 +207,10 @@ export function clamp(value: number, min: number, max: number): number {
  */
 export function sanitizeStringArray(arr: unknown): string[] {
   if (!Array.isArray(arr)) return [];
-  
+
   return arr
-    .filter((item): item is string => 
-      typeof item === 'string' && item.trim().length > 0
-    )
-    .map(item => item.trim());
+    .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    .map((item) => item.trim());
 }
 
 /**
@@ -233,5 +231,5 @@ export {
   parseAIResponse,
   validateAIResponseStructure,
   isValidRiskAssessment,
-  isValidOptimizationResult
+  isValidOptimizationResult,
 } from './aiResponseParsers';
