@@ -1,226 +1,177 @@
-import { z } from 'zod';
+// Portfolio Balance Interface
+export interface PortfolioBalance {
+  asset: string;
+  free: string;
+  locked: string;
+  total: string;
+  usdValue: string;
+  percentage: number;
+  timestamp: string;
+}
 
-// Portfolio Balance Schema
-export const PortfolioBalanceSchema = z.object({
-  asset: z.string().min(1, 'Asset is required'),
-  free: z.string().regex(/^\d+\.?\d*$/, 'Free must be a valid number string'),
-  locked: z.string().regex(/^\d+\.?\d*$/, 'Locked must be a valid number string'),
-  total: z.string().regex(/^\d+\.?\d*$/, 'Total must be a valid number string'),
-  usdValue: z.string().regex(/^\d+\.?\d*$/, 'USD value must be a valid number string'),
-  percentage: z.number().min(0).max(100),
-  timestamp: z.string().datetime(),
-});
+// Portfolio Position Interface  
+export interface PortfolioPosition {
+  symbol: string;
+  asset: string;
+  quantity: string;
+  averagePrice: string;
+  currentPrice: string;
+  marketValue: string;
+  unrealizedPnl: string;
+  unrealizedPnlPercent: number;
+  cost: string;
+  side: 'long' | 'short';
+  timestamp: string;
+}
 
-// Portfolio Position Schema
-export const PortfolioPositionSchema = z.object({
-  symbol: z.string().min(1, 'Symbol is required'),
-  asset: z.string().min(1, 'Asset is required'),
-  quantity: z.string().regex(/^\d+\.?\d*$/, 'Quantity must be a valid number string'),
-  averagePrice: z.string().regex(/^\d+\.?\d*$/, 'Average price must be a valid number string'),
-  currentPrice: z.string().regex(/^\d+\.?\d*$/, 'Current price must be a valid number string'),
-  marketValue: z.string().regex(/^\d+\.?\d*$/, 'Market value must be a valid number string'),
-  unrealizedPnl: z.string().regex(/^-?\d+\.?\d*$/, 'Unrealized PnL must be a valid number string'),
-  unrealizedPnlPercent: z.number(),
-  cost: z.string().regex(/^\d+\.?\d*$/, 'Cost must be a valid number string'),
-  side: z.enum(['long', 'short']),
-  timestamp: z.string().datetime(),
-});
+// Transaction Record Interface
+export interface TransactionRecord {
+  id: string;
+  type: 'trade' | 'deposit' | 'withdrawal' | 'fee' | 'dividend' | 'interest';
+  symbol?: string;
+  side?: 'buy' | 'sell';
+  quantity: string;
+  price?: string;
+  value: string;
+  fee?: string;
+  feeAsset?: string;
+  timestamp: string;
+  orderId?: string;
+  notes?: string;
+}
 
-// Transaction Record Schema
-export const TransactionRecordSchema = z.object({
-  id: z.string().min(1, 'Transaction ID is required'),
-  type: z.enum(['trade', 'deposit', 'withdrawal', 'fee', 'dividend', 'interest']),
-  symbol: z.string().optional(),
-  side: z.enum(['buy', 'sell']).optional(),
-  quantity: z.string().regex(/^\d+\.?\d*$/, 'Quantity must be a valid number string'),
-  price: z
-    .string()
-    .regex(/^\d+\.?\d*$/, 'Price must be a valid number string')
-    .optional(),
-  value: z.string().regex(/^\d+\.?\d*$/, 'Value must be a valid number string'),
-  fee: z
-    .string()
-    .regex(/^\d+\.?\d*$/, 'Fee must be a valid number string')
-    .optional(),
-  feeAsset: z.string().optional(),
-  timestamp: z.string().datetime(),
-  orderId: z.string().optional(),
-  notes: z.string().optional(),
-});
+// Portfolio Summary Interface
+export interface PortfolioSummary {
+  totalValue: string;
+  totalBalance: string;
+  totalPositions: number;
+  totalPnl: string;
+  totalPnlPercent: number;
+  topHoldings: Array<{
+    asset: string;
+    value: string;
+    percentage: number;
+  }>;
+  timestamp: string;
+}
 
-// Portfolio Summary Schema
-export const PortfolioSummarySchema = z.object({
-  totalValue: z.string().regex(/^\d+\.?\d*$/, 'Total value must be a valid number string'),
-  totalBalance: z.string().regex(/^\d+\.?\d*$/, 'Total balance must be a valid number string'),
-  totalPositions: z.number().int().min(0),
-  totalPnl: z.string().regex(/^-?\d+\.?\d*$/, 'Total PnL must be a valid number string'),
-  totalPnlPercent: z.number(),
-  topHoldings: z
-    .array(
-      z.object({
-        asset: z.string(),
-        value: z.string(),
-        percentage: z.number(),
-      })
-    )
-    .max(10),
-  timestamp: z.string().datetime(),
-});
+// Portfolio Metrics Interface
+export interface PortfolioMetrics {
+  totalValue: string;
+  totalPnl: string;
+  totalPnlPercent: number;
+  sharpeRatio?: number;
+  maxDrawdown?: number;
+  winRate?: number;
+  averageWin?: string;
+  averageLoss?: string;
+  profitFactor?: number;
+  totalTrades?: number;
+  timestamp: string;
+}
 
-// Portfolio Metrics Schema
-export const PortfolioMetricsSchema = z.object({
-  totalValue: z.string().regex(/^\d+\.?\d*$/, 'Total value must be a valid number string'),
-  totalPnl: z.string().regex(/^-?\d+\.?\d*$/, 'Total PnL must be a valid number string'),
-  totalPnlPercent: z.number(),
-  sharpeRatio: z.number().optional(),
-  maxDrawdown: z.number().optional(),
-  winRate: z.number().min(0).max(100).optional(),
-  averageWin: z
-    .string()
-    .regex(/^\d+\.?\d*$/, 'Average win must be a valid number string')
-    .optional(),
-  averageLoss: z
-    .string()
-    .regex(/^\d+\.?\d*$/, 'Average loss must be a valid number string')
-    .optional(),
-  profitFactor: z.number().optional(),
-  totalTrades: z.number().int().min(0).optional(),
-  timestamp: z.string().datetime(),
-});
+// Balance History Interface
+export interface BalanceHistory {
+  period: '1h' | '4h' | '1d' | '1w' | '1M';
+  dataPoints: Array<{
+    timestamp: string;
+    value: string;
+    change: string;
+    changePercent: number;
+  }>;
+  totalValue: string;
+  change24h: string;
+  changePercent24h: number;
+  timestamp: string;
+}
 
-// Balance History Schema
-export const BalanceHistorySchema = z.object({
-  period: z.enum(['1h', '4h', '1d', '1w', '1M']),
-  dataPoints: z.array(
-    z.object({
-      timestamp: z.string().datetime(),
-      value: z.string().regex(/^\d+\.?\d*$/, 'Value must be a valid number string'),
-      change: z.string().regex(/^-?\d+\.?\d*$/, 'Change must be a valid number string'),
-      changePercent: z.number(),
-    })
-  ),
-  totalValue: z.string().regex(/^\d+\.?\d*$/, 'Total value must be a valid number string'),
-  change24h: z.string().regex(/^-?\d+\.?\d*$/, 'Change 24h must be a valid number string'),
-  changePercent24h: z.number(),
-  timestamp: z.string().datetime(),
-});
+// Transaction History Query Interface
+export interface TransactionHistoryQuery {
+  limit?: number;
+  offset?: number;
+  type?: 'trade' | 'deposit' | 'withdrawal' | 'fee' | 'dividend' | 'interest';
+  symbol?: string;
+  side?: 'buy' | 'sell';
+  startTime?: number;
+  endTime?: number;
+  sortBy?: 'timestamp' | 'value' | 'quantity';
+  sortOrder?: 'asc' | 'desc';
+}
 
-// Transaction History Query Schema
-export const TransactionHistoryQuerySchema = z.object({
-  limit: z.number().int().min(1).max(1000).default(50),
-  offset: z.number().int().min(0).default(0),
-  type: z.enum(['trade', 'deposit', 'withdrawal', 'fee', 'dividend', 'interest']).optional(),
-  symbol: z.string().optional(),
-  side: z.enum(['buy', 'sell']).optional(),
-  startTime: z.number().optional(),
-  endTime: z.number().optional(),
-  sortBy: z.enum(['timestamp', 'value', 'quantity']).default('timestamp'),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
-});
+// Transaction History Response Interface
+export interface TransactionHistoryResponse {
+  transactions: TransactionRecord[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+  timestamp: string;
+}
 
-// Transaction History Response Schema
-export const TransactionHistoryResponseSchema = z.object({
-  transactions: z.array(TransactionRecordSchema),
-  total: z.number().int().min(0),
-  limit: z.number().int().min(1),
-  offset: z.number().int().min(0),
-  hasMore: z.boolean(),
-  timestamp: z.string().datetime(),
-});
+// Risk Metrics Interface
+export interface RiskMetrics {
+  valueAtRisk?: number;
+  expectedShortfall?: number;
+  beta?: number;
+  volatility?: number;
+  correlation?: Record<string, number>;
+  timestamp: string;
+}
 
-// Risk Metrics Schema
-export const RiskMetricsSchema = z.object({
-  valueAtRisk: z.number().optional(),
-  expectedShortfall: z.number().optional(),
-  beta: z.number().optional(),
-  volatility: z.number().optional(),
-  correlation: z.record(z.number()).optional(),
-  timestamp: z.string().datetime(),
-});
+// Position Metrics Interface
+export interface PositionMetrics {
+  totalPositions: number;
+  totalMarketValue: string;
+  totalUnrealizedPnl: string;
+  profitablePositions: number;
+  losingPositions: number;
+  largestPosition?: {
+    symbol: string;
+    value: string;
+    percentage: number;
+  };
+  timestamp: string;
+}
 
-// Position Metrics Schema
-export const PositionMetricsSchema = z.object({
-  totalPositions: z.number().int().min(0),
-  totalMarketValue: z
-    .string()
-    .regex(/^\d+\.?\d*$/, 'Total market value must be a valid number string'),
-  totalUnrealizedPnl: z
-    .string()
-    .regex(/^-?\d+\.?\d*$/, 'Total unrealized PnL must be a valid number string'),
-  profitablePositions: z.number().int().min(0),
-  losingPositions: z.number().int().min(0),
-  largestPosition: z
-    .object({
-      symbol: z.string(),
-      value: z.string(),
-      percentage: z.number(),
-    })
-    .optional(),
-  timestamp: z.string().datetime(),
-});
+// Balance Update Interface
+export interface BalanceUpdate {
+  asset: string;
+  previousBalance: string;
+  newBalance: string;
+  change: string;
+  changePercent: number;
+  timestamp: string;
+}
 
-// Balance Update Schema
-export const BalanceUpdateSchema = z.object({
-  asset: z.string().min(1, 'Asset is required'),
-  previousBalance: z
-    .string()
-    .regex(/^\d+\.?\d*$/, 'Previous balance must be a valid number string'),
-  newBalance: z.string().regex(/^\d+\.?\d*$/, 'New balance must be a valid number string'),
-  change: z.string().regex(/^-?\d+\.?\d*$/, 'Change must be a valid number string'),
-  changePercent: z.number(),
-  timestamp: z.string().datetime(),
-});
+// Portfolio Tool Arguments Interfaces
+export interface GetBalancesArgs {
+  includeZero?: boolean;
+  assets?: string[];
+  refresh?: boolean;
+}
 
-// Portfolio Tool Arguments Schemas
-export const GetBalancesArgsSchema = z.object({
-  includeZero: z.boolean().default(false),
-  assets: z.array(z.string()).optional(),
-  refresh: z.boolean().default(false),
-});
+export interface GetPositionsArgs {
+  symbols?: string[];
+  minValue?: number;
+  refresh?: boolean;
+}
 
-export const GetPositionsArgsSchema = z.object({
-  symbols: z.array(z.string()).optional(),
-  minValue: z.number().min(0).optional(),
-  refresh: z.boolean().default(false),
-});
+export interface GetTransactionHistoryArgs extends TransactionHistoryQuery {}
 
-export const GetTransactionHistoryArgsSchema = TransactionHistoryQuerySchema;
+export interface GetPortfolioSummaryArgs {
+  includeMetrics?: boolean;
+  refresh?: boolean;
+}
 
-export const GetPortfolioSummaryArgsSchema = z.object({
-  includeMetrics: z.boolean().default(true),
-  refresh: z.boolean().default(false),
-});
+export interface GetBalanceHistoryArgs {
+  period?: '1h' | '4h' | '1d' | '1w' | '1M';
+  limit?: number;
+}
 
-export const GetBalanceHistoryArgsSchema = z.object({
-  period: z.enum(['1h', '4h', '1d', '1w', '1M']).default('1d'),
-  limit: z.number().int().min(1).max(1000).default(24),
-});
-
-export const GetRiskMetricsArgsSchema = z.object({
-  period: z.enum(['1d', '7d', '30d']).default('30d'),
-  refresh: z.boolean().default(false),
-});
-
-// Export all types
-export type PortfolioBalance = z.infer<typeof PortfolioBalanceSchema>;
-export type PortfolioPosition = z.infer<typeof PortfolioPositionSchema>;
-export type TransactionRecord = z.infer<typeof TransactionRecordSchema>;
-export type PortfolioSummary = z.infer<typeof PortfolioSummarySchema>;
-export type PortfolioMetrics = z.infer<typeof PortfolioMetricsSchema>;
-export type BalanceHistory = z.infer<typeof BalanceHistorySchema>;
-export type TransactionHistoryQuery = z.infer<typeof TransactionHistoryQuerySchema>;
-export type TransactionHistoryResponse = z.infer<typeof TransactionHistoryResponseSchema>;
-export type RiskMetrics = z.infer<typeof RiskMetricsSchema>;
-export type PositionMetrics = z.infer<typeof PositionMetricsSchema>;
-export type BalanceUpdate = z.infer<typeof BalanceUpdateSchema>;
-
-// Tool argument types
-export type GetBalancesArgs = z.infer<typeof GetBalancesArgsSchema>;
-export type GetPositionsArgs = z.infer<typeof GetPositionsArgsSchema>;
-export type GetTransactionHistoryArgs = z.infer<typeof GetTransactionHistoryArgsSchema>;
-export type GetPortfolioSummaryArgs = z.infer<typeof GetPortfolioSummaryArgsSchema>;
-export type GetBalanceHistoryArgs = z.infer<typeof GetBalanceHistoryArgsSchema>;
-export type GetRiskMetricsArgs = z.infer<typeof GetRiskMetricsArgsSchema>;
+export interface GetRiskMetricsArgs {
+  period?: '1d' | '7d' | '30d';
+  refresh?: boolean;
+}
 
 // Cache configuration
 export interface CacheConfig {

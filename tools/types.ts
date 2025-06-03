@@ -1,62 +1,47 @@
-import { z } from 'zod';
-
 // MCP Protocol Types
-export const MCPToolSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  inputSchema: z.record(z.any()),
-});
+export interface MCPTool {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+}
 
-export const MCPToolCallSchema = z.object({
-  name: z.string(),
-  arguments: z.record(z.any()).optional(),
-});
+export interface MCPToolCall {
+  name: string;
+  arguments?: Record<string, unknown>;
+}
 
-export const MCPToolResultSchema = z.object({
-  content: z.array(
-    z.object({
-      type: z.literal('text'),
-      text: z.string(),
-    })
-  ),
-  isError: z.boolean().optional(),
-});
+export interface MCPToolResult {
+  content: Array<{
+    type: 'text';
+    text: string;
+  }>;
+  isError?: boolean;
+}
 
-export const MCPListToolsRequestSchema = z.object({
-  method: z.literal('tools/list'),
-  params: z.object({}).optional(),
-});
+export interface MCPListToolsRequest {
+  method: 'tools/list';
+  params?: Record<string, unknown>;
+}
 
-export const MCPListToolsResponseSchema = z.object({
-  tools: z.array(MCPToolSchema),
-});
+export interface MCPListToolsResponse {
+  tools: MCPTool[];
+}
 
-export const MCPCallToolRequestSchema = z.object({
-  method: z.literal('tools/call'),
-  params: z.object({
-    name: z.string(),
-    arguments: z.record(z.any()).optional(),
-  }),
-});
+export interface MCPCallToolRequest {
+  method: 'tools/call';
+  params: {
+    name: string;
+    arguments?: Record<string, unknown>;
+  };
+}
 
-export const MCPCallToolResponseSchema = z.object({
-  content: z.array(
-    z.object({
-      type: z.literal('text'),
-      text: z.string(),
-    })
-  ),
-  isError: z.boolean().optional(),
-});
-
-// Internal Types
-export type MCPTool = z.infer<typeof MCPToolSchema>;
-export type MCPToolCall = z.infer<typeof MCPToolCallSchema>;
-export type MCPToolResult = z.infer<typeof MCPToolResultSchema>;
-export type MCPListToolsRequest = z.infer<typeof MCPListToolsRequestSchema>;
-export type MCPListToolsResponse = z.infer<typeof MCPListToolsResponseSchema>;
-export type MCPCallToolRequest = z.infer<typeof MCPCallToolRequestSchema>;
-export type MCPCallToolResponse = z.infer<typeof MCPCallToolResponseSchema>;
+export interface MCPCallToolResponse {
+  content: Array<{
+    type: 'text';
+    text: string;
+  }>;
+  isError?: boolean;
+}
 
 // Tool Execution Context
 export interface ToolExecutionContext {

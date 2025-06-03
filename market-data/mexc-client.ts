@@ -1,7 +1,6 @@
 import type { OrderBookData, Stats24hData, TickerData } from './tools.js';
 
-import { config } from '../shared/config.js';
-import { getMexcCredentials } from '../shared/secrets.js';
+import { marketDataConfig } from './config.js';
 import { retryWithBackoff } from '../shared/utils/index.js';
 
 // MEXC API response types
@@ -48,10 +47,9 @@ export class MEXCApiClient {
   private readonly secretKey: string;
 
   constructor() {
-    this.baseUrl = config.mexc.baseUrl;
-    const credentials = getMexcCredentials();
-    this.apiKey = credentials.apiKey;
-    this.secretKey = credentials.secretKey;
+    this.baseUrl = marketDataConfig.mexc.baseUrl;
+    this.apiKey = marketDataConfig.mexc.apiKey;
+    this.secretKey = marketDataConfig.mexc.secretKey;
   }
 
   /**
@@ -357,6 +355,21 @@ export class MEXCApiClient {
         `Failed to get account trades: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
+  }
+
+  /**
+   * Simple ping method to test API connectivity
+   */
+  async ping(): Promise<void> {
+    await this.makeRequest('/api/v3/ping');
+  }
+
+  /**
+   * Get server time
+   */
+  async getServerTime(): Promise<number> {
+    const response = await this.makeRequest<MEXCTimeResponse>('/api/v3/time');
+    return response.serverTime;
   }
 
   /**

@@ -18,12 +18,11 @@ import {
 } from './tools.js';
 
 import { api } from 'encore.dev/api';
-import type { z } from 'zod';
 
 // Get ticker endpoint
 export const getTicker = api(
   { expose: true, method: 'POST', path: '/market-data/ticker' },
-  async (req: z.infer<typeof GetTickerInputSchema>): Promise<MarketDataResponse<TickerData>> => {
+  async (req: { symbol: string; convert?: string }): Promise<MarketDataResponse<TickerData>> => {
     return await executeGetTicker(req);
   }
 );
@@ -32,7 +31,7 @@ export const getTicker = api(
 export const getOrderBook = api(
   { expose: true, method: 'POST', path: '/market-data/order-book' },
   async (
-    req: z.infer<typeof GetOrderBookInputSchema>
+    req: { symbol: string; limit?: number }
   ): Promise<MarketDataResponse<OrderBookData>> => {
     return await executeGetOrderBook(req);
   }
@@ -42,7 +41,7 @@ export const getOrderBook = api(
 export const get24hStats = api(
   { expose: true, method: 'POST', path: '/market-data/24h-stats' },
   async (
-    req: z.infer<typeof Get24hStatsInputSchema>
+    req: { symbol?: string }
   ): Promise<MarketDataResponse<Stats24hData[]>> => {
     return await executeGet24hStats(req);
   }
@@ -86,6 +85,27 @@ export const marketDataHealth = api(
   { expose: true, method: 'GET', path: '/market-data/health' },
   async (): Promise<HealthCheckResponse> => {
     return await healthCheck();
+  }
+);
+
+// Debug config endpoint
+interface ConfigDebugResponse {
+  hasCredentials: boolean;
+  baseUrl: string;
+  apiKeyLength: number;
+  secretKeyLength: number;
+}
+
+export const debugConfig = api(
+  { expose: true, method: 'GET', path: '/market-data/debug/config' },
+  async (): Promise<ConfigDebugResponse> => {
+    const { marketDataConfig } = await import('./config.js');
+    return {
+      hasCredentials: !!(marketDataConfig.mexc.apiKey && marketDataConfig.mexc.secretKey),
+      baseUrl: marketDataConfig.mexc.baseUrl,
+      apiKeyLength: marketDataConfig.mexc.apiKey?.length || 0,
+      secretKeyLength: marketDataConfig.mexc.secretKey?.length || 0,
+    };
   }
 );
 

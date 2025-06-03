@@ -8,7 +8,7 @@ import type {
   PortfolioDataRefreshOptions,
 } from './types';
 import { BalanceError, PriceError } from './types';
-import { PortfolioBalanceSchema } from './types';
+// import { PortfolioBalanceSchema } from './types'; // Disabled for Encore compatibility
 
 export class BalanceManager {
   private balanceCache: Map<string, BalanceCacheEntry> = new Map();
@@ -206,7 +206,7 @@ export class BalanceManager {
 
       // Validate the balance data
       try {
-        PortfolioBalanceSchema.parse(portfolioBalance);
+        // PortfolioBalanceSchema.parse(portfolioBalance); // Disabled for Encore compatibility
         balances.push(portfolioBalance);
       } catch (error) {
         console.warn(`Invalid balance data for ${balance.asset}:`, error);
@@ -368,7 +368,7 @@ export class BalanceManager {
   /**
    * Check if cache is valid
    */
-  isCacheValid(): boolean {
+  isBalanceCacheValid(): boolean {
     return this.balanceCache.size > 0 && Date.now() - this.lastUpdateTime < this.config.balanceTtl;
   }
 

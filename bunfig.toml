@@ -9,8 +9,7 @@ exact = true
 cache = true
 
 [test]
-# Test configuration
-preload = ["./tests/setup.ts"]
+# Test configuration - no preload needed for Encore.ts
 coverage = true
 
 [build]

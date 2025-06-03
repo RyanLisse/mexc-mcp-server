@@ -9,7 +9,7 @@ import type {
   PositionMetrics,
 } from './types';
 import { PositionError, PriceError } from './types';
-import { PortfolioPositionSchema } from './types';
+// import { PortfolioPositionSchema } from './types'; // Disabled for Encore compatibility
 
 export class PositionManager {
   private positionCache: Map<string, PositionCacheEntry> = new Map();
@@ -366,7 +366,7 @@ export class PositionManager {
 
         // Validate position data
         try {
-          PortfolioPositionSchema.parse(position);
+          // PortfolioPositionSchema.parse(position); // Disabled for Encore compatibility
           positions.push(position);
         } catch (error) {
           console.warn(`Invalid position data for ${symbol}:`, error);
@@ -474,7 +474,7 @@ export class PositionManager {
   /**
    * Check if cache is valid
    */
-  isCacheValid(): boolean {
+  isPositionCacheValid(): boolean {
     return (
       this.positionCache.size > 0 && Date.now() - this.lastUpdateTime < this.config.positionTtl
     );

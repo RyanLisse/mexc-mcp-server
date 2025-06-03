@@ -1,14 +1,5 @@
 import { api } from 'encore.dev/api';
-import { z } from 'zod';
 import { portfolioService } from './encore.service';
-import {
-  GetBalanceHistoryArgsSchema,
-  GetBalancesArgsSchema,
-  GetPortfolioSummaryArgsSchema,
-  GetPositionsArgsSchema,
-  GetRiskMetricsArgsSchema,
-  GetTransactionHistoryArgsSchema,
-} from './schemas';
 import type {
   BalanceHistory,
   GetBalanceHistoryArgs,
@@ -34,10 +25,7 @@ export const getBalances = api(
     expose: true,
   },
   async (request: GetBalancesArgs): Promise<{ balances: PortfolioBalance[] }> => {
-    // Validate request
-    const validatedArgs = GetBalancesArgsSchema.parse(request);
-
-    const balances = await portfolioService.getBalances(validatedArgs);
+    const balances = await portfolioService.getBalances(request);
 
     return { balances };
   }
@@ -52,9 +40,7 @@ export const getPositions = api(
   },
   async (request: GetPositionsArgs): Promise<{ positions: PortfolioPosition[] }> => {
     // Validate request
-    const validatedArgs = GetPositionsArgsSchema.parse(request);
-
-    const positions = await portfolioService.getPositions(validatedArgs);
+    const positions = await portfolioService.getPositions(request);
 
     return { positions };
   }
@@ -68,10 +54,7 @@ export const getTransactionHistory = api(
     expose: true,
   },
   async (request: GetTransactionHistoryArgs): Promise<TransactionHistoryResponse> => {
-    // Validate request
-    const validatedArgs = GetTransactionHistoryArgsSchema.parse(request);
-
-    return portfolioService.getTransactionHistory(validatedArgs);
+    return portfolioService.getTransactionHistory(request);
   }
 );
 
@@ -83,10 +66,7 @@ export const getPortfolioSummary = api(
     expose: true,
   },
   async (request: GetPortfolioSummaryArgs): Promise<PortfolioSummary> => {
-    // Validate request
-    const validatedArgs = GetPortfolioSummaryArgsSchema.parse(request);
-
-    return portfolioService.getPortfolioSummary(validatedArgs);
+    return portfolioService.getPortfolioSummary(request);
   }
 );
 
@@ -98,10 +78,7 @@ export const getBalanceHistory = api(
     expose: true,
   },
   async (request: GetBalanceHistoryArgs): Promise<BalanceHistory> => {
-    // Validate request
-    const validatedArgs = GetBalanceHistoryArgsSchema.parse(request);
-
-    return portfolioService.getBalanceHistory(validatedArgs.period, validatedArgs.limit);
+    return portfolioService.getBalanceHistory(request.period, request.limit);
   }
 );
 
@@ -125,10 +102,7 @@ export const getRiskMetrics = api(
     expose: true,
   },
   async (request: GetRiskMetricsArgs): Promise<RiskMetrics> => {
-    // Validate request
-    const validatedArgs = GetRiskMetricsArgsSchema.parse(request);
-
-    return portfolioService.getRiskMetrics(validatedArgs);
+    return portfolioService.getRiskMetrics(request);
   }
 );
 

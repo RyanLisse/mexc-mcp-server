@@ -1,4 +1,3 @@
-import { z } from 'zod';
 
 // Common MCP types
 // JSON Schema types for MCP tool input schemas
@@ -41,54 +40,47 @@ export interface JSONSchema extends JSONSchemaProperty {
   $ref?: string;
 }
 
-export const MCPToolSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  inputSchema: z.record(z.unknown()),
-});
+export interface MCPTool {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+}
 
-export const MCPResourceSchema = z.object({
-  uri: z.string(),
-  name: z.string(),
-  mimeType: z.string(),
-  description: z.string(),
-});
+export interface MCPResource {
+  uri: string;
+  name: string;
+  mimeType: string;
+  description: string;
+}
 
 // MEXC API types - Updated to match MEXC format (no underscore)
-export const MEXCSymbolSchema = z.string().regex(/^[A-Z0-9]+$/, 'Invalid trading symbol format');
+export type MEXCSymbol = string;
 
-export const MEXCTickerSchema = z.object({
-  symbol: MEXCSymbolSchema,
-  price: z.string(),
-  priceChangePercent: z.string(),
-  volume: z.string(),
-  quoteVolume: z.string(),
-  timestamp: z.number(),
-});
+export interface MEXCTicker {
+  symbol: string;
+  price: string;
+  priceChangePercent: string;
+  volume: string;
+  quoteVolume: string;
+  timestamp: number;
+}
 
-export const MEXCOrderSchema = z.object({
-  symbol: MEXCSymbolSchema,
-  side: z.enum(['BUY', 'SELL']),
-  type: z.enum(['MARKET', 'LIMIT']),
-  quantity: z.string(),
-  price: z.string().optional(),
-  timeInForce: z.enum(['GTC', 'IOC', 'FOK']).optional(),
-});
+export interface MEXCOrder {
+  symbol: string;
+  side: 'BUY' | 'SELL';
+  type: 'MARKET' | 'LIMIT';
+  quantity: string;
+  price?: string;
+  timeInForce?: 'GTC' | 'IOC' | 'FOK';
+}
 
 // Error types
-export const APIErrorSchema = z.object({
-  code: z.number(),
-  message: z.string(),
-  details: z.record(z.unknown()).optional(),
-});
+export interface APIError {
+  code: number;
+  message: string;
+  details?: Record<string, unknown>;
+}
 
-// Export TypeScript types
-export type MCPTool = z.infer<typeof MCPToolSchema>;
-export type MCPResource = z.infer<typeof MCPResourceSchema>;
-export type MEXCSymbol = z.infer<typeof MEXCSymbolSchema>;
-export type MEXCTicker = z.infer<typeof MEXCTickerSchema>;
-export type MEXCOrder = z.infer<typeof MEXCOrderSchema>;
-export type APIError = z.infer<typeof APIErrorSchema>;
 
 // Additional types for market data tools
 export interface TickerData {
@@ -107,8 +99,8 @@ export interface TickerData {
 
 export interface OrderBookData {
   symbol: string;
-  bids: Array<[string, string]>; // [price, quantity]
-  asks: Array<[string, string]>; // [price, quantity]
+  bids: Array<{ price: string; quantity: string }>;
+  asks: Array<{ price: string; quantity: string }>;
   timestamp: number;
 }
 

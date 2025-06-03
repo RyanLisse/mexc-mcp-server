@@ -1,12 +1,5 @@
 import { api } from 'encore.dev/api';
-import { z } from 'zod';
 import { toolsService } from './encore.service';
-import {
-  MCPCallToolRequestSchema,
-  MCPCallToolResponseSchema,
-  MCPListToolsRequestSchema,
-  MCPListToolsResponseSchema,
-} from './schemas';
 import type {
   MCPCallToolRequest,
   MCPCallToolResponse,
@@ -23,17 +16,11 @@ export const listTools = api(
     expose: true,
   },
   async (request: MCPListToolsRequest): Promise<MCPListToolsResponse> => {
-    // Validate request
-    MCPListToolsRequestSchema.parse(request);
-
     const tools = await toolsService.listTools();
 
     const response: MCPListToolsResponse = {
       tools: tools,
     };
-
-    // Validate response
-    MCPListToolsResponseSchema.parse(response);
 
     return response;
   }
@@ -47,9 +34,6 @@ export const callTool = api(
     expose: true,
   },
   async (request: MCPCallToolRequest): Promise<MCPCallToolResponse> => {
-    // Validate request
-    MCPCallToolRequestSchema.parse(request);
-
     const { name, arguments: args = {} } = request.params;
 
     // Create execution context
@@ -66,9 +50,6 @@ export const callTool = api(
       content: result.content,
       isError: result.isError,
     };
-
-    // Validate response
-    MCPCallToolResponseSchema.parse(response);
 
     return response;
   }
@@ -125,25 +106,6 @@ export const batchExecute = api(
     };
   }) => {
     const { calls, options } = request;
-
-    // Validate input
-    const BatchRequestSchema = z.object({
-      calls: z.array(
-        z.object({
-          name: z.string(),
-          arguments: z.record(z.unknown()).optional(),
-        })
-      ),
-      options: z
-        .object({
-          maxConcurrency: z.number().min(1).max(10).optional(),
-          timeoutMs: z.number().min(100).max(60000).optional(),
-          stopOnFirstError: z.boolean().optional(),
-        })
-        .optional(),
-    });
-
-    BatchRequestSchema.parse(request);
 
     const context: ToolExecutionContext = {
       timestamp: new Date(),

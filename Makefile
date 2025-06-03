@@ -51,17 +51,17 @@ dev: ## Start Encore development server with hot reload
 	@echo "$(BLUE)Starting Encore development server...$(NC)"
 	bun run dev
 
-test: ## Run complete test suite
-	@echo "$(BLUE)Running test suite...$(NC)"
-	bun test
+test: ## Run complete test suite with Encore runtime
+	@echo "$(BLUE)Running test suite with Encore...$(NC)"
+	encore test
 
 test-watch: ## Run tests in watch mode for continuous development
 	@echo "$(BLUE)Running tests in watch mode...$(NC)"
-	bun test --watch
+	vitest --watch
 
 test-coverage: ## Run tests with coverage report
 	@echo "$(BLUE)Running tests with coverage analysis...$(NC)"
-	bun test --coverage
+	vitest --coverage
 
 test-mexc: ## Test MEXC API integration specifically
 	@echo "$(BLUE)Testing MEXC API integration...$(NC)"

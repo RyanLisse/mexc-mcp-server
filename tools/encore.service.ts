@@ -1,5 +1,6 @@
 import { Service } from 'encore.dev/service';
 import * as marketDataService from '../market-data/tools';
+import { tradingTools } from '../trading/tools';
 import { ToolExecutor } from './executor';
 import { ToolRegistry } from './registry';
 import type { MCPTool, MCPToolResult, ToolExecutionContext, ToolHandler } from './types';
@@ -235,13 +236,19 @@ async function initializeBuiltInTools(): Promise<void> {
     },
   };
 
-  // Register all tools
+  // Register market data tools
   registry.register(getTickerTool);
   registry.register(getOrderBookTool);
   registry.register(get24hStatsTool);
   registry.register(testConnectivityTool);
   registry.register(testAuthenticationTool);
   registry.register(getActiveSymbolsTool);
+
+  // Register trading tools
+  for (const tool of tradingTools) {
+    // The trading tools already implement ToolHandler interface
+    registry.register(tool as ToolHandler);
+  }
 }
 
 // Service methods

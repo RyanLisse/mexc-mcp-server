@@ -7,7 +7,7 @@ A Model Context Protocol (MCP) server implementation for MEXC cryptocurrency exc
 - **Real-time Market Data**: Live ticker prices, order books, and 24h statistics from MEXC exchange
 - **Secure API Management**: Encore.ts secrets management for API keys
 - **Rate Limiting & Caching**: Built-in protection and performance optimization
-- **Type Safety**: Full TypeScript implementation with Zod validation
+- **Type Safety**: Full TypeScript implementation with Encore.ts interfaces
 - **Test-Driven Development**: Comprehensive test suite with >90% coverage
 - **CI/CD Pipeline**: Automated testing, linting, and deployment
 - **Pre-commit Hooks**: Automated code quality checks
@@ -82,6 +82,13 @@ bun run test:mexc
 | `mexc_test_connectivity` | Test API connectivity and server time | None |
 | `mexc_test_authentication` | Test API authentication | None |
 | `mexc_get_active_symbols` | Get all active trading symbols | `limit?: number` |
+| `mexc_place_order` | Place a buy/sell order | `symbol: string, side: 'buy'|'sell', type: 'market'|'limit', quantity: number, price?: number` |
+| `mexc_cancel_order` | Cancel an existing order | `symbol: string, orderId: string` |
+| `mexc_get_order_status` | Get order status and details | `symbol: string, orderId: string` |
+| `mexc_get_account_balance` | Get account balances | None |
+| `mexc_get_open_orders` | Get all open orders | `symbol?: string` |
+| `mexc_get_order_history` | Get order history | `symbol?: string, limit?: number` |
+| `mexc_get_trade_history` | Get trade execution history | `symbol?: string, limit?: number` |
 
 ## 🚀 Deployment
 
@@ -150,13 +157,35 @@ CODECOV_TOKEN=your_codecov_token  # Optional, for coverage reports
 
 ### Encore.ts Secrets
 
-This project uses Encore.ts built-in secrets management:
+This project uses Encore.ts built-in secrets management for secure credential storage:
 
 ```typescript
+// In shared/config.ts
 import { secret } from "encore.dev/config";
 
+// Secrets are automatically injected by Encore.ts
 const mexcApiKey = secret("MEXC_API_KEY");
 const mexcSecretKey = secret("MEXC_SECRET_KEY");
+
+// For local development, use environment variables
+const localConfig = {
+  apiKey: process.env.MEXC_API_KEY || mexcApiKey(),
+  secretKey: process.env.MEXC_SECRET_KEY || mexcSecretKey(),
+};
+```
+
+### Setting up Secrets
+
+```bash
+# Set secrets for different environments
+encore secret set --env=development MEXC_API_KEY "your_dev_api_key"
+encore secret set --env=development MEXC_SECRET_KEY "your_dev_secret_key"
+
+encore secret set --env=staging MEXC_API_KEY "your_staging_api_key"
+encore secret set --env=staging MEXC_SECRET_KEY "your_staging_secret_key"
+
+encore secret set --env=production MEXC_API_KEY "your_prod_api_key"
+encore secret set --env=production MEXC_SECRET_KEY "your_prod_secret_key"
 ```
 
 ### Best Practices
@@ -197,37 +226,82 @@ Husky pre-commit hooks ensure code quality:
 - `GET /mcp/info` - MCP protocol information
 - `GET /` - API overview
 
-### Authentication
+### Authentication Service
 - `POST /auth/validate` - Validate API key
 - `GET /auth/status` - Authentication status
 - `POST /auth/rate-limit` - Rate limit status
+- `GET /auth/test-mexc` - Test MEXC credentials
 
-### Market Data
+### Market Data Service
 - `POST /market-data/ticker` - Get ticker data
 - `POST /market-data/order-book` - Get order book
 - `POST /market-data/24h-stats` - Get 24h statistics
 - `GET /market-data/test-connectivity` - Test connectivity
 - `GET /market-data/test-auth` - Test authentication
 - `POST /market-data/active-symbols` - Get active symbols
+- `GET /market-data/health` - Market data service health
+- `GET /market-data/mcp/tools` - Available MCP tools
+
+### Trading Service
+- `POST /trading/place-order` - Place a new order
+- `POST /trading/cancel-order` - Cancel an existing order
+- `POST /trading/order-status` - Get order status
+- `GET /trading/open-orders` - Get open orders
+- `POST /trading/order-history` - Get order history
+- `POST /trading/trade-history` - Get trade history
+- `GET /trading/health` - Trading service health
+
+### Portfolio Service
+- `GET /portfolio/balance` - Get account balance
+- `GET /portfolio/positions` - Get open positions
+- `POST /portfolio/pnl` - Get profit/loss data
+- `GET /portfolio/health` - Portfolio service health
+
+### Tools Service (MCP Protocol)
+- `GET /tools/list` - List all available MCP tools
+- `POST /tools/call` - Execute an MCP tool
+- `GET /tools/resources` - List MCP resources
+- `POST /tools/resources/read` - Read MCP resource content
 
 ## 🧩 Architecture
 
 ### Encore.ts Services
 
+The application is built using a microservices architecture with 5 main services:
+
 ```
 mexc-mcp-server/
 ├── encore.service.ts        # Main service definition
 ├── api.ts                   # Root API endpoints
-├── auth/
-│   ├── encore.service.ts    # Auth service
+├── auth/                    # Authentication service
+│   ├── encore.service.ts    # Service definition
 │   ├── api.ts              # Auth endpoints
 │   └── auth.ts             # Auth logic
-└── market-data/
-    ├── encore.service.ts    # Market data service
-    ├── api.ts              # Market data endpoints
-    ├── tools.ts            # MCP tools implementation
-    └── mexc-client.ts      # MEXC API client
+├── market-data/             # Market data service
+│   ├── encore.service.ts    # Service definition
+│   ├── api.ts              # Market data endpoints
+│   ├── tools.ts            # MCP tools implementation
+│   └── mexc-client.ts      # MEXC API client
+├── trading/                 # Trading operations service
+│   ├── encore.service.ts    # Service definition
+│   ├── api.ts              # Trading endpoints
+│   └── tools.ts            # Trading MCP tools
+├── portfolio/               # Portfolio management service
+│   ├── encore.service.ts    # Service definition
+│   ├── api.ts              # Portfolio endpoints
+│   └── tools.ts            # Portfolio MCP tools
+└── tools/                   # MCP tools aggregation service
+    ├── encore.service.ts    # Service definition
+    └── api.ts              # MCP protocol endpoints
 ```
+
+### Service Dependencies
+
+- **auth**: Base authentication and rate limiting
+- **market-data**: Real-time market data (depends on auth)
+- **trading**: Order management (depends on auth, market-data)
+- **portfolio**: Account and position tracking (depends on auth, trading)
+- **tools**: MCP protocol implementation (aggregates all services)
 
 ## 🤝 Contributing
 
@@ -244,9 +318,10 @@ mexc-mcp-server/
 - ✅ TypeScript with strict mode
 - ✅ Test-driven development (TDD)
 - ✅ Files under 500 lines
-- ✅ Zod validation for all inputs
+- ✅ Encore.ts interfaces for type safety
 - ✅ Conventional commits
-- ✅ 100% test coverage for new features
+- ✅ 90%+ test coverage for new features
+- ✅ Biome.js for linting and formatting
 
 ## 📝 License
 

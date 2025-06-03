@@ -1,95 +1,63 @@
-import { z } from 'zod';
-import { config } from '../shared/config.js';
+import { marketDataConfig } from './config.js';
 import {
   type Get24hStatsArgs,
   type GetActiveSymbolsArgs,
   type GetOrderBookArgs,
   type GetTickerArgs,
   type MCPTool,
-  MEXCSymbolSchema,
   type MarketDataResponse,
 } from '../shared/types/index.js';
-import { createSuccessResponse, validateOrThrow } from '../shared/utils/index.js';
+import { createSuccessResponse } from '../shared/utils/index.js';
 import { mexcClient } from './mexc-client.js';
 
-// Input schemas for MCP tools
-export const GetTickerInputSchema = z.object({
-  symbol: MEXCSymbolSchema,
-  convert: z.string().optional(),
-});
+// Input interfaces for API endpoints
+export interface GetTickerInputSchema {
+  symbol: string;
+  convert?: string;
+}
 
-export const GetOrderBookInputSchema = z.object({
-  symbol: MEXCSymbolSchema,
-  limit: z.number().min(5).max(1000).optional().default(100),
-});
+export interface GetOrderBookInputSchema {
+  symbol: string;
+  limit?: number;
+}
 
-export const Get24hStatsInputSchema = z.object({
-  symbol: MEXCSymbolSchema.optional(),
-});
+export interface Get24hStatsInputSchema {
+  symbol?: string;
+}
 
-// Output schemas - Updated to handle MEXC API null values
-export const TickerDataSchema = z
-  .object({
-    symbol: z.string(),
-    price: z.string(),
-    priceChange: z.string(),
-    priceChangePercent: z.string(),
-    volume: z.string(),
-    quoteVolume: z.string(),
-    open: z.string(),
-    high: z.string(),
-    low: z.string(),
-    count: z.number().nullable(),
-    timestamp: z.number(),
-  })
-  .transform((data) => ({
-    symbol: data.symbol,
-    price: data.price,
-    priceChange: data.priceChange,
-    priceChangePercent: data.priceChangePercent,
-    volume: data.volume,
-    quoteVolume: data.quoteVolume,
-    open: data.open,
-    high: data.high,
-    low: data.low,
-    count: data.count ?? 0, // Transform null to 0
-    timestamp: data.timestamp,
-  }));
+// Output data types
+export interface TickerData {
+  symbol: string;
+  price: string;
+  priceChange: string;
+  priceChangePercent: string;
+  volume: string;
+  quoteVolume: string;
+  open: string;
+  high: string;
+  low: string;
+  count: number;
+  timestamp: number;
+}
 
-export const OrderBookDataSchema = z.object({
-  symbol: z.string(),
-  bids: z.array(z.tuple([z.string(), z.string()])), // [price, quantity]
-  asks: z.array(z.tuple([z.string(), z.string()])), // [price, quantity]
-  timestamp: z.number(),
-});
+export interface OrderBookData {
+  symbol: string;
+  bids: Array<{ price: string; quantity: string }>;
+  asks: Array<{ price: string; quantity: string }>;
+  timestamp: number;
+}
 
-export const Stats24hDataSchema = z
-  .object({
-    symbol: z.string(),
-    volume: z.string(),
-    volumeQuote: z.string(),
-    priceChange: z.string(),
-    priceChangePercent: z.string(),
-    high: z.string(),
-    low: z.string(),
-    trades: z.number().nullable(),
-    timestamp: z.number(),
-  })
-  .transform((data) => ({
-    symbol: data.symbol,
-    volume: data.volume,
-    volumeQuote: data.volumeQuote,
-    priceChange: data.priceChange,
-    priceChangePercent: data.priceChangePercent,
-    high: data.high,
-    low: data.low,
-    trades: data.trades ?? 0, // Transform null to 0
-    timestamp: data.timestamp,
-  }));
-
-export type TickerData = z.infer<typeof TickerDataSchema>;
-export type OrderBookData = z.infer<typeof OrderBookDataSchema>;
-export type Stats24hData = z.infer<typeof Stats24hDataSchema>;
+export interface Stats24hData {
+  symbol: string;
+  volume: string;
+  volumeQuote: string;
+  priceChange: string;
+  priceChangePercent: string;
+  high: string;
+  low: string;
+  trades: number;
+  timestamp: number;
+}
 
 // Cache implementation with proper typing
 interface CacheEntry<T> {
@@ -132,9 +100,9 @@ class MarketDataCache {
   }
 
   private getDefaultTTL(key: string): number {
-    if (key.startsWith('ticker:')) return config.cache.ttlTicker;
-    if (key.startsWith('orderbook:')) return config.cache.ttlOrderbook;
-    if (key.startsWith('24hstats:')) return config.cache.ttlStats;
+    if (key.startsWith('ticker:')) return marketDataConfig.cache.ttlTicker;
+    if (key.startsWith('orderbook:')) return marketDataConfig.cache.ttlOrderbook;
+    if (key.startsWith('24hstats:')) return marketDataConfig.cache.ttlStats;
     return 5000; // Default 5 seconds
   }
 }
@@ -142,216 +110,310 @@ class MarketDataCache {
 // Global cache instance
 const marketDataCache = new MarketDataCache();
 
+// Data transformation helpers
+function transformTickerData(rawData: any): TickerData {
+  return {
+    symbol: rawData.symbol,
+    price: rawData.price,
+    priceChange: rawData.priceChange,
+    priceChangePercent: rawData.priceChangePercent,
+    volume: rawData.volume,
+    quoteVolume: rawData.quoteVolume,
+    open: rawData.open,
+    high: rawData.high,
+    low: rawData.low,
+    count: rawData.count ?? 0, // Transform null to 0
+    timestamp: rawData.timestamp,
+  };
+}
+
+function transformStats24hData(rawData: any): Stats24hData {
+  return {
+    symbol: rawData.symbol,
+    volume: rawData.volume,
+    volumeQuote: rawData.volumeQuote,
+    priceChange: rawData.priceChange,
+    priceChangePercent: rawData.priceChangePercent,
+    high: rawData.high,
+    low: rawData.low,
+    trades: rawData.trades ?? 0, // Transform null to 0
+    timestamp: rawData.timestamp,
+  };
+}
+
 // MCP Tool definitions
 export const getTickerTool: MCPTool = {
   name: 'mexc_get_ticker',
   description: 'Get current ticker price and 24h statistics for a trading symbol',
-  inputSchema: GetTickerInputSchema.describe('Get ticker data for a specific symbol')
-    .shape as Record<string, unknown>,
+  inputSchema: {
+    type: 'object',
+    properties: {
+      symbol: {
+        type: 'string',
+        pattern: '^[A-Z0-9]+$',
+        description: 'Trading symbol (e.g., BTCUSDT)',
+      },
+      convert: {
+        type: 'string',
+        description: 'Optional currency to convert to',
+      },
+    },
+    required: ['symbol'],
+  },
 };
 
 export const getOrderBookTool: MCPTool = {
   name: 'mexc_get_order_book',
   description: 'Get current order book (bids and asks) for a trading symbol',
-  inputSchema: GetOrderBookInputSchema.describe('Get order book depth for a specific symbol')
-    .shape as Record<string, unknown>,
+  inputSchema: {
+    type: 'object',
+    properties: {
+      symbol: {
+        type: 'string',
+        pattern: '^[A-Z0-9]+$',
+        description: 'Trading symbol (e.g., BTCUSDT)',
+      },
+      limit: {
+        type: 'number',
+        minimum: 5,
+        maximum: 1000,
+        default: 100,
+        description: 'Number of orders to return',
+      },
+    },
+    required: ['symbol'],
+  },
 };
 
 export const get24hStatsTool: MCPTool = {
   name: 'mexc_get_24h_stats',
   description: 'Get 24-hour trading statistics for one or all symbols',
-  inputSchema: Get24hStatsInputSchema.describe('Get 24h statistics for symbol(s)').shape as Record<
-    string,
-    unknown
-  >,
+  inputSchema: {
+    type: 'object',
+    properties: {
+      symbol: {
+        type: 'string',
+        pattern: '^[A-Z0-9]+$',
+        description: 'Trading symbol (optional)',
+      },
+    },
+    required: [],
+  },
 };
 
 export const testConnectivityTool: MCPTool = {
   name: 'mexc_test_connectivity',
   description: 'Test connectivity to MEXC API and check server time synchronization',
-  inputSchema: z.object({}).shape as Record<string, unknown>,
+  inputSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
 };
 
 export const testAuthenticationTool: MCPTool = {
   name: 'mexc_test_authentication',
   description: 'Test MEXC API authentication with provided credentials',
-  inputSchema: z.object({}).shape as Record<string, unknown>,
+  inputSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
 };
 
 export const getActiveSymbolsTool: MCPTool = {
   name: 'mexc_get_active_symbols',
   description: 'Get all active trading symbols on MEXC exchange',
-  inputSchema: z.object({
-    limit: z.number().min(1).max(100).optional().default(50),
-  }).shape as Record<string, unknown>,
+  inputSchema: {
+    type: 'object',
+    properties: {
+      limit: {
+        type: 'number',
+        minimum: 1,
+        maximum: 100,
+        default: 50,
+        description: 'Maximum number of symbols to return',
+      },
+    },
+    required: [],
+  },
 };
 
-// Tool execution functions
-export async function executeGetTicker(input: unknown): Promise<MarketDataResponse<TickerData>> {
-  const validInput = validateOrThrow(GetTickerInputSchema, input) as GetTickerArgs;
-  const cacheKey = `ticker:${validInput.symbol}`;
-
-  // Check cache first
-  const cached = marketDataCache.get<TickerData>(cacheKey);
-  if (cached) {
-    return createSuccessResponse(cached, true);
-  }
-
+// Main execution functions
+export async function executeGetTicker(
+  args: GetTickerInputSchema
+): Promise<MarketDataResponse<TickerData>> {
   try {
-    // Fetch fresh data from MEXC API
-    const data = await mexcClient.getTicker(validInput.symbol);
+    const cacheKey = `ticker:${args.symbol}${args.convert ? `:${args.convert}` : ''}`;
+    const cached = marketDataCache.get<TickerData>(cacheKey);
 
-    // Cache the result
-    marketDataCache.set(cacheKey, data);
+    if (cached) {
+      return createSuccessResponse(cached, 'Ticker data retrieved from cache');
+    }
 
-    return createSuccessResponse(data, false);
+    const tickerData = await mexcClient.getTicker(args.symbol);
+    const transformedData = transformTickerData({
+      ...tickerData,
+      timestamp: Date.now(),
+    });
+
+    marketDataCache.set(cacheKey, transformedData);
+
+    return createSuccessResponse(transformedData, 'Ticker data retrieved successfully');
   } catch (error) {
-    throw new Error(
-      `Failed to fetch ticker data: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+    console.error('Get ticker error:', error);
+    // Return error in the expected MarketDataResponse format
+    return {
+      data: null as any,
+      timestamp: Date.now(),
+      cached: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
   }
 }
 
 export async function executeGetOrderBook(
-  input: unknown
+  args: GetOrderBookInputSchema
 ): Promise<MarketDataResponse<OrderBookData>> {
-  const validInput = validateOrThrow(GetOrderBookInputSchema, input) as GetOrderBookArgs;
-  const limit = validInput.limit ?? 100;
-  const cacheKey = `orderbook:${validInput.symbol}:${limit}`;
-
-  // Check cache first
-  const cached = marketDataCache.get<OrderBookData>(cacheKey);
-  if (cached) {
-    return createSuccessResponse(cached, true);
-  }
-
   try {
-    // Fetch fresh data from MEXC API
-    const data = await mexcClient.getOrderBook(validInput.symbol, limit);
+    const limit = args.limit ?? 100;
+    const cacheKey = `orderbook:${args.symbol}:${limit}`;
+    const cached = marketDataCache.get<OrderBookData>(cacheKey);
 
-    // Validate response
-    const validatedData = validateOrThrow(OrderBookDataSchema, data);
+    if (cached) {
+      return createSuccessResponse(cached, 'Order book data retrieved from cache');
+    }
 
-    // Cache the result
-    marketDataCache.set(cacheKey, validatedData);
+    const orderBookData = await mexcClient.getOrderBook(args.symbol, limit);
+    const transformedData: OrderBookData = {
+      symbol: args.symbol,
+      bids: (orderBookData.bids || []).map(([price, quantity]) => ({ price, quantity })),
+      asks: (orderBookData.asks || []).map(([price, quantity]) => ({ price, quantity })),
+      timestamp: Date.now(),
+    };
 
-    return createSuccessResponse(validatedData, false);
+    marketDataCache.set(cacheKey, transformedData);
+
+    return createSuccessResponse(transformedData, 'Order book data retrieved successfully');
   } catch (error) {
-    throw new Error(
-      `Failed to fetch order book data: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+    console.error('Get order book error:', error);
+    return {
+      data: null as any,
+      timestamp: Date.now(),
+      cached: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
   }
 }
 
 export async function executeGet24hStats(
-  input: unknown
+  args: Get24hStatsInputSchema
 ): Promise<MarketDataResponse<Stats24hData[]>> {
-  const validInput = validateOrThrow(Get24hStatsInputSchema, input) as Get24hStatsArgs;
-  const cacheKey = `24hstats:${validInput.symbol ?? 'all'}`;
-
-  // Check cache first
-  const cached = marketDataCache.get<Stats24hData[]>(cacheKey);
-  if (cached) {
-    return createSuccessResponse(cached, true);
-  }
-
   try {
-    // Fetch fresh data from MEXC API
-    const data = await mexcClient.get24hStats(validInput.symbol);
+    const cacheKey = `24hstats:${args.symbol || 'all'}`;
+    const cached = marketDataCache.get<Stats24hData[]>(cacheKey);
 
-    // Cache the result
-    marketDataCache.set(cacheKey, data);
+    if (cached) {
+      return createSuccessResponse(cached, '24h statistics retrieved from cache');
+    }
 
-    return createSuccessResponse(data, false);
+    const statsData = await mexcClient.get24hStats(args.symbol);
+    const transformedData = Array.isArray(statsData)
+      ? statsData.map(stat => transformStats24hData({
+          ...stat,
+          timestamp: Date.now(),
+        }))
+      : [transformStats24hData({
+          ...statsData,
+          timestamp: Date.now(),
+        })];
+
+    marketDataCache.set(cacheKey, transformedData);
+
+    return createSuccessResponse(transformedData, '24h statistics retrieved successfully');
   } catch (error) {
-    throw new Error(
-      `Failed to fetch 24h stats: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+    console.error('Get 24h stats error:', error);
+    return {
+      data: null as any,
+      timestamp: Date.now(),
+      cached: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
   }
 }
 
 export async function executeTestConnectivity(
-  _input: unknown
+  args: Record<string, unknown>
 ): Promise<MarketDataResponse<{ success: boolean; message: string }>> {
   try {
-    const result = await mexcClient.testConnectivity();
-    return createSuccessResponse(result, false);
-  } catch (error) {
-    throw new Error(
-      `Connectivity test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    await mexcClient.ping();
+    const serverTime = await mexcClient.getServerTime();
+    
+    return createSuccessResponse(
+      { success: true, message: `Connected successfully. Server time: ${new Date(serverTime).toISOString()}` },
+      'Connectivity test passed'
     );
+  } catch (error) {
+    console.error('Connectivity test error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Connectivity test failed',
+      timestamp: Date.now(),
+    };
   }
 }
 
 export async function executeTestAuthentication(
-  _input: unknown
+  args: Record<string, unknown>
 ): Promise<MarketDataResponse<{ success: boolean; message: string }>> {
   try {
-    const result = await mexcClient.testAuthentication();
-    return createSuccessResponse(result, false);
-  } catch (error) {
-    throw new Error(
-      `Authentication test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    // Test authentication by making a request that requires auth
+    const accountInfo = await mexcClient.getAccountInfo();
+    
+    return createSuccessResponse(
+      { success: true, message: 'Authentication successful' },
+      'Authentication test passed'
     );
+  } catch (error) {
+    console.error('Authentication test error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Authentication test failed',
+      timestamp: Date.now(),
+    };
   }
 }
 
 export async function executeGetActiveSymbols(
-  input: unknown
+  args: { limit?: number }
 ): Promise<MarketDataResponse<string[]>> {
-  const validInput = validateOrThrow(
-    z.object({ limit: z.number().optional().default(50) }),
-    input
-  ) as GetActiveSymbolsArgs;
-  const cacheKey = `active_symbols:${validInput.limit}`;
-
-  // Check cache first
-  const cached = marketDataCache.get<string[]>(cacheKey);
-  if (cached) {
-    return createSuccessResponse(cached, true);
-  }
-
   try {
-    const symbols = await mexcClient.getActiveSymbols();
-    const limitedSymbols = symbols.slice(0, validInput.limit);
+    const limit = args.limit ?? 50;
+    const cacheKey = `symbols:active:${limit}`;
+    const cached = marketDataCache.get<string[]>(cacheKey);
 
-    // Cache for longer since symbols don't change frequently
-    marketDataCache.set(cacheKey, limitedSymbols, 300000); // 5 minutes
+    if (cached) {
+      return createSuccessResponse(cached, 'Active symbols retrieved from cache');
+    }
 
-    return createSuccessResponse(limitedSymbols, false);
+    const exchangeInfo = await mexcClient.getExchangeInfo();
+    const activeSymbols = exchangeInfo.symbols
+      ?.filter(symbol => symbol.status === 'TRADING')
+      ?.map(symbol => symbol.symbol)
+      ?.slice(0, limit) || [];
+
+    marketDataCache.set(cacheKey, activeSymbols, 60000); // Cache for 1 minute
+
+    return createSuccessResponse(activeSymbols, 'Active symbols retrieved successfully');
   } catch (error) {
-    throw new Error(
-      `Failed to fetch active symbols: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+    console.error('Get active symbols error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      timestamp: Date.now(),
+    };
   }
 }
-
-// Utility functions
-export function clearMarketDataCache(): void {
-  marketDataCache.clear();
-}
-
-export function getMarketDataCacheSize(): number {
-  return marketDataCache.size();
-}
-
-export function getCacheStats(): { size: number; keys: string[] } {
-  const keys: string[] = Array.from(marketDataCache.cache.keys());
-  return {
-    size: marketDataCache.size(),
-    keys,
-  };
-}
-
-// Export the tools array for easy registration
-export const marketDataTools: MCPTool[] = [
-  getTickerTool,
-  getOrderBookTool,
-  get24hStatsTool,
-  testConnectivityTool,
-  testAuthenticationTool,
-  getActiveSymbolsTool,
-];
 
 // Health check function
 export async function healthCheck(): Promise<{
@@ -360,53 +422,61 @@ export async function healthCheck(): Promise<{
 }> {
   const checks: Record<string, { status: 'pass' | 'fail'; message: string }> = {};
 
-  // Test connectivity
+  // Test API connectivity
   try {
-    const connectivityResult = await mexcClient.testConnectivity();
-    checks.connectivity = {
-      status: connectivityResult.success ? 'pass' : 'fail',
-      message: connectivityResult.message,
-    };
+    await mexcClient.ping();
+    checks.connectivity = { status: 'pass', message: 'API connectivity OK' };
   } catch (error) {
-    checks.connectivity = {
-      status: 'fail',
-      message: error instanceof Error ? error.message : 'Unknown error',
+    checks.connectivity = { 
+      status: 'fail', 
+      message: `API connectivity failed: ${error instanceof Error ? error.message : 'Unknown error'}` 
     };
   }
 
-  // Test cache
+  // Test cache functionality
   try {
-    const cacheSize = marketDataCache.size();
-    checks.cache = {
-      status: 'pass',
-      message: `Cache operational with ${cacheSize} entries`,
-    };
+    marketDataCache.set('health-check', 'test', 1000);
+    const cached = marketDataCache.get('health-check');
+    if (cached === 'test') {
+      checks.cache = { status: 'pass', message: 'Cache functionality OK' };
+    } else {
+      checks.cache = { status: 'fail', message: 'Cache read/write failed' };
+    }
   } catch (error) {
-    checks.cache = {
-      status: 'fail',
-      message: error instanceof Error ? error.message : 'Cache error',
+    checks.cache = { 
+      status: 'fail', 
+      message: `Cache error: ${error instanceof Error ? error.message : 'Unknown error'}` 
     };
   }
 
-  // Test sample API call
+  // Test configuration
   try {
-    await mexcClient.getTicker('BTCUSDT');
-    checks.api_call = {
-      status: 'pass',
-      message: 'Sample API call successful',
-    };
+    if (marketDataConfig.mexc.baseUrl && marketDataConfig.mexc.apiKey && marketDataConfig.mexc.secretKey) {
+      checks.configuration = { status: 'pass', message: 'Configuration loaded' };
+    } else {
+      checks.configuration = { status: 'fail', message: 'Missing configuration values' };
+    }
   } catch (error) {
-    checks.api_call = {
-      status: 'fail',
-      message: error instanceof Error ? error.message : 'API call failed',
+    checks.configuration = { 
+      status: 'fail', 
+      message: `Configuration error: ${error instanceof Error ? error.message : 'Unknown error'}` 
     };
   }
 
-  // Determine overall status
-  const allPassed = Object.values(checks).every((check) => check.status === 'pass');
+  const allHealthy = Object.values(checks).every(check => check.status === 'pass');
 
   return {
-    status: allPassed ? 'healthy' : 'unhealthy',
+    status: allHealthy ? 'healthy' : 'unhealthy',
     checks,
   };
 }
+
+// Export all tools
+export const marketDataTools: MCPTool[] = [
+  getTickerTool,
+  getOrderBookTool,
+  get24hStatsTool,
+  testConnectivityTool,
+  testAuthenticationTool,
+  getActiveSymbolsTool,
+];

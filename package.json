@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "encore run",
     "build": "encore build",
-    "test": "bun test",
+    "test": "vitest",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
     "test:mexc": "bun run test-mexc-api.ts",

@@ -1,3 +1,4 @@
 {
-  "id": "mexc-mcp-server"
+	"id":   "mexc-mcp-server-voh2",
+	"lang": "typescript"
 }

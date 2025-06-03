@@ -1,6 +1,9 @@
 /**
  * Configuration management for MEXC MCP Server
+ * Uses Encore.ts secrets for secure credential management
  */
+
+// Secrets will be imported dynamically when needed
 
 export interface ServerConfig {
   mexc: {
@@ -43,11 +46,31 @@ function getEnvNumber(key: string, defaultValue: number): number {
   return parsed;
 }
 
-export function loadConfig(): ServerConfig {
-  return {
-    mexc: {
+async function getMexcCredentials(): Promise<{ apiKey: string; secretKey: string }> {
+  try {
+    // Try to import secrets dynamically (only works in Encore service context)
+    const { getMexcCredentials } = await import('./secrets');
+    return getMexcCredentials();
+  } catch (error) {
+    // Fallback to environment variables for local development
+    return {
       apiKey: getEnvVar('MEXC_API_KEY'),
       secretKey: getEnvVar('MEXC_SECRET_KEY'),
+    };
+  }
+}
+
+export function loadConfig(): ServerConfig {
+  // Use environment variables as primary source, secrets as fallback in services
+  const mexcCredentials = {
+    apiKey: getEnvVar('MEXC_API_KEY'),
+    secretKey: getEnvVar('MEXC_SECRET_KEY'),
+  };
+
+  return {
+    mexc: {
+      apiKey: mexcCredentials.apiKey,
+      secretKey: mexcCredentials.secretKey,
       baseUrl: getEnvVar('MEXC_BASE_URL', 'https://api.mexc.com'),
       websocketUrl: getEnvVar('MEXC_WEBSOCKET_URL', 'wss://wbs.mexc.com/ws'),
     },

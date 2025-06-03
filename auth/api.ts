@@ -7,7 +7,8 @@ import {
 } from './auth.js';
 
 import { authHandler } from 'encore.dev/auth';
-import { hasMexcCredentials } from '../shared/secrets.js';
+// import { config } from '../shared/config.js'; // Disabled for service-specific config
+// import { hasMexcCredentials } from '../shared/secrets.js'; // Disabled for now
 
 // Auth handler interface
 interface AuthParams {
@@ -105,7 +106,7 @@ export const testMexcCredentials = api(
   { expose: true, method: 'GET', path: '/auth/test-mexc' },
   async (): Promise<{ hasCredentials: boolean; message: string }> => {
     try {
-      const hasCredentials = hasMexcCredentials();
+      const hasCredentials = !!(process.env.MEXC_API_KEY && process.env.MEXC_SECRET_KEY);
 
       return {
         hasCredentials,
