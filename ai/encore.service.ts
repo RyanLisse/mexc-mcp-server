@@ -36,7 +36,7 @@ export const aiService = {
    */
   generateObject: async <T>(
     prompt: string,
-    schema: any,
+    schema: Record<string, unknown>,
     description?: string
   ): Promise<GeminiObjectResponse<T>> => {
     return geminiClient.generateObject<T>(prompt, schema, description);

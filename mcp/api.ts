@@ -326,13 +326,13 @@ export const multiAnalysis = api(
       let successfulAnalyses = 0;
       let failedAnalyses = 0;
 
-      Object.values(results).forEach((result) => {
+      for (const result of Object.values(results)) {
         if (result.success) {
           successfulAnalyses++;
         } else {
           failedAnalyses++;
         }
-      });
+      }
 
       const overallSuccess = successfulAnalyses > 0;
 
@@ -377,7 +377,7 @@ export const getServiceHealth = api(
     try {
       const health = mcpService.getServiceHealth();
       return health;
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'unhealthy',
         budgetStatus: undefined,
@@ -453,12 +453,12 @@ export const quickRiskScore = api(
 
       // Calculate volatility risk based on price changes
       let volatilityRisk = 0;
-      portfolio.forEach((asset) => {
+      for (const asset of portfolio) {
         if (asset.entryPrice) {
           const priceChange = Math.abs(asset.currentPrice - asset.entryPrice) / asset.entryPrice;
           volatilityRisk += priceChange;
         }
-      });
+      }
       volatilityRisk = volatilityRisk / portfolio.length; // Average volatility
 
       // Calculate overall risk score (0-100)
@@ -1119,7 +1119,13 @@ export const portfolioRiskAssessment = api(
  */
 export interface TradingToolsRequest {
   /** Trading tool action to perform */
-  action: 'position_sizing' | 'stop_loss' | 'take_profit' | 'risk_reward' | 'technical_analysis' | 'market_conditions';
+  action:
+    | 'position_sizing'
+    | 'stop_loss'
+    | 'take_profit'
+    | 'risk_reward'
+    | 'technical_analysis'
+    | 'market_conditions';
   /** Trading symbol */
   symbol: string & MinLen<1>;
   /** Account balance in USD */
@@ -1282,10 +1288,12 @@ export const tradingTools = api(
     analysisDepth = 'standard',
   }: TradingToolsRequest): Promise<TradingToolsResponse> => {
     const startTime = Date.now();
+    
+    // Note: mexcFeatures parameter available for future MEXC-specific optimizations
 
     try {
       // Validate input
-      if (\!symbol || \!action) {
+      if (!symbol || !action) {
         return {
           success: false,
           error: 'Symbol and action are required',
@@ -1297,7 +1305,7 @@ export const tradingTools = api(
         };
       }
 
-      if (accountBalance \!== undefined && accountBalance <= 0) {
+      if (accountBalance !== undefined && accountBalance <= 0) {
         return {
           success: false,
           error: 'Account balance must be positive',
@@ -1309,7 +1317,7 @@ export const tradingTools = api(
         };
       }
 
-      if (riskPerTrade \!== undefined && (riskPerTrade <= 0 || riskPerTrade > 1)) {
+      if (riskPerTrade !== undefined && (riskPerTrade <= 0 || riskPerTrade > 1)) {
         return {
           success: false,
           error: 'Risk per trade must be between 0 and 1',
@@ -1322,8 +1330,9 @@ export const tradingTools = api(
       }
 
       // Check risk operation allowance
-      const riskLevel = analysisDepth === 'quick' ? 'low' : analysisDepth === 'deep' ? 'high' : 'medium';
-      if (\!isAIOperationAllowed(riskLevel)) {
+      const riskLevel =
+        analysisDepth === 'quick' ? 'low' : analysisDepth === 'deep' ? 'high' : 'medium';
+      if (!isAIOperationAllowed(riskLevel)) {
         return {
           success: false,
           error: `Trading tools analysis not allowed for risk level: ${riskLevel}`,
@@ -1359,9 +1368,9 @@ export const tradingTools = api(
       );
 
       // Validate confidence
-      const confidenceValidated = result.confidence \!== undefined && result.confidence >= 0.7;
+      const confidenceValidated = result.confidence !== undefined && result.confidence >= 0.7;
 
-      if (\!confidenceValidated && result.success) {
+      if (!confidenceValidated && result.success) {
         logAndNotify(new Error(`Low confidence trading tools analysis: ${result.confidence}`), {
           action,
           symbol,
@@ -1407,4 +1416,3 @@ export const tradingTools = api(
     }
   }
 );
-EOF < /dev/null

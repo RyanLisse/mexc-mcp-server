@@ -23,7 +23,7 @@ export interface ChatRequest {
 
 export interface ObjectGenerationRequest {
   prompt: string & MinLen<1>;
-  schema: any; // JSON schema object
+  schema: Record<string, unknown>; // JSON schema object
   description?: string;
 }
 
@@ -61,7 +61,7 @@ export interface AIResponse {
 
 export interface ObjectResponse {
   success: boolean;
-  data?: any;
+  data?: Record<string, unknown>;
   error?: string;
   usage?: TokenUsage;
 }

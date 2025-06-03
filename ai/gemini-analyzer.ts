@@ -48,8 +48,23 @@ export interface CacheStats {
   totalEntries: number;
 }
 
+export interface MarketData {
+  symbol: string;
+  price?: number;
+  volume?: number;
+  prices?: number[];
+  [key: string]: unknown;
+}
+
+export interface TrendData {
+  symbol: string;
+  timeframe?: string;
+  dataPoints: unknown[];
+  [key: string]: unknown;
+}
+
 interface CacheEntry {
-  data: any;
+  data: Record<string, unknown>;
   timestamp: number;
   expiresAt: number;
 }
@@ -98,19 +113,20 @@ export class GeminiAnalyzer {
     }
   }
 
-  private generateCacheKey(method: string, data: any): string {
+  private generateCacheKey(method: string, data: Record<string, unknown>): string {
     const normalized = JSON.stringify(data, Object.keys(data).sort());
     return crypto.createHash('sha256').update(`${method}:${normalized}`).digest('hex');
   }
 
-  private isValidInput(data: any): boolean {
+  private isValidInput(data: unknown): data is MarketData {
     if (!data || typeof data !== 'object') return false;
-    if (!data.symbol || typeof data.symbol !== 'string' || data.symbol.trim() === '') return false;
-    if (typeof data.price === 'number' && data.price <= 0) return false;
+    const obj = data as Record<string, unknown>;
+    if (!obj.symbol || typeof obj.symbol !== 'string' || obj.symbol.trim() === '') return false;
+    if (typeof obj.price === 'number' && obj.price <= 0) return false;
     return true;
   }
 
-  private getFromCache(key: string): any | null {
+  private getFromCache(key: string): Record<string, unknown> | null {
     const entry = this.cache.get(key);
     if (!entry) {
       this.cacheStats.misses++;
@@ -127,7 +143,7 @@ export class GeminiAnalyzer {
     return entry.data;
   }
 
-  private setCache(key: string, data: any): void {
+  private setCache(key: string, data: Record<string, unknown>): void {
     const ttlMs = this.config.cacheTTLMinutes * 60 * 1000;
     const entry: CacheEntry = {
       data,
@@ -171,14 +187,14 @@ export class GeminiAnalyzer {
         if (i === attempts - 1) throw error;
 
         // Exponential backoff
-        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, i) * 1000));
+        await new Promise((resolve) => setTimeout(resolve, 2 ** i * 1000));
       }
     }
 
     throw new Error('Max retry attempts exceeded');
   }
 
-  async analyzeSentiment(data: any): Promise<AnalysisResult> {
+  async analyzeSentiment(data: MarketData): Promise<AnalysisResult> {
     if (!this.isValidInput(data)) {
       throw new Error('Invalid input data: symbol and valid price required');
     }
@@ -233,7 +249,7 @@ Provide sentiment analysis with confidence level and risk assessment.`;
     }
   }
 
-  async performTechnicalAnalysis(marketData: any): Promise<MarketAnalysis> {
+  async performTechnicalAnalysis(marketData: MarketData): Promise<MarketAnalysis> {
     if (!marketData || !marketData.symbol) {
       throw new Error('Invalid market data: symbol required');
     }
@@ -273,7 +289,7 @@ Analyze price action, volume patterns, momentum, and identify key support/resist
     return result.data as MarketAnalysis;
   }
 
-  async assessRisk(position: any): Promise<AnalysisResult> {
+  async assessRisk(position: MarketData): Promise<AnalysisResult> {
     if (!this.isValidInput(position)) {
       throw new Error('Invalid position data');
     }
@@ -317,7 +333,7 @@ Evaluate market conditions, position size, volatility, and provide risk level wi
     return analysisResult;
   }
 
-  async analyzeTrend(trendData: any): Promise<MarketAnalysis> {
+  async analyzeTrend(trendData: TrendData): Promise<MarketAnalysis> {
     if (!trendData || !trendData.symbol || !Array.isArray(trendData.dataPoints)) {
       throw new Error('Invalid trend data: symbol and dataPoints array required');
     }
@@ -410,11 +426,11 @@ Determine trend direction and strength.`;
   }
 
   // Alias methods to match test expectations
-  async analyzeTechnical(marketData: any): Promise<MarketAnalysis> {
+  async analyzeTechnical(marketData: MarketData): Promise<MarketAnalysis> {
     return this.performTechnicalAnalysis(marketData);
   }
 
-  async analyzeRisk(position: any): Promise<AnalysisResult> {
+  async analyzeRisk(position: MarketData): Promise<AnalysisResult> {
     return this.assessRisk(position);
   }
 

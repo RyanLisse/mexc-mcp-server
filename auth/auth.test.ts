@@ -159,7 +159,7 @@ describe('Authentication Module', () => {
     it('rejects non-string secret key', () => {
       const invalidCredentials = {
         apiKey: 'mx0vABCD-1234-5678-90EF',
-        secretKey: 123 as any, // Invalid type
+        secretKey: 123 as unknown as string, // Invalid type
       };
 
       const result = validateApiCredentials(invalidCredentials);

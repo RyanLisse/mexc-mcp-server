@@ -17,7 +17,7 @@ describe('Trading Tools Structure - Task #28', () => {
         symbol: '',
         accountBalance: 10000,
       });
-      
+
       expect(result1.success).toBe(false);
       expect(result1.error).toContain('Symbol and action are required');
     });
@@ -28,7 +28,7 @@ describe('Trading Tools Structure - Task #28', () => {
         symbol: 'BTCUSDT',
         accountBalance: -1000,
       });
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Account balance must be a positive number');
     });
@@ -40,7 +40,7 @@ describe('Trading Tools Structure - Task #28', () => {
         accountBalance: 10000,
         riskPerTrade: 2, // Invalid: > 1 (100%)
       });
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Risk per trade must be between 0 and 1');
     });
@@ -48,11 +48,11 @@ describe('Trading Tools Structure - Task #28', () => {
     it('should have all required trading actions available', () => {
       const validActions = [
         'position_sizing',
-        'stop_loss', 
+        'stop_loss',
         'take_profit',
         'risk_reward',
         'technical_analysis',
-        'market_conditions'
+        'market_conditions',
       ];
 
       // Verify mcpTradingToolsService supports all actions
@@ -61,7 +61,7 @@ describe('Trading Tools Structure - Task #28', () => {
       expect(mcpTradingToolsService.performTradingToolsAnalysis).toBeDefined();
 
       // Test that schemas exist for all actions
-      validActions.forEach(action => {
+      validActions.forEach((action) => {
         const schema = mcpTradingToolsService.getTradingToolsSchema(action);
         expect(schema).toBeDefined();
         expect(typeof schema).toBe('object');
@@ -79,7 +79,7 @@ describe('Trading Tools Structure - Task #28', () => {
 
       // Should attempt to call the service and fail gracefully without API
       const result = await mcpIntegrationService.tradingTools(request);
-      
+
       // Structure should be correct even if AI call fails
       expect(result).toBeDefined();
       expect(typeof result.success).toBe('boolean');
@@ -100,7 +100,7 @@ describe('Trading Tools Structure - Task #28', () => {
       };
 
       const result = await mcpIntegrationService.tradingTools(requestWithMEXC);
-      
+
       // Should accept MEXC features without error
       expect(result).toBeDefined();
       expect(typeof result.success).toBe('boolean');
@@ -110,7 +110,7 @@ describe('Trading Tools Structure - Task #28', () => {
   describe('Service Integration', () => {
     it('should reflect trading tools in service capabilities', () => {
       const serviceInfo = mcpIntegrationService.getServiceInfo();
-      
+
       expect(serviceInfo.success).toBe(true);
       expect(serviceInfo.data?.availableEndpoints).toContain('tradingTools');
       expect(serviceInfo.data?.implementedFeatures).toContain('Trading Tools (Task #28)');
@@ -120,13 +120,13 @@ describe('Trading Tools Structure - Task #28', () => {
       // Verify all required methods exist
       expect(mcpTradingToolsService.performTradingToolsAnalysis).toBeDefined();
       expect(typeof mcpTradingToolsService.performTradingToolsAnalysis).toBe('function');
-      
+
       expect(mcpTradingToolsService.buildTradingToolsPrompt).toBeDefined();
       expect(typeof mcpTradingToolsService.buildTradingToolsPrompt).toBe('function');
-      
+
       expect(mcpTradingToolsService.getTradingToolsSchema).toBeDefined();
       expect(typeof mcpTradingToolsService.getTradingToolsSchema).toBe('function');
-      
+
       expect(mcpTradingToolsService.enhanceTradingToolsWithMEXC).toBeDefined();
       expect(typeof mcpTradingToolsService.enhanceTradingToolsWithMEXC).toBe('function');
     });
@@ -138,7 +138,7 @@ describe('Trading Tools Structure - Task #28', () => {
         'market_conditions',
         'stop_loss',
         'take_profit',
-        'risk_reward'
+        'risk_reward',
       ];
 
       const sampleData = {
@@ -148,12 +148,12 @@ describe('Trading Tools Structure - Task #28', () => {
         currentPrice: 50000,
       };
 
-      actions.forEach(action => {
+      actions.forEach((action) => {
         const prompt = mcpTradingToolsService.buildTradingToolsPrompt(
           { ...sampleData, action: action as any },
           'standard'
         );
-        
+
         expect(prompt).toBeDefined();
         expect(typeof prompt).toBe('string');
         expect(prompt.length).toBeGreaterThan(100); // Should be comprehensive
@@ -166,10 +166,10 @@ describe('Trading Tools Structure - Task #28', () => {
   describe('Schema Validation', () => {
     it('should have proper schema structure for position sizing', () => {
       const schema = mcpTradingToolsService.getTradingToolsSchema('position_sizing');
-      
+
       expect(schema).toBeDefined();
       expect(schema._def).toBeDefined(); // Zod schema
-      
+
       // Test schema structure by attempting to parse sample data
       const sampleValidData = {
         confidence: 0.8,
@@ -184,11 +184,13 @@ describe('Trading Tools Structure - Task #28', () => {
           takeProfitPrice: 55000,
           riskRewardRatio: 2.5,
         },
-        recommendations: [{
-          type: 'position_size',
-          priority: 'high' as const,
-          description: 'Test recommendation',
-        }],
+        recommendations: [
+          {
+            type: 'position_size',
+            priority: 'high' as const,
+            description: 'Test recommendation',
+          },
+        ],
       };
 
       expect(() => schema.parse(sampleValidData)).not.toThrow();
@@ -196,28 +198,32 @@ describe('Trading Tools Structure - Task #28', () => {
 
     it('should have proper schema structure for technical analysis', () => {
       const schema = mcpTradingToolsService.getTradingToolsSchema('technical_analysis');
-      
+
       expect(schema).toBeDefined();
-      
+
       const sampleValidData = {
         confidence: 0.7,
         technicalAnalysis: {
           trendDirection: 'bullish' as const,
           strength: 0.8,
-          signals: [{
-            type: 'buy_signal',
-            strength: 0.9,
-            description: 'Strong bullish signal',
-          }],
+          signals: [
+            {
+              type: 'buy_signal',
+              strength: 0.9,
+              description: 'Strong bullish signal',
+            },
+          ],
           supportLevels: [48000, 47000],
           resistanceLevels: [52000, 55000],
           timeframeBias: 'bullish_1h',
         },
-        recommendations: [{
-          type: 'entry',
-          priority: 'high' as const,
-          description: 'Enter long position',
-        }],
+        recommendations: [
+          {
+            type: 'entry',
+            priority: 'high' as const,
+            description: 'Enter long position',
+          },
+        ],
       };
 
       expect(() => schema.parse(sampleValidData)).not.toThrow();
@@ -225,9 +231,9 @@ describe('Trading Tools Structure - Task #28', () => {
 
     it('should have proper schema structure for market conditions', () => {
       const schema = mcpTradingToolsService.getTradingToolsSchema('market_conditions');
-      
+
       expect(schema).toBeDefined();
-      
+
       const sampleValidData = {
         confidence: 0.75,
         marketConditions: {
@@ -237,11 +243,13 @@ describe('Trading Tools Structure - Task #28', () => {
           trendStrength: 0.7,
           timeframeBias: 'bullish_trend',
         },
-        recommendations: [{
-          type: 'strategy',
-          priority: 'medium' as const,
-          description: 'Favor trend-following strategies',
-        }],
+        recommendations: [
+          {
+            type: 'strategy',
+            priority: 'medium' as const,
+            description: 'Favor trend-following strategies',
+          },
+        ],
       };
 
       expect(() => schema.parse(sampleValidData)).not.toThrow();
@@ -249,11 +257,11 @@ describe('Trading Tools Structure - Task #28', () => {
 
     it('should have proper schema structure for risk management actions', () => {
       const riskActions = ['stop_loss', 'take_profit', 'risk_reward'];
-      
-      riskActions.forEach(action => {
+
+      riskActions.forEach((action) => {
         const schema = mcpTradingToolsService.getTradingToolsSchema(action);
         expect(schema).toBeDefined();
-        
+
         const sampleValidData = {
           confidence: 0.8,
           riskManagement: {
@@ -263,11 +271,13 @@ describe('Trading Tools Structure - Task #28', () => {
             riskAmount: 200,
             potentialProfit: 500,
           },
-          recommendations: [{
-            type: 'risk_management',
-            priority: 'high' as const,
-            description: 'Maintain strict risk management',
-          }],
+          recommendations: [
+            {
+              type: 'risk_management',
+              priority: 'high' as const,
+              description: 'Maintain strict risk management',
+            },
+          ],
         };
 
         expect(() => schema.parse(sampleValidData)).not.toThrow();
@@ -333,7 +343,7 @@ describe('Trading Tools Structure - Task #28', () => {
       };
 
       const result = await mcpIntegrationService.tradingTools(invalidRequest);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
       expect(typeof result.error).toBe('string');
@@ -345,7 +355,12 @@ describe('Trading Tools Structure - Task #28', () => {
       const invalidRequests = [
         { action: 'position_sizing' as const, symbol: '', accountBalance: 10000 },
         { action: 'position_sizing' as const, symbol: 'BTCUSDT', accountBalance: -1000 },
-        { action: 'position_sizing' as const, symbol: 'BTCUSDT', accountBalance: 10000, riskPerTrade: 2 },
+        {
+          action: 'position_sizing' as const,
+          symbol: 'BTCUSDT',
+          accountBalance: 10000,
+          riskPerTrade: 2,
+        },
       ];
 
       for (const request of invalidRequests) {
@@ -360,8 +375,8 @@ describe('Trading Tools Structure - Task #28', () => {
   describe('Analysis Depth Configuration', () => {
     it('should support all analysis depths', () => {
       const depths = ['quick', 'standard', 'comprehensive', 'deep'];
-      
-      depths.forEach(depth => {
+
+      depths.forEach((depth) => {
         const prompt = mcpTradingToolsService.buildTradingToolsPrompt(
           {
             action: 'position_sizing',
@@ -370,7 +385,7 @@ describe('Trading Tools Structure - Task #28', () => {
           },
           depth
         );
-        
+
         expect(prompt).toContain(`Analysis Depth: ${depth}`);
       });
     });
@@ -386,7 +401,7 @@ describe('Trading Tools Structure - Task #28', () => {
 
       const quickPrompt = mcpTradingToolsService.buildTradingToolsPrompt(baseData, 'quick');
       const deepPrompt = mcpTradingToolsService.buildTradingToolsPrompt(baseData, 'deep');
-      
+
       // Both should contain depth information
       expect(quickPrompt).toContain('Analysis Depth: quick');
       expect(deepPrompt).toContain('Analysis Depth: deep');

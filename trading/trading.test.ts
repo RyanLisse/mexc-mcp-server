@@ -42,7 +42,7 @@ interface BatchOrderArgs {
 }
 
 // Simple validation helpers (replacing Zod schemas)
-function validatePlaceOrder(data: any): { success: boolean; errors: string[] } {
+function validatePlaceOrder(data: Record<string, unknown>): { success: boolean; errors: string[] } {
   const errors: string[] = [];
 
   if (!data || !data.symbol || typeof data.symbol !== 'string') {
@@ -77,7 +77,10 @@ function validatePlaceOrder(data: any): { success: boolean; errors: string[] } {
   return { success: errors.length === 0, errors };
 }
 
-function validateCancelOrder(data: any): { success: boolean; errors: string[] } {
+function validateCancelOrder(data: Record<string, unknown>): {
+  success: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
   if (!data.symbol || typeof data.symbol !== 'string') {

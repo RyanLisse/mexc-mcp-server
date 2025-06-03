@@ -4,20 +4,18 @@
  * TDD Implementation - Comprehensive validation tests
  */
 
-import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { mcpIntegrationService } from '../services/mcpIntegration';
-import { mcpAnalysisService } from '../services/mcpAnalysis';
-import { mcpRiskService } from '../services/mcpRisk';
-import { mcpTradingToolsService } from '../services/mcpTradingTools';
-import { mcpCoreService } from '../services/mcpCore';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { geminiAnalyzer } from '../../ai/gemini-analyzer';
 import { geminiClient } from '../../ai/gemini-client';
 import type { AIAnalysisResult, AnalysisType } from '../../shared/types/ai-types';
+import { mcpAnalysisService } from '../services/mcpAnalysis';
+import { mcpCoreService } from '../services/mcpCore';
+import { mcpIntegrationService } from '../services/mcpIntegration';
+import { mcpRiskService } from '../services/mcpRisk';
+import { mcpTradingToolsService } from '../services/mcpTradingTools';
 
 describe('Comprehensive AI Integration Test Suite - Task #29', () => {
-  
   describe('GeminiAnalyzer Core Functionality', () => {
-    
     describe('Initialization and Configuration', () => {
       it('should initialize GeminiAnalyzer with correct configuration', () => {
         expect(geminiAnalyzer).toBeDefined();
@@ -57,8 +55,8 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
       const analysisTypes: AnalysisType[] = ['sentiment', 'technical', 'risk', 'trend'];
       const depths = ['quick', 'standard', 'comprehensive', 'deep'] as const;
 
-      analysisTypes.forEach(analysisType => {
-        depths.forEach(depth => {
+      analysisTypes.forEach((analysisType) => {
+        depths.forEach((depth) => {
           it(`should support ${depth} analysis for ${analysisType}`, async () => {
             const mockData = {
               symbol: testSymbol,
@@ -68,8 +66,8 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
 
             // This will likely fail due to API keys, but structure should be correct
             const result = await mcpAnalysisService.performMarketAnalysis(
-              mockData, 
-              analysisType, 
+              mockData,
+              analysisType,
               depth
             );
 
@@ -125,7 +123,6 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
   });
 
   describe('API Endpoint Comprehensive Testing', () => {
-    
     describe('Market Analysis Endpoint (/mcp/ai-market-analysis)', () => {
       it('should validate all required parameters', async () => {
         const invalidRequests = [
@@ -190,7 +187,7 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
           currentPrice: 3000,
           entryPrice: 2800,
           assetType: 'crypto' as const,
-        }
+        },
       ];
 
       it('should validate portfolio requirements', async () => {
@@ -255,8 +252,18 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
 
       it('should validate portfolio allocation weights', async () => {
         const invalidAllocations = [
-          { portfolio: [{ symbol: 'BTCUSDT', allocation: 0.7 }, { symbol: 'ETHUSDT', allocation: 0.5 }] }, // Sum > 1
-          { portfolio: [{ symbol: 'BTCUSDT', allocation: 0.3 }, { symbol: 'ETHUSDT', allocation: 0.3 }] }, // Sum < 1
+          {
+            portfolio: [
+              { symbol: 'BTCUSDT', allocation: 0.7 },
+              { symbol: 'ETHUSDT', allocation: 0.5 },
+            ],
+          }, // Sum > 1
+          {
+            portfolio: [
+              { symbol: 'BTCUSDT', allocation: 0.3 },
+              { symbol: 'ETHUSDT', allocation: 0.3 },
+            ],
+          }, // Sum < 1
         ];
 
         for (const invalid of invalidAllocations) {
@@ -285,7 +292,7 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
 
       it('should automatically configure MEXC parameters', async () => {
         const result = await mcpIntegrationService.strategyOptimizer(validStrategy);
-        
+
         // Should include MEXC-specific processing internally
         expect(result).toBeDefined();
         expect(result.serviceVersion).toBe('mcp-integration-v1.0');
@@ -301,11 +308,11 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
       it('should support all trading tool actions', async () => {
         const actions = [
           'position_sizing',
-          'stop_loss', 
+          'stop_loss',
           'take_profit',
           'risk_reward',
           'technical_analysis',
-          'market_conditions'
+          'market_conditions',
         ] as const;
 
         for (const action of actions) {
@@ -352,7 +359,6 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
   });
 
   describe('Encore.ts Validation Compliance', () => {
-    
     it('should follow Encore.ts API standards for all endpoints', () => {
       // Check that services are properly structured
       expect(mcpIntegrationService).toBeDefined();
@@ -366,12 +372,18 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
       const services = [
         () => mcpIntegrationService.aiMarketAnalysis({ symbol: '', analysisType: 'sentiment' }),
         () => mcpIntegrationService.riskAssessment({ portfolio: [], totalValue: 10000 }),
-        () => mcpIntegrationService.strategyOptimizer({ 
-          portfolio: [], 
-          objectiveFunction: 'sharpe_ratio', 
-          constraints: {} 
-        }),
-        () => mcpIntegrationService.tradingTools({ action: 'position_sizing', symbol: '', accountBalance: 10000 }),
+        () =>
+          mcpIntegrationService.strategyOptimizer({
+            portfolio: [],
+            objectiveFunction: 'sharpe_ratio',
+            constraints: {},
+          }),
+        () =>
+          mcpIntegrationService.tradingTools({
+            action: 'position_sizing',
+            symbol: '',
+            accountBalance: 10000,
+          }),
       ];
 
       for (const serviceCall of services) {
@@ -394,7 +406,7 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
       expect(result).toHaveProperty('timestamp');
       expect(result).toHaveProperty('serviceVersion');
       expect(result).toHaveProperty('processingTimeMs');
-      
+
       if (!result.success) {
         expect(result).toHaveProperty('error');
       }
@@ -402,7 +414,6 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
   });
 
   describe('Streaming Analysis Functionality', () => {
-    
     it('should support streaming analysis capabilities', () => {
       // Check that streaming infrastructure exists
       expect(mcpAnalysisService.performMultiAnalysis).toBeDefined();
@@ -436,7 +447,6 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
   });
 
   describe('Error Handling Scenarios', () => {
-    
     it('should handle network timeouts gracefully', async () => {
       // Test with very quick timeout to simulate network issues
       const result = await mcpIntegrationService.aiMarketAnalysis({
@@ -492,7 +502,6 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
   });
 
   describe('AI Model Integration', () => {
-    
     it('should have proper Vercel AI SDK integration', () => {
       expect(geminiClient).toBeDefined();
       expect(typeof geminiClient.generateText).toBe('function');
@@ -516,11 +525,13 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
           riskPercentage: 0.02,
           leverageRecommendation: 2,
         },
-        recommendations: [{
-          type: 'position_size',
-          priority: 'high' as const,
-          description: 'Test recommendation',
-        }],
+        recommendations: [
+          {
+            type: 'position_size',
+            priority: 'high' as const,
+            description: 'Test recommendation',
+          },
+        ],
       };
 
       const schema = mcpTradingToolsService.getTradingToolsSchema('position_sizing');
@@ -534,20 +545,21 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
   });
 
   describe('Performance and Load Testing', () => {
-    
     it('should handle concurrent requests', async () => {
-      const concurrentRequests = Array(3).fill(null).map(() => 
-        mcpIntegrationService.aiMarketAnalysis({
-          symbol: 'BTCUSDT',
-          analysisType: 'sentiment',
-          depth: 'quick',
-        })
-      );
+      const concurrentRequests = Array(3)
+        .fill(null)
+        .map(() =>
+          mcpIntegrationService.aiMarketAnalysis({
+            symbol: 'BTCUSDT',
+            analysisType: 'sentiment',
+            depth: 'quick',
+          })
+        );
 
       const results = await Promise.allSettled(concurrentRequests);
-      
+
       expect(results).toHaveLength(3);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.status).toBe('fulfilled');
         if (result.status === 'fulfilled') {
           expect(result.value).toBeDefined();
@@ -558,16 +570,16 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
 
     it('should have reasonable response times', async () => {
       const startTime = Date.now();
-      
+
       const result = await mcpIntegrationService.aiMarketAnalysis({
         symbol: 'BTCUSDT',
         analysisType: 'sentiment',
         depth: 'quick',
       });
-      
+
       const endTime = Date.now();
       const responseTime = endTime - startTime;
-      
+
       expect(result).toBeDefined();
       expect(responseTime).toBeLessThan(30000); // Should complete within 30 seconds
     });
@@ -585,10 +597,9 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
   });
 
   describe('Service Health and Monitoring', () => {
-    
     it('should provide unified health status', () => {
       const health = mcpIntegrationService.getUnifiedHealth();
-      
+
       expect(health.success).toBe(true);
       expect(health.data).toBeDefined();
       expect(health.serviceVersion).toBe('mcp-integration-v1.0');
@@ -596,7 +607,7 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
 
     it('should support environment reset functionality', () => {
       const result = mcpIntegrationService.resetEnvironment();
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       expect(result.serviceVersion).toBe('mcp-integration-v1.0');
@@ -604,7 +615,7 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
 
     it('should provide comprehensive service information', () => {
       const serviceInfo = mcpIntegrationService.getServiceInfo();
-      
+
       expect(serviceInfo.success).toBe(true);
       expect(serviceInfo.data?.availableEndpoints).toContain('aiMarketAnalysis');
       expect(serviceInfo.data?.availableEndpoints).toContain('riskAssessment');
@@ -614,7 +625,6 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
   });
 
   describe('Integration with Existing Systems', () => {
-    
     it('should maintain compatibility with MCP protocol', () => {
       // Verify that all services follow MCP patterns
       expect(mcpIntegrationService.getServiceInfo).toBeDefined();
@@ -636,7 +646,7 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
 
     it('should support all implemented AI features', () => {
       const serviceInfo = mcpIntegrationService.getServiceInfo();
-      
+
       const expectedFeatures = [
         'AI Market Analysis (Task #24)',
         'Risk Assessment (Task #26)',
@@ -644,7 +654,7 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
         'Trading Tools (Task #28)',
       ];
 
-      expectedFeatures.forEach(feature => {
+      expectedFeatures.forEach((feature) => {
         expect(serviceInfo.data?.implementedFeatures).toContain(feature);
       });
     });

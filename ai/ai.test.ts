@@ -171,7 +171,7 @@ describe('Gemini AI Integration', () => {
     });
 
     it('should handle malformed chat messages', async () => {
-      const invalidMessages = [{ role: 'invalid' as any, content: 'test' }];
+      const invalidMessages = [{ role: 'invalid' as 'user', content: 'test' }];
 
       const result = await client.chat(invalidMessages);
       expect(result.success).toBe(false);

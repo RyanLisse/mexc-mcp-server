@@ -174,7 +174,7 @@ export class GeminiClient {
    */
   async generateObject<T>(
     prompt: string,
-    schema: any,
+    schema: Record<string, unknown>,
     description?: string
   ): Promise<GeminiObjectResponse<T>> {
     try {
