@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it } from 'bun:test';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  APICredentialsSchema,
   AuthenticationError,
   RateLimiter,
   authenticateUser,
+  validateApiCredentials,
   validateApiKey,
+  validateMexcApiKeyFormat,
 } from './auth';
 
 describe('Authentication Module', () => {
@@ -102,15 +103,15 @@ describe('Authentication Module', () => {
     });
   });
 
-  describe('API Credentials Schema', () => {
+  describe('API Credentials Validation', () => {
     it('validates complete API credentials', () => {
       const validCredentials = {
         apiKey: 'mx0vABCD-1234-5678-90EF',
         secretKey: 'a'.repeat(32), // 32 character secret key
       };
 
-      const result = APICredentialsSchema.safeParse(validCredentials);
-      expect(result.success).toBe(true);
+      const result = validateApiCredentials(validCredentials);
+      expect(result).toBeNull(); // No validation errors
     });
 
     it('rejects short secret key', () => {
@@ -119,8 +120,8 @@ describe('Authentication Module', () => {
         secretKey: 'short', // Too short
       };
 
-      const result = APICredentialsSchema.safeParse(invalidCredentials);
-      expect(result.success).toBe(false);
+      const result = validateApiCredentials(invalidCredentials);
+      expect(result).toBe('Secret key must be at least 32 characters');
     });
 
     it('rejects invalid API key in credentials', () => {
@@ -129,8 +130,40 @@ describe('Authentication Module', () => {
         secretKey: 'a'.repeat(32),
       };
 
-      const result = APICredentialsSchema.safeParse(invalidCredentials);
-      expect(result.success).toBe(false);
+      const result = validateApiCredentials(invalidCredentials);
+      expect(result).toBe('Invalid MEXC API key format');
+    });
+
+    it('validates MEXC API key format directly', () => {
+      expect(validateMexcApiKeyFormat('mx0vABCD-1234-5678-90EF')).toBe(true);
+      expect(validateMexcApiKeyFormat('invalid-format')).toBe(false);
+      expect(validateMexcApiKeyFormat('abc0vABCD-1234-5678-90EF')).toBe(false);
+      expect(validateMexcApiKeyFormat('mx0vABCD123456789')).toBe(false);
+    });
+
+    it('validates partial credentials for API key only', () => {
+      const partialCredentials = {
+        apiKey: 'mx0vABCD-1234-5678-90EF',
+      };
+
+      const result = validateApiCredentials(partialCredentials);
+      expect(result).toBeNull(); // No validation errors
+    });
+
+    it('rejects missing API key', () => {
+      const emptyCredentials = {};
+      const result = validateApiCredentials(emptyCredentials);
+      expect(result).toBe('API key is required and must be a string');
+    });
+
+    it('rejects non-string secret key', () => {
+      const invalidCredentials = {
+        apiKey: 'mx0vABCD-1234-5678-90EF',
+        secretKey: 123 as any, // Invalid type
+      };
+
+      const result = validateApiCredentials(invalidCredentials);
+      expect(result).toBe('Secret key must be a string');
     });
   });
 

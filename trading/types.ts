@@ -3,12 +3,7 @@
  * TypeScript interfaces for trading operations
  */
 
-import type { 
-  OrderSideType, 
-  OrderTypeType, 
-  OrderStatusType, 
-  TimeInForceType 
-} from './schemas';
+import type { OrderSideType, OrderStatusType, OrderTypeType, TimeInForceType } from './schemas';
 
 /**
  * Order interface representing a trading order

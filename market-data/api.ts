@@ -30,9 +30,7 @@ export const getTicker = api(
 // Get order book endpoint
 export const getOrderBook = api(
   { expose: true, method: 'POST', path: '/market-data/order-book' },
-  async (
-    req: { symbol: string; limit?: number }
-  ): Promise<MarketDataResponse<OrderBookData>> => {
+  async (req: { symbol: string; limit?: number }): Promise<MarketDataResponse<OrderBookData>> => {
     return await executeGetOrderBook(req);
   }
 );
@@ -40,9 +38,7 @@ export const getOrderBook = api(
 // Get 24h stats endpoint
 export const get24hStats = api(
   { expose: true, method: 'POST', path: '/market-data/24h-stats' },
-  async (
-    req: { symbol?: string }
-  ): Promise<MarketDataResponse<Stats24hData[]>> => {
+  async (req: { symbol?: string }): Promise<MarketDataResponse<Stats24hData[]>> => {
     return await executeGet24hStats(req);
   }
 );

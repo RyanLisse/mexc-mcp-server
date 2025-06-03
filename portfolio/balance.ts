@@ -134,7 +134,7 @@ export class BalanceManager {
 
       // Filter by minimum value
       if (filter.minValue && filter.minValue > 0) {
-        filtered = filtered.filter((b) => Number(b.usdValue) >= filter.minValue!);
+        filtered = filtered.filter((b) => Number(b.usdValue) >= filter.minValue);
       }
 
       return filtered;
@@ -210,7 +210,6 @@ export class BalanceManager {
         balances.push(portfolioBalance);
       } catch (error) {
         console.warn(`Invalid balance data for ${balance.asset}:`, error);
-        continue;
       }
     }
 

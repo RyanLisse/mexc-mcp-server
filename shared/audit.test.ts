@@ -4,37 +4,6 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { APIGateway } from 'encore.dev/api';
-
-// Test interfaces for audit logging
-interface AuditLogEntry {
-  id: string;
-  timestamp: Date;
-  userId?: string;
-  apiKey: string;
-  operation: string;
-  endpoint: string;
-  httpMethod: string;
-  requestData?: Record<string, unknown>;
-  responseStatus: number;
-  responseData?: Record<string, unknown>;
-  errorMessage?: string;
-  durationMs: number;
-  ipAddress?: string;
-  userAgent?: string;
-}
-
-interface AuditLogQuery {
-  startDate?: Date;
-  endDate?: Date;
-  userId?: string;
-  apiKey?: string;
-  operation?: string;
-  endpoint?: string;
-  status?: 'success' | 'error';
-  limit?: number;
-  offset?: number;
-}
 
 describe('Audit Logging System - Task #4', () => {
   beforeEach(async () => {
@@ -134,9 +103,9 @@ describe('Audit Logging System - Task #4', () => {
       };
 
       // Act & Assert
-      await expect(AuditLogger.logRequest(invalidRequest as any)).rejects.toThrow(
-        'Missing required audit log fields'
-      );
+      await expect(
+        AuditLogger.logRequest(invalidRequest as Parameters<typeof AuditLogger.logRequest>[0])
+      ).rejects.toThrow('Missing required audit log fields');
     });
   });
 
@@ -157,9 +126,9 @@ describe('Audit Logging System - Task #4', () => {
       const logEntry = await AuditLogger.logRequest(testRequest);
 
       // Verify persistence by querying
-      const retrievedLogs = await getAuditLogs({ 
+      const retrievedLogs = await getAuditLogs({
         apiKey: testRequest.apiKey,
-        limit: 1 
+        limit: 1,
       });
 
       // Assert
@@ -171,7 +140,7 @@ describe('Audit Logging System - Task #4', () => {
     it('should handle database connection errors gracefully', async () => {
       // Arrange
       const { AuditLogger } = await import('./audit');
-      
+
       // Mock database failure
       // This test assumes we can inject a mock database connection
       const testRequest = {
@@ -196,7 +165,7 @@ describe('Audit Logging System - Task #4', () => {
       // Clear and seed test data
       const { AuditLogger, clearAuditLogs } = await import('./audit');
       clearAuditLogs();
-      
+
       const testRequests = [
         {
           apiKey: 'mx_user1_key',
@@ -239,7 +208,7 @@ describe('Audit Logging System - Task #4', () => {
 
       // Assert
       expect(logs).toHaveLength(2);
-      expect(logs.every(log => log.apiKey === 'mx_user1******')).toBe(true);
+      expect(logs.every((log) => log.apiKey === 'mx_user1******')).toBe(true);
     });
 
     it('should query audit logs by operation', async () => {
@@ -251,7 +220,7 @@ describe('Audit Logging System - Task #4', () => {
 
       // Assert
       expect(logs).toHaveLength(2);
-      expect(logs.every(log => log.operation === 'getTicker')).toBe(true);
+      expect(logs.every((log) => log.operation === 'getTicker')).toBe(true);
     });
 
     it('should query audit logs by status (success/error)', async () => {
@@ -264,10 +233,12 @@ describe('Audit Logging System - Task #4', () => {
 
       // Assert
       expect(successLogs.length).toBeGreaterThan(0);
-      expect(successLogs.every(log => log.responseStatus >= 200 && log.responseStatus < 400)).toBe(true);
-      
+      expect(
+        successLogs.every((log) => log.responseStatus >= 200 && log.responseStatus < 400)
+      ).toBe(true);
+
       expect(errorLogs.length).toBeGreaterThan(0);
-      expect(errorLogs.every(log => log.responseStatus >= 400)).toBe(true);
+      expect(errorLogs.every((log) => log.responseStatus >= 400)).toBe(true);
     });
 
     it('should support pagination with limit and offset', async () => {
@@ -291,16 +262,16 @@ describe('Audit Logging System - Task #4', () => {
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
       // Act
-      const recentLogs = await getAuditLogs({ 
+      const recentLogs = await getAuditLogs({
         startDate: oneHourAgo,
-        endDate: now 
+        endDate: now,
       });
 
       // Assert
       expect(recentLogs.length).toBeGreaterThan(0);
-      expect(recentLogs.every(log => 
-        log.timestamp >= oneHourAgo && log.timestamp <= now
-      )).toBe(true);
+      expect(recentLogs.every((log) => log.timestamp >= oneHourAgo && log.timestamp <= now)).toBe(
+        true
+      );
     });
   });
 
@@ -313,14 +284,14 @@ describe('Audit Logging System - Task #4', () => {
         operation: 'createApiKey',
         endpoint: '/api/v1/keys',
         httpMethod: 'POST',
-        requestData: { 
+        requestData: {
           description: 'Test key',
-          secretKey: 'very_secret_key_do_not_log' // Should be filtered
+          secretKey: 'very_secret_key_do_not_log', // Should be filtered
         },
         responseStatus: 201,
         responseData: {
           apiKey: 'mx_new_key_123',
-          secretKey: 'another_secret_do_not_log' // Should be filtered
+          secretKey: 'another_secret_do_not_log', // Should be filtered
         },
         durationMs: 250,
       };
@@ -391,13 +362,13 @@ describe('Audit Logging System - Task #4', () => {
 
       // Act
       const start = Date.now();
-      const promises = requests.map(req => AuditLogger.logRequest(req));
+      const promises = requests.map((req) => AuditLogger.logRequest(req));
       const results = await Promise.all(promises);
       const duration = Date.now() - start;
 
       // Assert
       expect(results).toHaveLength(50);
-      expect(results.every(result => result.id)).toBe(true);
+      expect(results.every((result) => result.id)).toBe(true);
       expect(duration).toBeLessThan(5000); // Should handle 50 concurrent logs within 5 seconds
     });
   });

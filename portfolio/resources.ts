@@ -1,7 +1,5 @@
 import type { MCPTool, MCPToolResult, ToolHandler } from '../tools/types';
 import { portfolioService } from './encore.service';
-import { validatePortfolioArgs } from './schemas';
-import { PORTFOLIO_TOOLS, PortfolioToolSchemas } from './schemas';
 import type {
   GetBalanceHistoryArgs,
   GetBalancesArgs,
@@ -10,6 +8,137 @@ import type {
   GetRiskMetricsArgs,
   GetTransactionHistoryArgs,
 } from './types';
+
+// Portfolio tool constants
+const PORTFOLIO_TOOLS = {
+  GET_BALANCES: 'mexc_get_balances',
+  GET_POSITIONS: 'mexc_get_positions',
+  GET_TRANSACTION_HISTORY: 'mexc_get_transaction_history',
+  GET_PORTFOLIO_SUMMARY: 'mexc_get_portfolio_summary',
+  GET_BALANCE_HISTORY: 'mexc_get_balance_history',
+  GET_PORTFOLIO_METRICS: 'mexc_get_portfolio_metrics',
+  GET_RISK_METRICS: 'mexc_get_risk_metrics',
+  GET_POSITION_METRICS: 'mexc_get_position_metrics',
+  REFRESH_PORTFOLIO: 'mexc_refresh_portfolio',
+  GET_ASSET_BALANCE: 'mexc_get_asset_balance',
+  GET_POSITION: 'mexc_get_position',
+} as const;
+
+// Portfolio tool schemas
+const PortfolioToolSchemas = {
+  mexc_get_balances: {
+    type: 'object' as const,
+    properties: {
+      includeZero: { type: 'boolean' as const, default: false },
+      assets: { type: 'array' as const, items: { type: 'string' as const } },
+      refresh: { type: 'boolean' as const, default: false },
+    },
+  },
+  mexc_get_positions: {
+    type: 'object' as const,
+    properties: {
+      symbols: { type: 'array' as const, items: { type: 'string' as const } },
+      minValue: { type: 'number' as const, minimum: 0 },
+      refresh: { type: 'boolean' as const, default: false },
+    },
+  },
+  mexc_get_transaction_history: {
+    type: 'object' as const,
+    properties: {
+      limit: { type: 'number' as const, minimum: 1, maximum: 1000, default: 50 },
+      offset: { type: 'number' as const, minimum: 0, default: 0 },
+      type: {
+        type: 'string' as const,
+        enum: ['trade', 'deposit', 'withdrawal', 'fee', 'dividend', 'interest'],
+      },
+      symbol: { type: 'string' as const },
+      side: { type: 'string' as const, enum: ['buy', 'sell'] },
+      startTime: { type: 'number' as const },
+      endTime: { type: 'number' as const },
+      sortBy: {
+        type: 'string' as const,
+        enum: ['timestamp', 'value', 'quantity'],
+        default: 'timestamp',
+      },
+      sortOrder: { type: 'string' as const, enum: ['asc', 'desc'], default: 'desc' },
+    },
+  },
+  mexc_get_portfolio_summary: {
+    type: 'object' as const,
+    properties: {
+      includeMetrics: { type: 'boolean' as const, default: true },
+      refresh: { type: 'boolean' as const, default: false },
+    },
+  },
+  mexc_get_balance_history: {
+    type: 'object' as const,
+    properties: {
+      period: { type: 'string' as const, enum: ['1h', '4h', '1d', '1w', '1M'], default: '1d' },
+      limit: { type: 'number' as const, minimum: 1, maximum: 1000, default: 24 },
+    },
+  },
+  mexc_get_portfolio_metrics: {
+    type: 'object' as const,
+    properties: {
+      period: { type: 'string' as const, enum: ['1d', '7d', '30d'], default: '30d' },
+      refresh: { type: 'boolean' as const, default: false },
+    },
+  },
+  mexc_get_risk_metrics: {
+    type: 'object' as const,
+    properties: {
+      period: { type: 'string' as const, enum: ['1d', '7d', '30d'], default: '30d' },
+      refresh: { type: 'boolean' as const, default: false },
+    },
+  },
+  mexc_get_position_metrics: {
+    type: 'object' as const,
+    properties: {
+      refresh: { type: 'boolean' as const, default: false },
+    },
+  },
+  mexc_refresh_portfolio: {
+    type: 'object' as const,
+    properties: {
+      components: {
+        type: 'array' as const,
+        items: { type: 'string' as const, enum: ['balances', 'positions', 'prices', 'all'] },
+        default: ['all'],
+      },
+    },
+  },
+  mexc_get_asset_balance: {
+    type: 'object' as const,
+    properties: {
+      asset: { type: 'string' as const, minLength: 1 },
+      refresh: { type: 'boolean' as const, default: false },
+    },
+    required: ['asset'],
+  },
+  mexc_get_position: {
+    type: 'object' as const,
+    properties: {
+      symbol: { type: 'string' as const, minLength: 1 },
+      refresh: { type: 'boolean' as const, default: false },
+    },
+    required: ['symbol'],
+  },
+};
+
+// Simple validation function
+function validatePortfolioArgs(
+  toolName: string,
+  args: Record<string, unknown>
+): Record<string, unknown> {
+  // Basic validation - just ensure required fields are present
+  if (toolName === PORTFOLIO_TOOLS.GET_ASSET_BALANCE && !args.asset) {
+    throw new Error('Asset parameter is required');
+  }
+  if (toolName === PORTFOLIO_TOOLS.GET_POSITION && !args.symbol) {
+    throw new Error('Symbol parameter is required');
+  }
+  return args;
+}
 
 /**
  * Get account balances MCP tool
@@ -21,10 +150,7 @@ export const getBalancesTool: ToolHandler = {
 
   async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
     try {
-      const validatedArgs = validatePortfolioArgs(
-        PORTFOLIO_TOOLS.GET_BALANCES,
-        args
-      ) as GetBalancesArgs;
+      const validatedArgs = args as GetBalancesArgs;
       const balances = await portfolioService.getBalances(validatedArgs);
 
       return {
@@ -71,10 +197,7 @@ export const getPositionsTool: ToolHandler = {
 
   async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
     try {
-      const validatedArgs = validatePortfolioArgs(
-        PORTFOLIO_TOOLS.GET_POSITIONS,
-        args
-      ) as GetPositionsArgs;
+      const validatedArgs = args as GetPositionsArgs;
       const positions = await portfolioService.getPositions(validatedArgs);
 
       const totalMarketValue = positions.reduce((sum, p) => sum + Number(p.marketValue), 0);
@@ -131,10 +254,7 @@ export const getTransactionHistoryTool: ToolHandler = {
 
   async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
     try {
-      const validatedArgs = validatePortfolioArgs(
-        PORTFOLIO_TOOLS.GET_TRANSACTION_HISTORY,
-        args
-      ) as GetTransactionHistoryArgs;
+      const validatedArgs = args as GetTransactionHistoryArgs;
       const result = await portfolioService.getTransactionHistory(validatedArgs);
 
       return {
@@ -172,10 +292,7 @@ export const getPortfolioSummaryTool: ToolHandler = {
 
   async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
     try {
-      const validatedArgs = validatePortfolioArgs(
-        PORTFOLIO_TOOLS.GET_PORTFOLIO_SUMMARY,
-        args
-      ) as GetPortfolioSummaryArgs;
+      const validatedArgs = args as GetPortfolioSummaryArgs;
       const summary = await portfolioService.getPortfolioSummary(validatedArgs);
 
       return {
@@ -213,10 +330,7 @@ export const getBalanceHistoryTool: ToolHandler = {
 
   async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
     try {
-      const validatedArgs = validatePortfolioArgs(
-        PORTFOLIO_TOOLS.GET_BALANCE_HISTORY,
-        args
-      ) as GetBalanceHistoryArgs;
+      const validatedArgs = args as GetBalanceHistoryArgs;
       const history = await portfolioService.getBalanceHistory(
         validatedArgs.period,
         validatedArgs.limit
@@ -255,7 +369,7 @@ export const getPortfolioMetricsTool: ToolHandler = {
   description: 'Get comprehensive portfolio performance metrics and statistics',
   inputSchema: PortfolioToolSchemas.mexc_get_portfolio_metrics,
 
-  async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
+  async execute(_args: Record<string, unknown>): Promise<MCPToolResult> {
     try {
       const metrics = await portfolioService.getPortfolioMetrics();
 
@@ -294,10 +408,7 @@ export const getRiskMetricsTool: ToolHandler = {
 
   async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
     try {
-      const validatedArgs = validatePortfolioArgs(
-        PORTFOLIO_TOOLS.GET_RISK_METRICS,
-        args
-      ) as GetRiskMetricsArgs;
+      const validatedArgs = args as GetRiskMetricsArgs;
       const riskMetrics = await portfolioService.getRiskMetrics(validatedArgs);
 
       return {
@@ -333,7 +444,7 @@ export const getPositionMetricsTool: ToolHandler = {
   description: 'Get position-level metrics including allocation and performance analysis',
   inputSchema: PortfolioToolSchemas.mexc_get_position_metrics,
 
-  async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
+  async execute(_args: Record<string, unknown>): Promise<MCPToolResult> {
     try {
       const metrics = await portfolioService.getPositionMetrics();
 

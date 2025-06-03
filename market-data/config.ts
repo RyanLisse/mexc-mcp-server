@@ -33,7 +33,7 @@ export function getMarketDataConfig(): MarketDataConfig {
     // Try to load Encore secrets
     const apiKey = mexcApiKey();
     const secretKey = mexcSecretKey();
-    
+
     serviceConfig = {
       mexc: {
         apiKey,
@@ -46,11 +46,11 @@ export function getMarketDataConfig(): MarketDataConfig {
         ttlStats: Number(process.env.CACHE_TTL_STATS) || 10000,
       },
     };
-  } catch (error) {
+  } catch (_error) {
     // Fallback to environment variables
     const apiKey = process.env.MEXC_API_KEY;
     const secretKey = process.env.MEXC_SECRET_KEY;
-    
+
     if (!apiKey || !secretKey) {
       throw new Error('MEXC API credentials not found in secrets or environment variables');
     }

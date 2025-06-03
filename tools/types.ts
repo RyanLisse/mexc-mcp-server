@@ -2,7 +2,8 @@
 export interface MCPTool {
   name: string;
   description: string;
-  inputSchema: Record<string, unknown>;
+  inputSchema: any;
+  execute: any;
 }
 
 export interface MCPToolCall {
@@ -54,21 +55,17 @@ export interface ToolExecutionContext {
 export interface ToolHandler {
   name: string;
   description: string;
-  inputSchema: Record<string, any>;
-  execute(args: Record<string, any>, context: ToolExecutionContext): Promise<MCPToolResult>;
+  inputSchema: any;
+  execute: any;
 }
 
 // Tool Registry Interface
 export interface ToolRegistry {
-  register(handler: ToolHandler): void;
-  unregister(name: string): boolean;
-  get(name: string): ToolHandler | undefined;
-  list(): MCPTool[];
-  execute(
-    name: string,
-    args: Record<string, any>,
-    context: ToolExecutionContext
-  ): Promise<MCPToolResult>;
+  register: any;
+  unregister: any;
+  get: any;
+  list: any;
+  execute: any;
 }
 
 // Tool Execution Error

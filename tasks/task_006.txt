@@ -1,6 +1,6 @@
 # Task ID: 6
 # Title: Develop Market Data API
-# Status: pending
+# Status: done
 # Dependencies: 3, 5
 # Priority: medium
 # Description: Implement endpoints for real-time ticker prices, order book, and market statistics.

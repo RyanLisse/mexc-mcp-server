@@ -26,7 +26,7 @@ This is a **MEXC cryptocurrency exchange MCP (Model Context Protocol) server** b
 - **Runtime**: Bun (3x faster than Node.js)
 - **Framework**: Encore.ts microservices framework
 - **Language**: TypeScript with strict type checking
-- **Validation**: Zod for runtime type safety
+- **Validation**: Encore.ts built-in validation with TypeScript
 - **Linting**: Biome.js (35x faster than ESLint)
 - **Testing**: Bun's built-in test runner
 
@@ -62,8 +62,8 @@ type ApiResponse<T> = {
 ### Environment Configuration
 Use `shared/config.ts` for all environment variables with validation. The config includes MEXC credentials, server settings, rate limits, and cache TTLs.
 
-### Zod Validation
-All API inputs/outputs use Zod schemas for runtime validation. Import from service-specific files.
+### Type Validation
+All API inputs/outputs use TypeScript interfaces with Encore.ts validation. Type definitions are in service-specific `types.ts` files.
 
 ### Testing
 - Real API integration tests with live MEXC data
@@ -82,7 +82,7 @@ All API inputs/outputs use Zod schemas for runtime validation. Import from servi
 - MEXC API keys validated with regex patterns
 - HMAC-SHA256 signature generation for authenticated requests
 - Rate limiting (100 req/min configurable)
-- Input sanitization via Zod schemas
+- Input sanitization via TypeScript type validation
 
 ### Performance
 - Intelligent caching with configurable TTLs

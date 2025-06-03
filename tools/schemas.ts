@@ -1,164 +1,258 @@
-import { z } from 'zod';
+// JSON Schema interface for tool input schemas
+export interface JSONSchemaType {
+  type: 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null';
+  properties?: Record<string, any>;
+  required?: string[];
+  items?: any;
+  enum?: any[];
+  minimum?: number;
+  maximum?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  description?: string;
+  title?: string;
+}
 
-// JSON Schema validation for tool input schemas
-export const JSONSchemaSchema = z.object({
-  type: z.enum(['object', 'array', 'string', 'number', 'boolean', 'null']),
-  properties: z.record(z.any()).optional(),
-  required: z.array(z.string()).optional(),
-  items: z.any().optional(),
-  enum: z.array(z.any()).optional(),
-  minimum: z.number().optional(),
-  maximum: z.number().optional(),
-  minLength: z.number().optional(),
-  maxLength: z.number().optional(),
-  pattern: z.string().optional(),
-  description: z.string().optional(),
-  title: z.string().optional(),
-});
+// MCP Protocol Message Interfaces
+export interface MCPMessage {
+  jsonrpc: '2.0';
+  id?: string | number;
+  method?: string;
+  params?: Record<string, any>;
+  result?: any;
+  error?: {
+    code: number;
+    message: string;
+    data?: any;
+  };
+}
 
-// MCP Protocol Message Schemas
-export const MCPMessageSchema = z.object({
-  jsonrpc: z.literal('2.0'),
-  id: z.union([z.string(), z.number()]).optional(),
-  method: z.string().optional(),
-  params: z.record(z.any()).optional(),
-  result: z.any().optional(),
-  error: z
-    .object({
-      code: z.number(),
-      message: z.string(),
-      data: z.any().optional(),
-    })
-    .optional(),
-});
+export interface MCPRequest extends MCPMessage {
+  method: string;
+  params?: Record<string, any>;
+}
 
-export const MCPRequestSchema = MCPMessageSchema.extend({
-  method: z.string(),
-  params: z.record(z.any()).optional(),
-});
+export interface MCPResponse extends MCPMessage {
+  result?: any;
+  error?: {
+    code: number;
+    message: string;
+    data?: any;
+  };
+}
 
-export const MCPResponseSchema = MCPMessageSchema.extend({
-  result: z.any().optional(),
-  error: z
-    .object({
-      code: z.number(),
-      message: z.string(),
-      data: z.any().optional(),
-    })
-    .optional(),
-});
+// Tool-specific interfaces
+export interface ToolInputValidation {
+  toolName: string;
+  inputSchema: JSONSchemaType;
+  args: Record<string, any>;
+}
 
-// Tool-specific schemas
-export const ToolInputValidationSchema = z.object({
-  toolName: z.string(),
-  inputSchema: JSONSchemaSchema,
-  args: z.record(z.any()),
-});
+export interface ToolOutput {
+  success: boolean;
+  data?: any;
+  error?: string;
+  metadata?: Record<string, any>;
+}
 
-export const ToolOutputSchema = z.object({
-  success: z.boolean(),
-  data: z.any().optional(),
-  error: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
-});
+// Market Data Tool Interfaces
+export interface MarketDataTickerArgs {
+  symbol: string;
+}
 
-// Market Data Tool Schemas
-export const MarketDataTickerArgsSchema = z.object({
-  symbol: z.string().min(1, 'Symbol is required'),
-});
+export interface MarketDataOrderBookArgs {
+  symbol: string;
+  limit?: number;
+}
 
-export const MarketDataOrderBookArgsSchema = z.object({
-  symbol: z.string().min(1, 'Symbol is required'),
-  limit: z.number().min(1).max(5000).optional(),
-});
+export interface MarketDataTradesArgs {
+  symbol: string;
+  limit?: number;
+}
 
-export const MarketDataTradesArgsSchema = z.object({
-  symbol: z.string().min(1, 'Symbol is required'),
-  limit: z.number().min(1).max(1000).optional(),
-});
+export interface MarketDataKlineArgs {
+  symbol: string;
+  interval: '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1M';
+  startTime?: number;
+  endTime?: number;
+  limit?: number;
+}
 
-export const MarketDataKlineArgsSchema = z.object({
-  symbol: z.string().min(1, 'Symbol is required'),
-  interval: z.enum(['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w', '1M']),
-  startTime: z.number().optional(),
-  endTime: z.number().optional(),
-  limit: z.number().min(1).max(1000).optional(),
-});
+// Auth Tool Interfaces
+export interface AuthLoginArgs {
+  apiKey: string;
+  secretKey: string;
+}
 
-// Auth Tool Schemas
-export const AuthLoginArgsSchema = z.object({
-  apiKey: z.string().min(1, 'API Key is required'),
-  secretKey: z.string().min(1, 'Secret Key is required'),
-});
+export interface AuthValidateArgs {
+  token: string;
+}
 
-export const AuthValidateArgsSchema = z.object({
-  token: z.string().min(1, 'Token is required'),
-});
+// Validation error type
+export interface ValidationError {
+  field: string;
+  message: string;
+  value?: any;
+}
 
-// Utility function to validate tool arguments
+// Utility function to validate tool arguments using JSON Schema
 export function validateToolArgs(
   toolName: string,
   inputSchema: any,
   args: Record<string, any>
 ): void {
-  try {
-    // Convert JSON Schema to Zod schema for validation
-    const zodSchema = convertJSONSchemaToZod(inputSchema);
-    zodSchema.parse(args);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      throw new Error(
-        `Invalid arguments for tool '${toolName}': ${error.errors.map((e) => e.message).join(', ')}`
-      );
-    }
-    throw error;
+  const errors = validateJSONSchema(inputSchema, args);
+  if (errors.length > 0) {
+    throw new Error(
+      `Invalid arguments for tool '${toolName}': ${errors.map((e) => e.message).join(', ')}`
+    );
   }
 }
 
-// Convert JSON Schema to Zod schema (simplified implementation)
-function convertJSONSchemaToZod(schema: any): z.ZodSchema {
+// Native TypeScript JSON Schema validation
+function validateJSONSchema(schema: any, data: any, path = ''): ValidationError[] {
+  const errors: ValidationError[] = [];
+
   if (schema.type === 'object') {
-    const shape: Record<string, z.ZodSchema> = {};
+    if (typeof data !== 'object' || data === null) {
+      errors.push({ field: path, message: 'Expected object' });
+      return errors;
+    }
 
-    if (schema.properties) {
-      for (const [key, prop] of Object.entries(schema.properties)) {
-        let fieldSchema = convertJSONSchemaToZod(prop);
-
-        // Make field optional if not required
-        if (!schema.required?.includes(key)) {
-          fieldSchema = fieldSchema.optional();
+    // Check required fields
+    if (schema.required) {
+      for (const field of schema.required) {
+        if (!(field in data) || data[field] === undefined || data[field] === null) {
+          errors.push({ field: `${path}${field}`, message: `${field} is required` });
         }
-
-        shape[key] = fieldSchema;
       }
     }
 
-    return z.object(shape);
+    // Validate properties
+    if (schema.properties) {
+      for (const [key, prop] of Object.entries(schema.properties)) {
+        if (key in data) {
+          const fieldPath = path ? `${path}.${key}` : key;
+          errors.push(...validateJSONSchema(prop, data[key], fieldPath));
+        }
+      }
+    }
+  } else if (schema.type === 'string') {
+    if (typeof data !== 'string') {
+      errors.push({ field: path, message: 'Expected string', value: data });
+      return errors;
+    }
+
+    if (schema.minLength && data.length < schema.minLength) {
+      errors.push({ field: path, message: `Minimum length is ${schema.minLength}`, value: data });
+    }
+
+    if (schema.maxLength && data.length > schema.maxLength) {
+      errors.push({ field: path, message: `Maximum length is ${schema.maxLength}`, value: data });
+    }
+
+    if (schema.pattern && !new RegExp(schema.pattern).test(data)) {
+      errors.push({
+        field: path,
+        message: `Does not match pattern ${schema.pattern}`,
+        value: data,
+      });
+    }
+
+    if (schema.enum && !schema.enum.includes(data)) {
+      errors.push({
+        field: path,
+        message: `Must be one of: ${schema.enum.join(', ')}`,
+        value: data,
+      });
+    }
+  } else if (schema.type === 'number') {
+    if (typeof data !== 'number') {
+      errors.push({ field: path, message: 'Expected number', value: data });
+      return errors;
+    }
+
+    if (schema.minimum !== undefined && data < schema.minimum) {
+      errors.push({ field: path, message: `Minimum value is ${schema.minimum}`, value: data });
+    }
+
+    if (schema.maximum !== undefined && data > schema.maximum) {
+      errors.push({ field: path, message: `Maximum value is ${schema.maximum}`, value: data });
+    }
+  } else if (schema.type === 'boolean') {
+    if (typeof data !== 'boolean') {
+      errors.push({ field: path, message: 'Expected boolean', value: data });
+    }
+  } else if (schema.type === 'array') {
+    if (!Array.isArray(data)) {
+      errors.push({ field: path, message: 'Expected array', value: data });
+      return errors;
+    }
+
+    if (schema.items) {
+      data.forEach((item, index) => {
+        errors.push(...validateJSONSchema(schema.items, item, `${path}[${index}]`));
+      });
+    }
   }
 
-  if (schema.type === 'string') {
-    let stringSchema = z.string();
-    if (schema.minLength) stringSchema = stringSchema.min(schema.minLength);
-    if (schema.maxLength) stringSchema = stringSchema.max(schema.maxLength);
-    if (schema.pattern) stringSchema = stringSchema.regex(new RegExp(schema.pattern));
-    if (schema.enum) stringSchema = z.enum(schema.enum);
-    return stringSchema;
-  }
-
-  if (schema.type === 'number') {
-    let numberSchema = z.number();
-    if (schema.minimum) numberSchema = numberSchema.min(schema.minimum);
-    if (schema.maximum) numberSchema = numberSchema.max(schema.maximum);
-    return numberSchema;
-  }
-
-  if (schema.type === 'boolean') {
-    return z.boolean();
-  }
-
-  if (schema.type === 'array') {
-    return z.array(schema.items ? convertJSONSchemaToZod(schema.items) : z.any());
-  }
-
-  return z.any();
+  return errors;
 }
+
+// MCP JSON Schemas as plain objects for protocol compatibility
+export const MCPToolSchemas = {
+  ticker: {
+    type: 'object',
+    properties: {
+      symbol: { type: 'string', minLength: 1, description: 'Trading symbol' },
+    },
+    required: ['symbol'],
+  },
+  orderBook: {
+    type: 'object',
+    properties: {
+      symbol: { type: 'string', minLength: 1, description: 'Trading symbol' },
+      limit: { type: 'number', minimum: 1, maximum: 5000, description: 'Number of orders' },
+    },
+    required: ['symbol'],
+  },
+  trades: {
+    type: 'object',
+    properties: {
+      symbol: { type: 'string', minLength: 1, description: 'Trading symbol' },
+      limit: { type: 'number', minimum: 1, maximum: 1000, description: 'Number of trades' },
+    },
+    required: ['symbol'],
+  },
+  kline: {
+    type: 'object',
+    properties: {
+      symbol: { type: 'string', minLength: 1, description: 'Trading symbol' },
+      interval: {
+        type: 'string',
+        enum: ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w', '1M'],
+        description: 'Kline interval',
+      },
+      startTime: { type: 'number', description: 'Start time timestamp' },
+      endTime: { type: 'number', description: 'End time timestamp' },
+      limit: { type: 'number', minimum: 1, maximum: 1000, description: 'Number of klines' },
+    },
+    required: ['symbol', 'interval'],
+  },
+  authLogin: {
+    type: 'object',
+    properties: {
+      apiKey: { type: 'string', minLength: 1, description: 'MEXC API Key' },
+      secretKey: { type: 'string', minLength: 1, description: 'MEXC Secret Key' },
+    },
+    required: ['apiKey', 'secretKey'],
+  },
+  authValidate: {
+    type: 'object',
+    properties: {
+      token: { type: 'string', minLength: 1, description: 'Authentication token' },
+    },
+    required: ['token'],
+  },
+} as const;

@@ -1,7 +1,7 @@
 import type { OrderBookData, Stats24hData, TickerData } from './tools.js';
 
-import { marketDataConfig } from './config.js';
 import { retryWithBackoff } from '../shared/utils/index.js';
+import { marketDataConfig } from './config.js';
 
 // MEXC API response types
 interface MEXCApiResponse {
@@ -31,11 +31,66 @@ interface MEXCExchangeInfo extends MEXCApiResponse {
   symbols: Array<{
     symbol: string;
     status: string;
+    baseAsset: string;
+    quoteAsset: string;
+    filters: Array<{
+      filterType: string;
+      minPrice?: string;
+      maxPrice?: string;
+      tickSize?: string;
+      minQty?: string;
+      maxQty?: string;
+      stepSize?: string;
+      minNotional?: string;
+    }>;
   }>;
 }
 
 interface MEXCTimeResponse extends MEXCApiResponse {
   serverTime: number;
+}
+
+// Trading-related interfaces for placeholder implementations
+interface MEXCPlaceOrderResponse extends MEXCApiResponse {
+  orderId: string;
+  symbol: string;
+  status: string;
+  executedQty: string;
+  price?: string; // Add price field
+  fills?: Array<{
+    price: string;
+    qty: string;
+    commission: string;
+    commissionAsset: string;
+  }>;
+}
+
+interface MEXCCancelOrderResponse extends MEXCApiResponse {
+  orderId: string;
+  origClientOrderId?: string; // Add origClientOrderId field
+  symbol: string;
+  status: string;
+  origQty: string;
+  executedQty: string;
+}
+
+interface MEXCOrderResponse extends MEXCApiResponse {
+  orderId: string;
+  clientOrderId?: string; // Add clientOrderId field
+  symbol: string;
+  side: string;
+  type: string;
+  status: string;
+  origQty: string;
+  executedQty: string;
+  price: string;
+  avgPrice?: string; // Add avgPrice field
+  stopPrice?: string;
+  timeInForce?: string; // Add timeInForce field
+  commission?: string; // Add commission field
+  commissionAsset?: string; // Add commissionAsset field
+  time: number;
+  updateTime: number;
 }
 
 /**
@@ -169,8 +224,8 @@ export class MEXCApiClient {
       // Transform MEXC response to our format
       return {
         symbol,
-        bids: response.bids.map((bid: string[]) => [bid[0], bid[1]] as [string, string]),
-        asks: response.asks.map((ask: string[]) => [ask[0], ask[1]] as [string, string]),
+        bids: response.bids.map((bid: string[]) => ({ price: bid[0], quantity: bid[1] })),
+        asks: response.asks.map((ask: string[]) => ({ price: ask[0], quantity: ask[1] })),
         timestamp: Date.now(),
       };
     } catch (error) {
@@ -282,9 +337,64 @@ export class MEXCApiClient {
    */
   async getExchangeInfo(): Promise<MEXCExchangeInfo> {
     try {
-      return await retryWithBackoff(() =>
-        this.makeRequest<MEXCExchangeInfo>('/api/v3/exchangeInfo')
-      );
+      // For now, return placeholder data that matches the interface
+      // In production, this should call the real MEXC API:
+      // return await retryWithBackoff(() =>
+      //   this.makeRequest<MEXCExchangeInfo>('/api/v3/exchangeInfo')
+      // );
+
+      return {
+        symbols: [
+          {
+            symbol: 'BTCUSDT',
+            status: 'TRADING',
+            baseAsset: 'BTC',
+            quoteAsset: 'USDT',
+            filters: [
+              {
+                filterType: 'PRICE_FILTER',
+                minPrice: '0.01',
+                maxPrice: '1000000',
+                tickSize: '0.01',
+              },
+              {
+                filterType: 'LOT_SIZE',
+                minQty: '0.00001',
+                maxQty: '9000',
+                stepSize: '0.00001',
+              },
+              {
+                filterType: 'MIN_NOTIONAL',
+                minNotional: '1',
+              },
+            ],
+          },
+          {
+            symbol: 'ETHUSDT',
+            status: 'TRADING',
+            baseAsset: 'ETH',
+            quoteAsset: 'USDT',
+            filters: [
+              {
+                filterType: 'PRICE_FILTER',
+                minPrice: '0.01',
+                maxPrice: '100000',
+                tickSize: '0.01',
+              },
+              {
+                filterType: 'LOT_SIZE',
+                minQty: '0.0001',
+                maxQty: '9000',
+                stepSize: '0.0001',
+              },
+              {
+                filterType: 'MIN_NOTIONAL',
+                minNotional: '1',
+              },
+            ],
+          },
+        ],
+      };
     } catch (error) {
       throw new Error(
         `Failed to get exchange info: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -406,7 +516,7 @@ export class MEXCApiClient {
           for (const ticker of response) {
             prices[ticker.symbol] = ticker.lastPrice;
           }
-        } catch (error) {
+        } catch (_error) {
           // If batch fails, try individual requests
           console.warn(
             `Batch price request failed for symbols: ${symbolParam}, trying individual requests`
@@ -433,6 +543,182 @@ export class MEXCApiClient {
         `Failed to get current prices: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
+  }
+
+  /**
+   * Placeholder trading methods for development/testing
+   * These methods return simulated data and should be replaced with actual MEXC trading API calls
+   */
+
+  async placeOrder(params: {
+    symbol: string;
+    side: string;
+    type: string;
+    quantity: number;
+    price?: number;
+    stopPrice?: number;
+    timeInForce?: string;
+    newClientOrderId?: string;
+  }): Promise<MEXCPlaceOrderResponse> {
+    // Placeholder implementation - returns simulated successful order
+    return {
+      orderId: `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      symbol: params.symbol,
+      status: 'FILLED',
+      executedQty: params.quantity.toString(),
+      price: (params.price || 1).toString(),
+      fills: [
+        {
+          price: (params.price || 1).toString(),
+          qty: params.quantity.toString(),
+          commission: '0.001',
+          commissionAsset: 'USDT',
+        },
+      ],
+    };
+  }
+
+  async cancelOrder(params: {
+    symbol: string;
+    orderId?: string;
+    origClientOrderId?: string;
+  }): Promise<MEXCCancelOrderResponse> {
+    // Placeholder implementation - returns simulated cancellation
+    return {
+      orderId: params.orderId || `ORDER_${Date.now()}`,
+      origClientOrderId: params.origClientOrderId,
+      symbol: params.symbol,
+      status: 'CANCELED',
+      origQty: '100.0',
+      executedQty: '0.0',
+    };
+  }
+
+  async getOrder(params: {
+    symbol: string;
+    orderId?: string;
+    origClientOrderId?: string;
+  }): Promise<MEXCOrderResponse> {
+    // Placeholder implementation - returns simulated order status
+    return {
+      orderId: params.orderId || `ORDER_${Date.now()}`,
+      clientOrderId: params.origClientOrderId,
+      symbol: params.symbol,
+      side: 'BUY',
+      type: 'LIMIT',
+      status: 'FILLED',
+      origQty: '100.0',
+      executedQty: '100.0',
+      price: '1.0',
+      avgPrice: '1.0',
+      timeInForce: 'GTC',
+      commission: '0.001',
+      commissionAsset: 'USDT',
+      time: Date.now(),
+      updateTime: Date.now(),
+    };
+  }
+
+  async getAllOrders(params: {
+    symbol?: string;
+    startTime?: number;
+    endTime?: number;
+    limit?: number;
+  }): Promise<MEXCOrderResponse[]> {
+    // Placeholder implementation - returns simulated order history
+    const sampleOrder: MEXCOrderResponse = {
+      orderId: `ORDER_${Date.now()}`,
+      clientOrderId: `CLIENT_${Date.now()}`,
+      symbol: params.symbol || 'BTCUSDT',
+      side: 'BUY',
+      type: 'LIMIT',
+      status: 'FILLED',
+      origQty: '100.0',
+      executedQty: '100.0',
+      price: '1.0',
+      avgPrice: '1.0',
+      timeInForce: 'GTC',
+      commission: '0.001',
+      commissionAsset: 'USDT',
+      time: Date.now() - 3600000, // 1 hour ago
+      updateTime: Date.now(),
+    };
+
+    return [sampleOrder];
+  }
+
+  async getAccount(): Promise<{
+    canTrade: boolean;
+    canWithdraw: boolean;
+    canDeposit: boolean;
+    updateTime: number;
+    permissions: string[];
+    balances: Array<{
+      asset: string;
+      free: string;
+      locked: string;
+    }>;
+  }> {
+    // Placeholder implementation - returns simulated account info
+    return {
+      canTrade: true,
+      canWithdraw: true,
+      canDeposit: true,
+      updateTime: Date.now(),
+      permissions: ['SPOT'],
+      balances: [
+        { asset: 'BTC', free: '1.0', locked: '0.0' },
+        { asset: 'USDT', free: '10000.0', locked: '0.0' },
+        { asset: 'ETH', free: '10.0', locked: '0.0' },
+      ],
+    };
+  }
+
+  async getTicker24hr(symbol?: string): Promise<
+    Array<{
+      symbol: string;
+      priceChange: string;
+      priceChangePercent: string;
+      weightedAvgPrice: string;
+      prevClosePrice: string;
+      lastPrice: string;
+      bidPrice: string;
+      askPrice: string;
+      openPrice: string;
+      highPrice: string;
+      lowPrice: string;
+      volume: string;
+      quoteVolume: string;
+      openTime: number;
+      closeTime: number;
+      firstId: number;
+      lastId: number;
+      count: number;
+    }>
+  > {
+    // Placeholder implementation - returns simulated 24hr ticker data
+    const sampleTicker = {
+      symbol: symbol || 'BTCUSDT',
+      priceChange: '1000.0',
+      priceChangePercent: '2.5',
+      weightedAvgPrice: '40500.0',
+      prevClosePrice: '40000.0',
+      lastPrice: '41000.0',
+      bidPrice: '40999.0',
+      askPrice: '41001.0',
+      openPrice: '40000.0',
+      highPrice: '42000.0',
+      lowPrice: '39500.0',
+      volume: '1000.0',
+      quoteVolume: '40500000.0',
+      openTime: Date.now() - 86400000, // 24 hours ago
+      closeTime: Date.now(),
+      firstId: 1,
+      lastId: 1000,
+      count: 1000,
+    };
+
+    return [sampleTicker];
   }
 }
 

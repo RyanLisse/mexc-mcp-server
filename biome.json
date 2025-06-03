@@ -8,7 +8,9 @@
       ".git/**",
       "coverage/**",
       "*.min.js",
-      "*.d.ts"
+      "*.d.ts",
+      "encore.gen/**",
+      ".encore/**"
     ]
   },
   "organizeImports": {

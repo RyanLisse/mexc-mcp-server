@@ -27,19 +27,41 @@ export interface AuditLogEntry {
 }
 
 // Mock database for testing - replaced with actual Encore SQLDatabase in production
+interface MockQueryData {
+  strings?: string[];
+  values?: unknown[];
+}
+
+interface MockRow {
+  id: string;
+  timestamp: Date;
+  user_id?: string;
+  api_key: string;
+  operation: string;
+  endpoint: string;
+  http_method: string;
+  request_data?: string;
+  response_status: number;
+  response_data?: string;
+  error_message?: string;
+  duration_ms: number;
+  ip_address?: string;
+  user_agent?: string;
+}
+
 interface MockDatabase {
-  exec(query: any): Promise<void>;
-  query(sql: string, params: unknown[]): Promise<any[]>;
+  exec(query: MockQueryData): Promise<void>;
+  query(sql: string, params: unknown[]): Promise<MockRow[]>;
 }
 
 // In-memory storage for testing
 const mockStorage: AuditLogEntry[] = [];
 
 const mockDb: MockDatabase = {
-  async exec(query: any): Promise<void> {
+  async exec(query: MockQueryData): Promise<void> {
     // Mock database write - in production this would use Encore.ts SQLDatabase
     // Extract values from the query for mock storage
-    if (query && query.strings && query.values) {
+    if (query?.strings && query.values) {
       const values = query.values;
       if (values.length >= 8) {
         const entry: AuditLogEntry = {
@@ -62,54 +84,56 @@ const mockDb: MockDatabase = {
       }
     }
   },
-  async query(sql: string, params: unknown[]): Promise<any[]> {
+  async query(sql: string, params: unknown[]): Promise<MockRow[]> {
     // Mock database query - return filtered mockStorage
     let filtered = [...mockStorage];
-    
+
     // Apply basic filtering based on common parameters
     let paramIndex = 0;
     if (sql.includes('api_key =')) {
       const apiKey = params[paramIndex++] as string;
       // We need to compare masked API keys properly since we store masked versions
       const maskedSearchKey = maskApiKey(apiKey);
-      filtered = filtered.filter(entry => entry.apiKey === maskedSearchKey);
+      filtered = filtered.filter((entry) => entry.apiKey === maskedSearchKey);
     }
     if (sql.includes('operation =')) {
       const operation = params[paramIndex++] as string;
-      filtered = filtered.filter(entry => entry.operation === operation);
+      filtered = filtered.filter((entry) => entry.operation === operation);
     }
-    
+
     // Apply status filtering
     if (sql.includes('response_status >= 200 AND response_status < 400')) {
-      filtered = filtered.filter(entry => entry.responseStatus >= 200 && entry.responseStatus < 400);
+      filtered = filtered.filter(
+        (entry) => entry.responseStatus >= 200 && entry.responseStatus < 400
+      );
     }
     if (sql.includes('response_status >= 400')) {
-      filtered = filtered.filter(entry => entry.responseStatus >= 400);
+      filtered = filtered.filter((entry) => entry.responseStatus >= 400);
     }
-    
+
     // Apply limit and offset
     let offset = 0;
     let limit = filtered.length;
-    
+
     if (sql.includes('OFFSET')) {
       const offsetMatch = sql.match(/OFFSET \$(\d+)/);
       if (offsetMatch) {
-        const offsetIndex = parseInt(offsetMatch[1]) - 1;
+        const offsetIndex = Number.parseInt(offsetMatch[1]) - 1;
         offset = params[offsetIndex] as number;
       }
     }
-    
+
     if (sql.includes('LIMIT')) {
       const limitMatch = sql.match(/LIMIT \$(\d+)/);
       if (limitMatch) {
-        const limitIndex = parseInt(limitMatch[1]) - 1;
+        const limitIndex = Number.parseInt(limitMatch[1]) - 1;
         limit = params[limitIndex] as number;
       }
     }
-    
+
     filtered = filtered.slice(offset, offset + limit);
-    
-    return filtered.map(entry => ({
+
+    return filtered.map((entry) => ({
       id: entry.id,
       timestamp: entry.timestamp,
       user_id: entry.userId,
@@ -125,7 +149,7 @@ const mockDb: MockDatabase = {
       ip_address: entry.ipAddress,
       user_agent: entry.userAgent,
     }));
-  }
+  },
 };
 
 // Use mock database for now - in production this would be:
@@ -184,13 +208,13 @@ const SENSITIVE_FIELDS = [
  */
 function sanitizeData(data: Record<string, unknown>): Record<string, unknown> {
   if (!data || typeof data !== 'object') return data;
-  
+
   const sanitized: Record<string, unknown> = {};
-  
+
   for (const [key, value] of Object.entries(data)) {
     const lowerKey = key.toLowerCase();
-    const isSensitive = SENSITIVE_FIELDS.some(field => lowerKey.includes(field));
-    
+    const isSensitive = SENSITIVE_FIELDS.some((field) => lowerKey.includes(field));
+
     if (isSensitive) {
       sanitized[key] = '[REDACTED]';
     } else if (typeof value === 'object' && value !== null) {
@@ -199,7 +223,7 @@ function sanitizeData(data: Record<string, unknown>): Record<string, unknown> {
       sanitized[key] = value;
     }
   }
-  
+
   return sanitized;
 }
 
@@ -223,18 +247,20 @@ export class AuditLogger {
   static async logRequest(request: AuditLogRequest): Promise<AuditLogEntry> {
     // Validate required fields
     if (!request.apiKey || !request.operation || !request.endpoint) {
-      throw new Error('Missing required audit log fields: apiKey, operation, endpoint are required');
+      throw new Error(
+        'Missing required audit log fields: apiKey, operation, endpoint are required'
+      );
     }
 
     const id = crypto.randomUUID();
     const timestamp = new Date();
-    
+
     // Sanitize request and response data
-    const sanitizedRequestData = request.requestData 
-      ? sanitizeData(request.requestData) 
+    const sanitizedRequestData = request.requestData
+      ? sanitizeData(request.requestData)
       : undefined;
-    const sanitizedResponseData = request.responseData 
-      ? sanitizeData(request.responseData) 
+    const sanitizedResponseData = request.responseData
+      ? sanitizeData(request.responseData)
       : undefined;
 
     const auditEntry: AuditLogEntry = {
@@ -257,16 +283,25 @@ export class AuditLogger {
     try {
       // Store in database using Encore.ts SQL (mocked for testing)
       const queryValues = [
-        id, timestamp, request.userId, maskApiKey(request.apiKey), 
-        request.operation, request.endpoint, request.httpMethod, 
-        JSON.stringify(sanitizedRequestData), request.responseStatus, 
-        JSON.stringify(sanitizedResponseData), request.errorMessage, 
-        request.durationMs, request.ipAddress, request.userAgent
+        id,
+        timestamp,
+        request.userId,
+        maskApiKey(request.apiKey),
+        request.operation,
+        request.endpoint,
+        request.httpMethod,
+        JSON.stringify(sanitizedRequestData),
+        request.responseStatus,
+        JSON.stringify(sanitizedResponseData),
+        request.errorMessage,
+        request.durationMs,
+        request.ipAddress,
+        request.userAgent,
       ];
-      
+
       await db.exec({
         strings: ['INSERT INTO audit_logs VALUES (...)'],
-        values: queryValues
+        values: queryValues,
       });
     } catch (error) {
       // Log to console if database fails (graceful degradation)
@@ -290,7 +325,7 @@ export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogE
     FROM audit_logs
     WHERE 1=1
   `;
-  
+
   const params: unknown[] = [];
   let paramIndex = 1;
 
@@ -317,9 +352,9 @@ export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogE
 
   if (query.status) {
     if (query.status === 'success') {
-      sql += ` AND response_status >= 200 AND response_status < 400`;
+      sql += ' AND response_status >= 200 AND response_status < 400';
     } else if (query.status === 'error') {
-      sql += ` AND response_status >= 400`;
+      sql += ' AND response_status >= 400';
     }
   }
 
@@ -334,8 +369,8 @@ export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogE
   }
 
   // Add ordering and pagination
-  sql += ` ORDER BY timestamp DESC`;
-  
+  sql += ' ORDER BY timestamp DESC';
+
   if (query.limit) {
     sql += ` LIMIT $${paramIndex++}`;
     params.push(query.limit);
@@ -348,8 +383,8 @@ export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogE
 
   try {
     const rows = await db.query(sql, params);
-    
-    return rows.map((row: any) => ({
+
+    return rows.map((row: MockRow) => ({
       id: row.id,
       timestamp: new Date(row.timestamp),
       userId: row.user_id,

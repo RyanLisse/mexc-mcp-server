@@ -12,12 +12,14 @@ async function testSecretsIntegration() {
     const apiKey = process.env.MEXC_API_KEY;
     const secretKey = process.env.MEXC_SECRET_KEY;
     const apiUrl = 'https://api.mexc.com';
-    
+
     console.log('📋 Configuration Status:');
     console.log(`- API URL: ${apiUrl}`);
-    console.log(`- API Key: ${apiKey ? apiKey.substring(0, 8) + '...' : 'NOT SET'}`);
-    console.log(`- Secret Key: ${secretKey ? '[HIDDEN - Length: ' + secretKey.length + ']' : 'NOT SET'}`);
-    
+    console.log(`- API Key: ${apiKey ? `${apiKey.substring(0, 8)}...` : 'NOT SET'}`);
+    console.log(
+      `- Secret Key: ${secretKey ? `[HIDDEN - Length: ${secretKey.length}]` : 'NOT SET'}`
+    );
+
     // Basic credential validation
     if (!apiKey || !secretKey) {
       console.log('\n❌ Missing API credentials from environment variables');
@@ -32,12 +34,12 @@ async function testSecretsIntegration() {
 
     console.log('\n✅ Credentials found in environment variables!');
     console.log('\n🧪 Testing API connectivity...');
-    
+
     // Simple connectivity test (using fetch for simplicity)
     const response = await fetch(`${apiUrl}/api/v3/ping`);
     if (response.ok) {
       console.log('✅ MEXC API connectivity: OK');
-      
+
       // Test server time sync
       const timeResponse = await fetch(`${apiUrl}/api/v3/time`);
       if (timeResponse.ok) {
@@ -50,7 +52,6 @@ async function testSecretsIntegration() {
 
     console.log('\n🎉 Basic integration test completed successfully!');
     console.log('\nNote: Full Encore secrets integration will work when running with `encore run`');
-
   } catch (error) {
     console.error('❌ Error testing secrets integration:', error);
   }

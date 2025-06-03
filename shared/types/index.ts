@@ -1,5 +1,4 @@
-
-// Common MCP types
+// Common MCP types and AI interfaces
 // JSON Schema types for MCP tool input schemas
 export interface JSONSchemaProperty {
   type?: string;
@@ -80,7 +79,6 @@ export interface APIError {
   message: string;
   details?: Record<string, unknown>;
 }
-
 
 // Additional types for market data tools
 export interface TickerData {
@@ -191,7 +189,8 @@ export type CommonMEXCSymbol = (typeof COMMON_MEXC_SYMBOLS)[number];
 
 // Helper function to validate MEXC symbols
 export function isValidMEXCSymbol(symbol: string): boolean {
-  return MEXCSymbolSchema.safeParse(symbol).success;
+  // Basic validation for MEXC symbol format (alphanumeric, 3-10 chars)
+  return /^[A-Z0-9]{3,10}$/.test(symbol.toUpperCase());
 }
 
 // Helper function to format symbol for display (adds underscore for readability)
@@ -274,3 +273,10 @@ export interface SystemHealthCheck {
   timestamp: number;
   version?: string;
 }
+
+// =============================================================================
+// AI-specific types and interfaces
+// =============================================================================
+
+// Re-export all AI types for easy access
+export * from './ai-types';

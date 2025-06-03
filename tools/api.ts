@@ -15,7 +15,7 @@ export const listTools = api(
     path: '/tools/list',
     expose: true,
   },
-  async (request: MCPListToolsRequest): Promise<MCPListToolsResponse> => {
+  async (_request: MCPListToolsRequest): Promise<MCPListToolsResponse> => {
     const tools = await toolsService.listTools();
 
     const response: MCPListToolsResponse = {

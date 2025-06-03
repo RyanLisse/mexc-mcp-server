@@ -1,14 +1,10 @@
-import { z } from 'zod';
+import type { MinLen } from 'encore.dev/validate';
 
-// Zod schema for API credentials validation
-export const APICredentialsSchema = z.object({
-  apiKey: z
-    .string()
-    .regex(/^mx0v[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/, 'Invalid MEXC API key format'),
-  secretKey: z.string().min(32, 'Secret key must be at least 32 characters'),
-});
-
-export type APICredentials = z.infer<typeof APICredentialsSchema>;
+// Encore.ts interface for API credentials validation
+export interface APICredentials {
+  apiKey: string;
+  secretKey: string & MinLen<32>;
+}
 
 export interface AuthenticatedUser {
   userId: string;
@@ -32,6 +28,39 @@ export class AuthenticationError extends Error {
   }
 }
 
+/**
+ * Validates MEXC API key format using business logic
+ * Expected format: mx0v[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}
+ */
+export function validateMexcApiKeyFormat(apiKey: string): boolean {
+  const mexcApiKeyRegex = /^mx0v[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+  return mexcApiKeyRegex.test(apiKey);
+}
+
+/**
+ * Validates API credentials interface fields
+ */
+export function validateApiCredentials(credentials: Partial<APICredentials>): string | null {
+  if (!credentials.apiKey || typeof credentials.apiKey !== 'string') {
+    return 'API key is required and must be a string';
+  }
+
+  if (!validateMexcApiKeyFormat(credentials.apiKey)) {
+    return 'Invalid MEXC API key format';
+  }
+
+  if (credentials.secretKey !== undefined) {
+    if (typeof credentials.secretKey !== 'string') {
+      return 'Secret key must be a string';
+    }
+    if (credentials.secretKey.length < 32) {
+      return 'Secret key must be at least 32 characters';
+    }
+  }
+
+  return null; // No validation errors
+}
+
 export async function validateApiKey(apiKey: string): Promise<ApiKeyValidationResult> {
   try {
     // Handle null/undefined inputs
@@ -42,13 +71,13 @@ export async function validateApiKey(apiKey: string): Promise<ApiKeyValidationRe
       };
     }
 
-    // Validate API key format using Zod
-    const validationResult = APICredentialsSchema.partial().safeParse({ apiKey });
+    // Validate API key format using business logic
+    const validationError = validateApiCredentials({ apiKey });
 
-    if (!validationResult.success) {
+    if (validationError) {
       return {
         isValid: false,
-        error: 'Invalid MEXC API key format',
+        error: validationError,
       };
     }
 

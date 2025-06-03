@@ -3,12 +3,19 @@
  * TypeScript interfaces for trading operations with Encore validation
  */
 
-import { MinLen, MaxLen, Min, Max } from 'encore.dev/validate';
+import type { Max, MaxLen, Min, MinLen } from 'encore.dev/validate';
 
 // Enum types
 export type OrderSideType = 'buy' | 'sell';
 export type OrderTypeType = 'market' | 'limit' | 'stop' | 'stop_limit';
-export type OrderStatusType = 'pending' | 'open' | 'filled' | 'partially_filled' | 'cancelled' | 'rejected' | 'expired';
+export type OrderStatusType =
+  | 'pending'
+  | 'open'
+  | 'filled'
+  | 'partially_filled'
+  | 'cancelled'
+  | 'rejected'
+  | 'expired';
 export type TimeInForceType = 'GTC' | 'IOC' | 'FOK';
 
 /**
@@ -73,3 +80,65 @@ export interface OrderSizeValidationArgs {
   quantity: number & Min<0>;
   price?: number & Min<0>;
 }
+
+// Export schema objects for test compatibility (using Encore validation patterns)
+export const PlaceOrderSchema = {
+  type: 'object',
+  properties: {
+    symbol: { type: 'string', minLength: 1, maxLength: 20 },
+    side: { type: 'string', enum: ['buy', 'sell'] },
+    type: { type: 'string', enum: ['market', 'limit', 'stop', 'stop_limit'] },
+    quantity: { type: 'number', minimum: 0 },
+    price: { type: 'number', minimum: 0 },
+    stopPrice: { type: 'number', minimum: 0 },
+    timeInForce: { type: 'string', enum: ['GTC', 'IOC', 'FOK'] },
+    clientOrderId: { type: 'string' },
+    testMode: { type: 'boolean' },
+  },
+  required: ['symbol', 'side', 'type', 'quantity'],
+} as const;
+
+export const CancelOrderSchema = {
+  type: 'object',
+  properties: {
+    orderId: { type: 'string' },
+    clientOrderId: { type: 'string' },
+    symbol: { type: 'string', minLength: 1, maxLength: 20 },
+  },
+  required: ['symbol'],
+} as const;
+
+export const GetOrderHistorySchema = {
+  type: 'object',
+  properties: {
+    symbol: { type: 'string', minLength: 1, maxLength: 20 },
+    status: {
+      type: 'string',
+      enum: ['pending', 'open', 'filled', 'partially_filled', 'cancelled', 'rejected', 'expired'],
+    },
+    startTime: { type: 'number', minimum: 0 },
+    endTime: { type: 'number', minimum: 0 },
+    limit: { type: 'number', minimum: 1, maximum: 500 },
+    page: { type: 'number', minimum: 1 },
+  },
+  required: [],
+} as const;
+
+export const GetOrderStatusSchema = {
+  type: 'object',
+  properties: {
+    orderId: { type: 'string' },
+    clientOrderId: { type: 'string' },
+    symbol: { type: 'string', minLength: 1, maxLength: 20 },
+  },
+  required: ['symbol'],
+} as const;
+
+export const BatchOrderSchema = {
+  type: 'object',
+  properties: {
+    orders: { type: 'array', items: PlaceOrderSchema },
+    testMode: { type: 'boolean' },
+  },
+  required: ['orders'],
+} as const;

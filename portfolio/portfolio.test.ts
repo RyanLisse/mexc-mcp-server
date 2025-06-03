@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { BalanceManager } from './balance';
 import { portfolioService } from './encore.service';
 import { PositionManager } from './positions';
@@ -13,7 +13,7 @@ import type {
 
 // Mock MEXC client
 const mockMEXCClient = {
-  getAccountInfo: mock(() =>
+  getAccountInfo: vi.fn(() =>
     Promise.resolve({
       balances: [
         { asset: 'USDT', free: '1000.00000000', locked: '0.00000000' },
@@ -22,7 +22,7 @@ const mockMEXCClient = {
       ],
     })
   ),
-  getAccountTrades: mock(() =>
+  getAccountTrades: vi.fn(() =>
     Promise.resolve([
       {
         id: '12345',
@@ -39,7 +39,7 @@ const mockMEXCClient = {
       },
     ])
   ),
-  getCurrentPrices: mock(() =>
+  getCurrentPrices: vi.fn(() =>
     Promise.resolve({
       BTCUSDT: '50000.00',
       ETHUSDT: '3000.00',

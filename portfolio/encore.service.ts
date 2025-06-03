@@ -187,7 +187,8 @@ export const portfolioService = {
 
       // Sort transactions
       filteredTransactions.sort((a, b) => {
-        let aValue: any, bValue: any;
+        let aValue: any;
+        let bValue: any;
 
         switch (sortBy) {
           case 'value':
@@ -205,9 +206,8 @@ export const portfolioService = {
 
         if (sortOrder === 'desc') {
           return bValue - aValue;
-        } else {
-          return aValue - bValue;
         }
+        return aValue - bValue;
       });
 
       // Cache filtered results
@@ -336,7 +336,7 @@ export const portfolioService = {
   /**
    * Get balance history
    */
-  getBalanceHistory: async (period = '1d', limit = 24): Promise<BalanceHistory> => {
+  getBalanceHistory: async (period = '1d', _limit = 24): Promise<BalanceHistory> => {
     try {
       // For now, return current value as single data point
       // In full implementation, would fetch historical data

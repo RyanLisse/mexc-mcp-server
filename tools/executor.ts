@@ -1,4 +1,3 @@
-import { validateToolArgs } from './schemas';
 import {
   type MCPToolResult,
   type ToolExecutionContext,
@@ -6,6 +5,26 @@ import {
   type ToolRegistry,
   ToolValidationError,
 } from './types';
+
+// Simple validation function to replace Zod validation
+function validateToolArgs(
+  toolName: string,
+  inputSchema: Record<string, unknown>,
+  args: Record<string, unknown>
+): void {
+  if (!inputSchema || typeof inputSchema !== 'object') {
+    return; // Skip validation if no schema
+  }
+
+  const schema = inputSchema as { required?: string[] };
+  if (schema.required) {
+    for (const field of schema.required) {
+      if (args[field] === undefined || args[field] === null) {
+        throw new Error(`Required field '${field}' is missing`);
+      }
+    }
+  }
+}
 
 export class ToolExecutor {
   constructor(private registry: ToolRegistry) {}

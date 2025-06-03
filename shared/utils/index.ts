@@ -1,32 +1,33 @@
-import type { z } from 'zod';
-
 /**
- * Validates data against a Zod schema and throws an error if invalid
+ * Validates data against a type guard and throws an error if invalid
  */
-export function validateOrThrow<T>(schema: z.ZodSchema<T>, data: unknown): T {
-  const result = schema.safeParse(data);
-  if (!result.success) {
-    throw new Error(`Validation failed: ${result.error.message}`);
+export function validateOrThrow<T>(
+  validator: (data: unknown) => data is T,
+  data: unknown,
+  errorMessage?: string
+): T {
+  if (!validator(data)) {
+    throw new Error(errorMessage || 'Validation failed');
   }
-  return result.data;
+  return data;
 }
 
 /**
- * Safely validates data against a Zod schema
+ * Safely validates data using a type guard
  */
 export function safeValidate<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown
+  validator: (data: unknown) => data is T,
+  data: unknown,
+  errorMessage?: string
 ): {
   success: boolean;
   data?: T;
   error?: string;
 } {
-  const result = schema.safeParse(data);
-  if (result.success) {
-    return { success: true, data: result.data };
+  if (validator(data)) {
+    return { success: true, data };
   }
-  return { success: false, error: result.error.message };
+  return { success: false, error: errorMessage || 'Validation failed' };
 }
 
 /**
@@ -193,3 +194,44 @@ export function isEmpty(obj: unknown): boolean {
   if (typeof obj === 'object') return Object.keys(obj).length === 0;
   return false;
 }
+
+/**
+ * Clamps a number to the specified range
+ */
+export function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+/**
+ * Sanitizes an array of strings, removing null/undefined/empty values
+ */
+export function sanitizeStringArray(arr: unknown): string[] {
+  if (!Array.isArray(arr)) return [];
+  
+  return arr
+    .filter((item): item is string => 
+      typeof item === 'string' && item.trim().length > 0
+    )
+    .map(item => item.trim());
+}
+
+/**
+ * Ensures a value is a valid confidence score (0-1)
+ */
+export function ensureValidConfidence(value: unknown, fallback = 0.5): number {
+  if (typeof value !== 'number' || isNaN(value)) return fallback;
+  return clamp(value, 0, 1);
+}
+
+// =============================================================================
+// AI Response Parsers (Task #30)
+// =============================================================================
+
+export {
+  parseRiskAssessmentResponse,
+  parseOptimizationResponse,
+  parseAIResponse,
+  validateAIResponseStructure,
+  isValidRiskAssessment,
+  isValidOptimizationResult
+} from './aiResponseParsers';

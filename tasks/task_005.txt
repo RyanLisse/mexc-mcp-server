@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Implement Rate Limiting
-# Status: pending
+# Status: done
 # Dependencies: 2, 3
 # Priority: medium
 # Description: Enforce MEXC API rate limits and protect against abuse.

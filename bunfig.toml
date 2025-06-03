@@ -8,9 +8,7 @@ exact = true
 # Use cache for faster installs
 cache = true
 
-[test]
-# Test configuration - no preload needed for Encore.ts
-coverage = true
+# Test configuration removed - now using Vitest instead of bun:test
 
 [build]
 # Build configuration for production

@@ -131,7 +131,7 @@ export class PositionManager {
 
       // Filter by minimum value
       if (filter.minValue && filter.minValue > 0) {
-        filtered = filtered.filter((p) => Number(p.marketValue) >= filter.minValue!);
+        filtered = filtered.filter((p) => Number(p.marketValue) >= filter.minValue);
       }
 
       // Filter by side
@@ -370,11 +370,9 @@ export class PositionManager {
           positions.push(position);
         } catch (error) {
           console.warn(`Invalid position data for ${symbol}:`, error);
-          continue;
         }
       } catch (error) {
         console.warn(`Error processing position for ${symbol}:`, error);
-        continue;
       }
     }
 
@@ -441,7 +439,8 @@ export class PositionManager {
     // If no common quote asset found, assume last 3-4 characters are quote
     if (symbol.length > 6) {
       return symbol.slice(0, -4);
-    } else if (symbol.length > 4) {
+    }
+    if (symbol.length > 4) {
       return symbol.slice(0, -3);
     }
 
@@ -514,7 +513,7 @@ export class PositionManager {
    */
   async getPositionPnLHistory(
     symbol: string,
-    periodHours = 24
+    _periodHours = 24
   ): Promise<{
     symbol: string;
     currentPnl: number;
@@ -580,9 +579,9 @@ export class PositionManager {
         .sort((a, b) => Number(b.value) - Number(a.value));
 
       // Categorize by position size
-      let large = 0,
-        medium = 0,
-        small = 0;
+      let large = 0;
+      let medium = 0;
+      let small = 0;
       for (const position of positions) {
         const percentage = totalValue > 0 ? (Number(position.marketValue) / totalValue) * 100 : 0;
         if (percentage > 20) large++;

@@ -6,12 +6,78 @@
 import { api } from 'encore.dev/api';
 import { tradingService } from './encore.service';
 import type {
-  PlaceOrderArgs,
+  BatchOrderArgs,
   CancelOrderArgs,
-  GetOrderStatusArgs,
   GetOrderHistoryArgs,
-  BatchOrderArgs
+  GetOrderStatusArgs,
+  PlaceOrderArgs,
 } from './schemas';
+
+/**
+ * Validation function to safely convert args to PlaceOrderArgs
+ */
+function validatePlaceOrderArgs(args: Record<string, unknown>): PlaceOrderArgs {
+  if (typeof args.symbol !== 'string' || !args.symbol) {
+    throw new Error('symbol is required and must be a string');
+  }
+  if (typeof args.side !== 'string' || !['buy', 'sell'].includes(args.side)) {
+    throw new Error('side is required and must be "buy" or "sell"');
+  }
+  if (
+    typeof args.type !== 'string' ||
+    !['market', 'limit', 'stop', 'stop_limit'].includes(args.type)
+  ) {
+    throw new Error('type is required and must be one of: market, limit, stop, stop_limit');
+  }
+  if (typeof args.quantity !== 'number' || args.quantity <= 0) {
+    throw new Error('quantity is required and must be a positive number');
+  }
+
+  return {
+    symbol: args.symbol,
+    side: args.side as 'buy' | 'sell',
+    type: args.type as 'market' | 'limit' | 'stop' | 'stop_limit',
+    quantity: args.quantity,
+    price: typeof args.price === 'number' ? args.price : undefined,
+    stopPrice: typeof args.stopPrice === 'number' ? args.stopPrice : undefined,
+    timeInForce:
+      typeof args.timeInForce === 'string' && ['GTC', 'IOC', 'FOK'].includes(args.timeInForce)
+        ? (args.timeInForce as 'GTC' | 'IOC' | 'FOK')
+        : undefined,
+    clientOrderId: typeof args.clientOrderId === 'string' ? args.clientOrderId : undefined,
+    testMode: typeof args.testMode === 'boolean' ? args.testMode : undefined,
+  };
+}
+
+/**
+ * Validation function to safely convert args to CancelOrderArgs
+ */
+function validateCancelOrderArgs(args: Record<string, unknown>): CancelOrderArgs {
+  if (typeof args.symbol !== 'string' || !args.symbol) {
+    throw new Error('symbol is required and must be a string');
+  }
+
+  return {
+    symbol: args.symbol,
+    orderId: typeof args.orderId === 'string' ? args.orderId : undefined,
+    clientOrderId: typeof args.clientOrderId === 'string' ? args.clientOrderId : undefined,
+  };
+}
+
+/**
+ * Validation function to safely convert args to GetOrderStatusArgs
+ */
+function validateGetOrderStatusArgs(args: Record<string, unknown>): GetOrderStatusArgs {
+  if (typeof args.symbol !== 'string' || !args.symbol) {
+    throw new Error('symbol is required and must be a string');
+  }
+
+  return {
+    symbol: args.symbol,
+    orderId: typeof args.orderId === 'string' ? args.orderId : undefined,
+    clientOrderId: typeof args.clientOrderId === 'string' ? args.clientOrderId : undefined,
+  };
+}
 
 /**
  * Place a new trading order
@@ -21,7 +87,7 @@ export const placeOrder = api(
     method: 'POST',
     path: '/trading/orders',
     expose: true,
-    auth: false // Set to true in production
+    auth: false, // Set to true in production
   },
   async (req: PlaceOrderArgs) => {
     try {
@@ -31,16 +97,15 @@ export const placeOrder = api(
       return {
         success: true,
         data: result,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-
     } catch (error) {
       console.error('Place order API error:', error);
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -54,9 +119,9 @@ export const cancelOrder = api(
     method: 'DELETE',
     path: '/trading/orders/:orderId',
     expose: true,
-    auth: false
+    auth: false,
   },
-  async (req: { 
+  async (req: {
     orderId: string;
     body?: Partial<CancelOrderArgs>;
   }) => {
@@ -64,7 +129,7 @@ export const cancelOrder = api(
       const validatedArgs: CancelOrderArgs = {
         orderId: req.orderId,
         symbol: req.body?.symbol || '',
-        ...(req.body || {})
+        ...(req.body || {}),
       };
 
       const result = await tradingService.cancelOrder(validatedArgs);
@@ -72,16 +137,15 @@ export const cancelOrder = api(
       return {
         success: true,
         data: result,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-
     } catch (error) {
       console.error('Cancel order API error:', error);
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -95,7 +159,7 @@ export const getOrderStatus = api(
     method: 'GET',
     path: '/trading/orders/:orderId',
     expose: true,
-    auth: false
+    auth: false,
   },
   async (req: {
     orderId: string;
@@ -106,7 +170,7 @@ export const getOrderStatus = api(
       const validatedArgs: GetOrderStatusArgs = {
         orderId: req.orderId,
         symbol: req.symbol,
-        clientOrderId: req.clientOrderId
+        clientOrderId: req.clientOrderId,
       };
 
       const result = await tradingService.getOrderStatus(validatedArgs);
@@ -114,16 +178,15 @@ export const getOrderStatus = api(
       return {
         success: true,
         data: result,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-
     } catch (error) {
       console.error('Get order status API error:', error);
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -137,7 +200,7 @@ export const getOrderHistory = api(
     method: 'GET',
     path: '/trading/orders',
     expose: true,
-    auth: false
+    auth: false,
   },
   async (req: GetOrderHistoryArgs) => {
     try {
@@ -147,16 +210,15 @@ export const getOrderHistory = api(
       return {
         success: true,
         data: result,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-
     } catch (error) {
       console.error('Get order history API error:', error);
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -170,7 +232,7 @@ export const validateOrder = api(
     method: 'POST',
     path: '/trading/orders/validate',
     expose: true,
-    auth: false
+    auth: false,
   },
   async (req: PlaceOrderArgs) => {
     try {
@@ -180,16 +242,15 @@ export const validateOrder = api(
       return {
         success: true,
         data: result,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-
     } catch (error) {
       console.error('Validate order API error:', error);
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -203,7 +264,7 @@ export const batchOrder = api(
     method: 'POST',
     path: '/trading/orders/batch',
     expose: true,
-    auth: false
+    auth: false,
   },
   async (req: BatchOrderArgs) => {
     try {
@@ -213,16 +274,15 @@ export const batchOrder = api(
       return {
         success: true,
         data: result,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-
     } catch (error) {
       console.error('Batch order API error:', error);
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -236,7 +296,7 @@ export const getTradingStatistics = api(
     method: 'GET',
     path: '/trading/statistics',
     expose: true,
-    auth: false
+    auth: false,
   },
   async (req: { timeframe?: string }) => {
     try {
@@ -245,16 +305,15 @@ export const getTradingStatistics = api(
       return {
         success: true,
         data: result,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-
     } catch (error) {
       console.error('Get trading statistics API error:', error);
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -268,7 +327,7 @@ export const getTradingHealth = api(
     method: 'GET',
     path: '/trading/health',
     expose: true,
-    auth: false
+    auth: false,
   },
   async (): Promise<{
     success: boolean;
@@ -285,30 +344,29 @@ export const getTradingHealth = api(
       const services = {
         mexcApi: true, // Would check MEXC API connectivity
         orderValidation: true,
-        balanceCheck: true
+        balanceCheck: true,
       };
 
-      const allHealthy = Object.values(services).every(status => status);
+      const allHealthy = Object.values(services).every((status) => status);
 
       return {
         success: allHealthy,
         status: allHealthy ? 'healthy' : 'degraded',
         services,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-
     } catch (error) {
       console.error('Trading health check failed:', error);
-      
+
       return {
         success: false,
         status: 'unhealthy',
         services: {
           mexcApi: false,
           orderValidation: false,
-          balanceCheck: false
+          balanceCheck: false,
         },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -322,7 +380,7 @@ export const batchOperations = api(
     method: 'POST',
     path: '/trading/batch',
     expose: true,
-    auth: false
+    auth: false,
   },
   async (req: {
     operations: Array<{
@@ -334,20 +392,20 @@ export const batchOperations = api(
     try {
       const results = await Promise.allSettled(
         req.operations.map(async (op) => {
-          let data: Record<string, unknown>;
+          let data: unknown;
 
           switch (op.type) {
             case 'place':
-              data = await tradingService.placeOrder(op.data as PlaceOrderArgs);
+              data = await tradingService.placeOrder(validatePlaceOrderArgs(op.data));
               break;
             case 'cancel':
-              data = await tradingService.cancelOrder(op.data as CancelOrderArgs);
+              data = await tradingService.cancelOrder(validateCancelOrderArgs(op.data));
               break;
             case 'status':
-              data = await tradingService.getOrderStatus(op.data as GetOrderStatusArgs);
+              data = await tradingService.getOrderStatus(validateGetOrderStatusArgs(op.data));
               break;
             case 'validate':
-              data = await tradingService.validateOrder(op.data as PlaceOrderArgs);
+              data = await tradingService.validateOrder(validatePlaceOrderArgs(op.data));
               break;
             default:
               throw new Error(`Unknown operation type: ${op.type}`);
@@ -356,7 +414,7 @@ export const batchOperations = api(
           return {
             type: op.type,
             success: true,
-            data
+            data,
           };
         })
       );
@@ -367,21 +425,19 @@ export const batchOperations = api(
           index,
           type: req.operations[index].type,
           success: result.status === 'fulfilled',
-          ...(result.status === 'fulfilled' 
-            ? { data: result.value } 
-            : { error: result.reason?.message || 'Unknown error' }
-          )
+          ...(result.status === 'fulfilled'
+            ? { data: result.value }
+            : { error: result.reason?.message || 'Unknown error' }),
         })),
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-
     } catch (error) {
       console.error('Batch operations API error:', error);
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }

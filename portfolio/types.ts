@@ -9,7 +9,7 @@ export interface PortfolioBalance {
   timestamp: string;
 }
 
-// Portfolio Position Interface  
+// Portfolio Position Interface
 export interface PortfolioPosition {
   symbol: string;
   asset: string;

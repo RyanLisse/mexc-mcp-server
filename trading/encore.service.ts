@@ -4,35 +4,52 @@
  */
 
 import { Service } from 'encore.dev/service';
-import type { 
-  PlaceOrderArgs,
-  CancelOrderArgs,
-  GetOrderStatusArgs,
-  GetOrderHistoryArgs,
+import { mexcClient } from '../market-data/mexc-client';
+import type {
   BatchOrderArgs,
-  OrderSizeValidationArgs
+  CancelOrderArgs,
+  GetOrderHistoryArgs,
+  GetOrderStatusArgs,
+  OrderStatusType,
+  PlaceOrderArgs,
 } from './schemas';
 import type {
-  Order,
-  OrderExecutionResult,
-  OrderCancellationResult,
-  OrderValidationResult,
   BatchOrderResult,
-  OrderHistoryResult,
-  TradingPair,
-  TradingLimits,
-  TradingSafetyConfig,
   MarketConditions,
+  Order,
+  OrderCancellationResult,
+  OrderExecutionResult,
+  OrderHistoryResult,
+  OrderValidationResult,
+  TradingPair,
+  TradingSafetyConfig,
   TradingStatistics,
-  TradingError,
-  TradingValidationError,
-  OrderExecutionError,
-  InsufficientBalanceError
 } from './types';
-import { mexcClient } from '../market-data/mexc-client';
+
+// Import error classes as constructors (not types)
+import { InsufficientBalanceError, OrderExecutionError, TradingValidationError } from './types';
 // import { config } from '../shared/config'; // Disabled for service-specific config
 
 export default new Service('trading');
+
+/**
+ * Convert MEXC API status to our OrderStatusType
+ */
+function convertMexcStatus(mexcStatus: string): OrderStatusType {
+  const statusMap: Record<string, OrderStatusType> = {
+    FILLED: 'filled',
+    PARTIALLY_FILLED: 'partially_filled',
+    CANCELED: 'cancelled',
+    CANCELLED: 'cancelled',
+    PENDING: 'pending',
+    NEW: 'open',
+    OPEN: 'open',
+    REJECTED: 'rejected',
+    EXPIRED: 'expired',
+  };
+
+  return statusMap[mexcStatus.toUpperCase()] || 'pending';
+}
 
 /**
  * Trading service configuration
@@ -71,7 +88,7 @@ export const tradingService = {
       if (!validation.isValid) {
         throw new TradingValidationError(
           'order_validation',
-          validation.errors.map(e => e.message).join(', '),
+          validation.errors.map((e) => e.message).join(', '),
           validation.errors
         );
       }
@@ -102,9 +119,9 @@ export const tradingService = {
         symbol: args.symbol.replace('_', ''),
         side: args.side.toUpperCase(),
         type: args.type.toUpperCase(),
-        quantity: args.quantity.toString(),
-        ...(args.price && { price: args.price.toString() }),
-        ...(args.stopPrice && { stopPrice: args.stopPrice.toString() }),
+        quantity: args.quantity,
+        ...(args.price && { price: args.price }),
+        ...(args.stopPrice && { stopPrice: args.stopPrice }),
         timeInForce: args.timeInForce || 'GTC',
         ...(args.clientOrderId && { newClientOrderId: args.clientOrderId }),
       };
@@ -117,11 +134,11 @@ export const tradingService = {
         success: true,
         orderId: response.orderId,
         clientOrderId: args.clientOrderId,
-        status: response.status,
+        status: convertMexcStatus(response.status),
         filledQuantity: response.executedQty || '0',
         averagePrice: response.price,
         timestamp: Date.now(),
-        message: 'Order placed successfully'
+        message: 'Order placed successfully',
       };
 
       // Cache the order
@@ -131,7 +148,7 @@ export const tradingService = {
         symbol: args.symbol,
         side: args.side,
         type: args.type,
-        status: response.status,
+        status: convertMexcStatus(response.status),
         quantity: args.quantity.toString(),
         price: args.price?.toString(),
         stopPrice: args.stopPrice?.toString(),
@@ -139,12 +156,11 @@ export const tradingService = {
         averagePrice: response.price,
         timeInForce: args.timeInForce || 'GTC',
         createdAt: Date.now(),
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       };
       orderCache.set(response.orderId, order);
 
       return result;
-
     } catch (error) {
       if (error instanceof TradingValidationError || error instanceof InsufficientBalanceError) {
         throw error;
@@ -176,10 +192,10 @@ export const tradingService = {
         orderId: response.orderId,
         clientOrderId: response.origClientOrderId,
         symbol: args.symbol,
-        status: response.status,
+        status: convertMexcStatus(response.status),
         cancelledQuantity: response.origQty,
         timestamp: Date.now(),
-        message: 'Order cancelled successfully'
+        message: 'Order cancelled successfully',
       };
 
       // Update cache
@@ -191,7 +207,6 @@ export const tradingService = {
       }
 
       return result;
-
     } catch (error) {
       console.error('Order cancellation failed:', error);
       throw new OrderExecutionError(
@@ -209,7 +224,8 @@ export const tradingService = {
       // Check cache first
       if (args.orderId && orderCache.has(args.orderId)) {
         const cached = orderCache.get(args.orderId)!;
-        if (Date.now() - cached.updatedAt < 30000) { // 30 second cache
+        if (Date.now() - cached.updatedAt < 30000) {
+          // 30 second cache
           return cached;
         }
       }
@@ -228,7 +244,7 @@ export const tradingService = {
         symbol: args.symbol,
         side: response.side.toLowerCase() as any,
         type: response.type.toLowerCase() as any,
-        status: mapOrderStatus(response.status),
+        status: convertMexcStatus(response.status),
         quantity: response.origQty,
         price: response.price,
         stopPrice: response.stopPrice,
@@ -238,14 +254,13 @@ export const tradingService = {
         createdAt: response.time,
         updatedAt: response.updateTime || response.time,
         fee: response.commission,
-        feeAsset: response.commissionAsset
+        feeAsset: response.commissionAsset,
       };
 
       // Update cache
       orderCache.set(order.orderId, order);
 
       return order;
-
     } catch (error) {
       console.error('Get order status failed:', error);
       throw new OrderExecutionError(
@@ -272,8 +287,8 @@ export const tradingService = {
       // Filter by status if provided
       let filteredOrders = response;
       if (args.status) {
-        filteredOrders = response.filter((order: any) => 
-          mapOrderStatus(order.status) === args.status
+        filteredOrders = response.filter(
+          (order: any) => convertMexcStatus(order.status) === args.status
         );
       }
 
@@ -288,7 +303,7 @@ export const tradingService = {
         symbol: args.symbol || order.symbol,
         side: order.side.toLowerCase() as any,
         type: order.type.toLowerCase() as any,
-        status: mapOrderStatus(order.status),
+        status: convertMexcStatus(order.status),
         quantity: order.origQty,
         price: order.price,
         stopPrice: order.stopPrice,
@@ -298,7 +313,7 @@ export const tradingService = {
         createdAt: order.time,
         updatedAt: order.updateTime || order.time,
         fee: order.commission,
-        feeAsset: order.commissionAsset
+        feeAsset: order.commissionAsset,
       }));
 
       return {
@@ -306,9 +321,8 @@ export const tradingService = {
         totalCount: filteredOrders.length,
         currentPage: args.page || 1,
         totalPages: Math.ceil(filteredOrders.length / (args.limit || 100)),
-        hasMore: endIndex < filteredOrders.length
+        hasMore: endIndex < filteredOrders.length,
       };
-
     } catch (error) {
       console.error('Get order history failed:', error);
       throw new Error(error instanceof Error ? error.message : 'Failed to get order history');
@@ -320,7 +334,8 @@ export const tradingService = {
    */
   validateOrder: async (args: PlaceOrderArgs): Promise<OrderValidationResult> => {
     const errors: Array<{ field: string; message: string; code?: string }> = [];
-    const warnings: Array<{ field: string; message: string; severity: 'low' | 'medium' | 'high' }> = [];
+    const warnings: Array<{ field: string; message: string; severity: 'low' | 'medium' | 'high' }> =
+      [];
 
     try {
       // Get trading pair info
@@ -329,7 +344,7 @@ export const tradingService = {
         errors.push({
           field: 'symbol',
           message: `Trading pair ${args.symbol} not found`,
-          code: 'INVALID_SYMBOL'
+          code: 'INVALID_SYMBOL',
         });
         return { isValid: false, errors, warnings };
       }
@@ -343,7 +358,7 @@ export const tradingService = {
         errors.push({
           field: 'quantity',
           message: `Quantity ${quantity} is below minimum ${minQty}`,
-          code: 'MIN_QUANTITY'
+          code: 'MIN_QUANTITY',
         });
       }
 
@@ -351,7 +366,7 @@ export const tradingService = {
         errors.push({
           field: 'quantity',
           message: `Quantity ${quantity} exceeds maximum ${maxQty}`,
-          code: 'MAX_QUANTITY'
+          code: 'MAX_QUANTITY',
         });
       }
 
@@ -365,7 +380,7 @@ export const tradingService = {
           errors.push({
             field: 'price',
             message: `Price ${price} is below minimum ${minPrice}`,
-            code: 'MIN_PRICE'
+            code: 'MIN_PRICE',
           });
         }
 
@@ -373,7 +388,7 @@ export const tradingService = {
           errors.push({
             field: 'price',
             message: `Price ${price} exceeds maximum ${maxPrice}`,
-            code: 'MAX_PRICE'
+            code: 'MAX_PRICE',
           });
         }
 
@@ -386,21 +401,21 @@ export const tradingService = {
           warnings.push({
             field: 'price',
             message: `Price deviates ${deviation.toFixed(2)}% from market price`,
-            severity: deviation > 10 ? 'high' : 'medium'
+            severity: deviation > 10 ? 'high' : 'medium',
           });
         }
       }
 
       // Validate order value
-      const orderValue = args.price ? 
-        Number(args.quantity) * Number(args.price) :
-        Number(args.quantity) * Number((await getMarketConditions(args.symbol)).currentPrice);
+      const orderValue = args.price
+        ? Number(args.quantity) * Number(args.price)
+        : Number(args.quantity) * Number((await getMarketConditions(args.symbol)).currentPrice);
 
       if (orderValue > TRADING_CONFIG.maxOrderValue) {
         warnings.push({
           field: 'value',
           message: `Order value $${orderValue.toFixed(2)} exceeds recommended maximum $${TRADING_CONFIG.maxOrderValue}`,
-          severity: 'high'
+          severity: 'high',
         });
       }
 
@@ -409,15 +424,14 @@ export const tradingService = {
         errors,
         warnings,
         estimatedCost: orderValue.toFixed(2),
-        estimatedFee: (orderValue * 0.001).toFixed(4) // 0.1% estimated fee
+        estimatedFee: (orderValue * 0.001).toFixed(4), // 0.1% estimated fee
       };
-
     } catch (error) {
       console.error('Order validation failed:', error);
       errors.push({
         field: 'validation',
         message: 'Validation service error',
-        code: 'VALIDATION_ERROR'
+        code: 'VALIDATION_ERROR',
       });
 
       return { isValid: false, errors, warnings };
@@ -445,14 +459,14 @@ export const tradingService = {
       try {
         const result = await tradingService.placeOrder({
           ...order,
-          testMode: args.testMode
+          testMode: args.testMode,
         });
 
         results.push({
           index: i,
           success: result.success,
           orderId: result.orderId,
-          clientOrderId: order.clientOrderId
+          clientOrderId: order.clientOrderId,
         });
 
         if (result.success) {
@@ -460,13 +474,12 @@ export const tradingService = {
         } else {
           failedOrders++;
         }
-
       } catch (error) {
         results.push({
           index: i,
           success: false,
           clientOrderId: order.clientOrderId,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
         failedOrders++;
       }
@@ -478,7 +491,7 @@ export const tradingService = {
       successfulOrders,
       failedOrders,
       results,
-      executionTime: Date.now() - startTime
+      executionTime: Date.now() - startTime,
     };
   },
 
@@ -500,13 +513,13 @@ export const tradingService = {
         winRate: 0,
         averageOrderSize: '0',
         mostTradedPair: 'BTC_USDT',
-        timeframe
+        timeframe,
       };
     } catch (error) {
       console.error('Get trading statistics failed:', error);
       throw new Error('Failed to get trading statistics');
     }
-  }
+  },
 };
 
 /**
@@ -519,9 +532,7 @@ async function getTradingPairInfo(symbol: string): Promise<TradingPair | null> {
     }
 
     const exchangeInfo = await mexcClient.getExchangeInfo();
-    const pairInfo = exchangeInfo.symbols.find(
-      (s: any) => s.symbol === symbol.replace('_', '')
-    );
+    const pairInfo = exchangeInfo.symbols.find((s: any) => s.symbol === symbol.replace('_', ''));
 
     if (!pairInfo) return null;
 
@@ -530,25 +541,27 @@ async function getTradingPairInfo(symbol: string): Promise<TradingPair | null> {
       baseAsset: pairInfo.baseAsset,
       quoteAsset: pairInfo.quoteAsset,
       status: pairInfo.status === 'TRADING' ? 'active' : 'inactive',
-      minOrderQuantity: pairInfo.filters.find((f: any) => f.filterType === 'LOT_SIZE')?.minQty || '0',
-      maxOrderQuantity: pairInfo.filters.find((f: any) => f.filterType === 'LOT_SIZE')?.maxQty || '0',
+      minOrderQuantity:
+        pairInfo.filters.find((f: any) => f.filterType === 'LOT_SIZE')?.minQty || '0',
+      maxOrderQuantity:
+        pairInfo.filters.find((f: any) => f.filterType === 'LOT_SIZE')?.maxQty || '0',
       minPrice: pairInfo.filters.find((f: any) => f.filterType === 'PRICE_FILTER')?.minPrice || '0',
       maxPrice: pairInfo.filters.find((f: any) => f.filterType === 'PRICE_FILTER')?.maxPrice || '0',
       tickSize: pairInfo.filters.find((f: any) => f.filterType === 'PRICE_FILTER')?.tickSize || '0',
       stepSize: pairInfo.filters.find((f: any) => f.filterType === 'LOT_SIZE')?.stepSize || '0',
-      minNotional: pairInfo.filters.find((f: any) => f.filterType === 'MIN_NOTIONAL')?.minNotional || '0',
+      minNotional:
+        pairInfo.filters.find((f: any) => f.filterType === 'MIN_NOTIONAL')?.minNotional || '0',
       maxNotional: '0',
       fees: {
         maker: '0.002',
-        taker: '0.002'
-      }
+        taker: '0.002',
+      },
     };
 
     tradingPairCache.set(symbol, tradingPair);
     cacheExpiry = Date.now() + CACHE_TTL;
 
     return tradingPair;
-
   } catch (error) {
     console.error('Get trading pair info failed:', error);
     return null;
@@ -567,29 +580,29 @@ async function checkTradingBalance(args: PlaceOrderArgs): Promise<{
   try {
     const [baseAsset, quoteAsset] = args.symbol.split('_');
     const asset = args.side === 'buy' ? quoteAsset : baseAsset;
-    
+
     const account = await mexcClient.getAccount();
     const balance = account.balances.find((b: any) => b.asset === asset);
-    
+
     const availableBalance = balance ? Number(balance.free) : 0;
-    const requiredBalance = args.side === 'buy' ? 
-      Number(args.quantity) * (Number(args.price) || 0) :
-      Number(args.quantity);
+    const requiredBalance =
+      args.side === 'buy'
+        ? Number(args.quantity) * (Number(args.price) || 0)
+        : Number(args.quantity);
 
     return {
       hasEnoughBalance: availableBalance >= requiredBalance,
       requiredBalance: requiredBalance.toString(),
       availableBalance: availableBalance.toString(),
-      asset
+      asset,
     };
-
   } catch (error) {
     console.error('Balance check failed:', error);
     return {
       hasEnoughBalance: false,
       requiredBalance: '0',
       availableBalance: '0',
-      asset: 'UNKNOWN'
+      asset: 'UNKNOWN',
     };
   }
 }
@@ -599,21 +612,25 @@ async function checkTradingBalance(args: PlaceOrderArgs): Promise<{
  */
 async function getMarketConditions(symbol: string): Promise<MarketConditions> {
   try {
-    const ticker = await mexcClient.getTicker24hr({ symbol: symbol.replace('_', '') });
-    
+    const tickerData = await mexcClient.getTicker24hr(symbol.replace('_', ''));
+    const ticker = tickerData[0]; // getTicker24hr returns an array
+
     return {
       symbol,
       currentPrice: ticker.lastPrice,
       priceChange24h: ticker.priceChange,
       priceChangePercent24h: ticker.priceChangePercent,
       volume24h: ticker.volume,
-      volatility: Math.abs(Number(ticker.priceChangePercent)) > 10 ? 'high' :
-                 Math.abs(Number(ticker.priceChangePercent)) > 5 ? 'medium' : 'low',
+      volatility:
+        Math.abs(Number(ticker.priceChangePercent)) > 10
+          ? 'high'
+          : Math.abs(Number(ticker.priceChangePercent)) > 5
+            ? 'medium'
+            : 'low',
       liquidityScore: 0.8, // Mock score
       recommendedOrderSize: (Number(ticker.volume) * 0.001).toString(),
-      warningFlags: []
+      warningFlags: [],
     };
-
   } catch (error) {
     console.error('Get market conditions failed:', error);
     return {
@@ -625,7 +642,7 @@ async function getMarketConditions(symbol: string): Promise<MarketConditions> {
       volatility: 'low',
       liquidityScore: 0,
       recommendedOrderSize: '0',
-      warningFlags: ['DATA_UNAVAILABLE']
+      warningFlags: ['DATA_UNAVAILABLE'],
     };
   }
 }
@@ -635,7 +652,7 @@ async function getMarketConditions(symbol: string): Promise<MarketConditions> {
  */
 function simulateOrderExecution(args: PlaceOrderArgs): OrderExecutionResult {
   const orderId = `TEST_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-  
+
   return {
     success: true,
     orderId,
@@ -644,23 +661,6 @@ function simulateOrderExecution(args: PlaceOrderArgs): OrderExecutionResult {
     filledQuantity: args.type === 'market' ? args.quantity.toString() : '0',
     averagePrice: args.price?.toString(),
     timestamp: Date.now(),
-    message: 'Order simulated successfully (TEST MODE)'
+    message: 'Order simulated successfully (TEST MODE)',
   };
-}
-
-/**
- * Helper function to map order status from MEXC to our internal format
- */
-function mapOrderStatus(mexcStatus: string): any {
-  const statusMap: Record<string, string> = {
-    'NEW': 'open',
-    'PARTIALLY_FILLED': 'partially_filled',
-    'FILLED': 'filled',
-    'CANCELED': 'cancelled',
-    'PENDING_CANCEL': 'pending',
-    'REJECTED': 'rejected',
-    'EXPIRED': 'expired'
-  };
-
-  return statusMap[mexcStatus] || 'pending';
 }

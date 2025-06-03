@@ -20,6 +20,7 @@ The application requires the following secrets:
 |-------------|-------------|----------|
 | `MEXC_API_KEY` | MEXC exchange API key | Yes |
 | `MEXC_SECRET_KEY` | MEXC exchange secret key | Yes |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Google AI API key for Gemini 2.5 Flash | Yes |
 
 ### Optional Secrets
 
@@ -28,6 +29,11 @@ The application requires the following secrets:
 | `MEXC_BASE_URL` | MEXC API base URL | `https://api.mexc.com` |
 | `RATE_LIMIT_PER_MINUTE` | API rate limit | `1200` |
 | `CACHE_TTL_SECONDS` | Cache TTL for market data | `30` |
+| `GOOGLE_AI_MODEL` | Google AI model name | `gemini-2.5-flash-preview-05-20` |
+| `GOOGLE_AI_MAX_TOKENS` | Maximum tokens for AI responses | `8192` |
+| `GOOGLE_AI_TEMPERATURE` | AI response creativity (0-2) | `0.7` |
+| `AI_RATE_LIMIT_MAX_REQUESTS` | AI API rate limit | `50` |
+| `AI_RATE_LIMIT_WINDOW_MS` | AI rate limit window in ms | `60000` |
 
 ## Local Development Setup
 
@@ -42,6 +48,14 @@ MEXC_SECRET_KEY=your_mexc_secret_key_here
 MEXC_BASE_URL=https://api.mexc.com
 RATE_LIMIT_PER_MINUTE=1200
 CACHE_TTL_SECONDS=30
+
+# Google AI Configuration
+GOOGLE_GENERATIVE_AI_API_KEY=your_google_ai_api_key_here
+GOOGLE_AI_MODEL=gemini-2.5-flash-preview-05-20
+GOOGLE_AI_MAX_TOKENS=8192
+GOOGLE_AI_TEMPERATURE=0.7
+AI_RATE_LIMIT_MAX_REQUESTS=50
+AI_RATE_LIMIT_WINDOW_MS=60000
 ```
 
 **Important**: Never commit the `.env` file to version control. It's already included in `.gitignore`.
