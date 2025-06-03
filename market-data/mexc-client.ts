@@ -307,6 +307,120 @@ export class MEXCApiClient {
       );
     }
   }
+
+  /**
+   * Get account trades (requires authentication)
+   */
+  async getAccountTrades(
+    symbol?: string,
+    limit = 500
+  ): Promise<
+    Array<{
+      id: number;
+      symbol: string;
+      orderId: number;
+      price: string;
+      qty: string;
+      commission: string;
+      commissionAsset: string;
+      time: number;
+      isBuyer: boolean;
+      isMaker: boolean;
+      isBestMatch: boolean;
+    }>
+  > {
+    try {
+      const params: Record<string, string | number> = { limit };
+      if (symbol) {
+        params.symbol = symbol;
+      }
+
+      return await retryWithBackoff(() =>
+        this.makeRequest<
+          Array<{
+            id: number;
+            symbol: string;
+            orderId: number;
+            price: string;
+            qty: string;
+            commission: string;
+            commissionAsset: string;
+            time: number;
+            isBuyer: boolean;
+            isMaker: boolean;
+            isBestMatch: boolean;
+          }>
+        >('/api/v3/myTrades', params, true)
+      );
+    } catch (error) {
+      throw new Error(
+        `Failed to get account trades: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Get current prices for multiple symbols
+   */
+  async getCurrentPrices(symbols?: string[]): Promise<Record<string, string>> {
+    try {
+      if (!symbols || symbols.length === 0) {
+        // Get all ticker data
+        const allTickers = await retryWithBackoff(() =>
+          this.makeRequest<MEXCTickerResponse[]>('/api/v3/ticker/price')
+        );
+
+        const prices: Record<string, string> = {};
+        for (const ticker of allTickers) {
+          prices[ticker.symbol] = ticker.lastPrice;
+        }
+        return prices;
+      }
+
+      // Get specific symbols
+      const prices: Record<string, string> = {};
+      const batchSize = 100; // MEXC API limit
+
+      for (let i = 0; i < symbols.length; i += batchSize) {
+        const batch = symbols.slice(i, i + batchSize);
+        const symbolParam = batch.join(',');
+
+        try {
+          const response = await retryWithBackoff(() =>
+            this.makeRequest<MEXCTickerResponse[]>('/api/v3/ticker/price', { symbols: symbolParam })
+          );
+
+          for (const ticker of response) {
+            prices[ticker.symbol] = ticker.lastPrice;
+          }
+        } catch (error) {
+          // If batch fails, try individual requests
+          console.warn(
+            `Batch price request failed for symbols: ${symbolParam}, trying individual requests`
+          );
+
+          for (const symbol of batch) {
+            try {
+              const ticker = await retryWithBackoff(() =>
+                this.makeRequest<MEXCTickerResponse>('/api/v3/ticker/price', { symbol })
+              );
+              prices[symbol] = ticker.lastPrice;
+            } catch (symbolError) {
+              console.warn(`Failed to get price for ${symbol}:`, symbolError);
+              // Set a default price of 0 for failed symbols
+              prices[symbol] = '0';
+            }
+          }
+        }
+      }
+
+      return prices;
+    } catch (error) {
+      throw new Error(
+        `Failed to get current prices: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
 }
 
 // Export a singleton instance

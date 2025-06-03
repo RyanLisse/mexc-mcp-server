@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { config } from '../shared/config.js';
-import { type MCPTool, MEXCSymbolSchema, type MarketDataResponse } from '../shared/types/index.js';
+import {
+  type Get24hStatsArgs,
+  type GetActiveSymbolsArgs,
+  type GetOrderBookArgs,
+  type GetTickerArgs,
+  type MCPTool,
+  MEXCSymbolSchema,
+  type MarketDataResponse,
+} from '../shared/types/index.js';
 import { createSuccessResponse, validateOrThrow } from '../shared/utils/index.js';
 import { mexcClient } from './mexc-client.js';
 
@@ -138,31 +146,36 @@ const marketDataCache = new MarketDataCache();
 export const getTickerTool: MCPTool = {
   name: 'mexc_get_ticker',
   description: 'Get current ticker price and 24h statistics for a trading symbol',
-  inputSchema: GetTickerInputSchema.describe('Get ticker data for a specific symbol').shape,
+  inputSchema: GetTickerInputSchema.describe('Get ticker data for a specific symbol')
+    .shape as Record<string, unknown>,
 };
 
 export const getOrderBookTool: MCPTool = {
   name: 'mexc_get_order_book',
   description: 'Get current order book (bids and asks) for a trading symbol',
-  inputSchema: GetOrderBookInputSchema.describe('Get order book depth for a specific symbol').shape,
+  inputSchema: GetOrderBookInputSchema.describe('Get order book depth for a specific symbol')
+    .shape as Record<string, unknown>,
 };
 
 export const get24hStatsTool: MCPTool = {
   name: 'mexc_get_24h_stats',
   description: 'Get 24-hour trading statistics for one or all symbols',
-  inputSchema: Get24hStatsInputSchema.describe('Get 24h statistics for symbol(s)').shape,
+  inputSchema: Get24hStatsInputSchema.describe('Get 24h statistics for symbol(s)').shape as Record<
+    string,
+    unknown
+  >,
 };
 
 export const testConnectivityTool: MCPTool = {
   name: 'mexc_test_connectivity',
   description: 'Test connectivity to MEXC API and check server time synchronization',
-  inputSchema: z.object({}).shape,
+  inputSchema: z.object({}).shape as Record<string, unknown>,
 };
 
 export const testAuthenticationTool: MCPTool = {
   name: 'mexc_test_authentication',
   description: 'Test MEXC API authentication with provided credentials',
-  inputSchema: z.object({}).shape,
+  inputSchema: z.object({}).shape as Record<string, unknown>,
 };
 
 export const getActiveSymbolsTool: MCPTool = {
@@ -170,12 +183,12 @@ export const getActiveSymbolsTool: MCPTool = {
   description: 'Get all active trading symbols on MEXC exchange',
   inputSchema: z.object({
     limit: z.number().min(1).max(100).optional().default(50),
-  }).shape,
+  }).shape as Record<string, unknown>,
 };
 
 // Tool execution functions
 export async function executeGetTicker(input: unknown): Promise<MarketDataResponse<TickerData>> {
-  const validInput = validateOrThrow(GetTickerInputSchema, input);
+  const validInput = validateOrThrow(GetTickerInputSchema, input) as GetTickerArgs;
   const cacheKey = `ticker:${validInput.symbol}`;
 
   // Check cache first
@@ -202,7 +215,7 @@ export async function executeGetTicker(input: unknown): Promise<MarketDataRespon
 export async function executeGetOrderBook(
   input: unknown
 ): Promise<MarketDataResponse<OrderBookData>> {
-  const validInput = validateOrThrow(GetOrderBookInputSchema, input);
+  const validInput = validateOrThrow(GetOrderBookInputSchema, input) as GetOrderBookArgs;
   const limit = validInput.limit ?? 100;
   const cacheKey = `orderbook:${validInput.symbol}:${limit}`;
 
@@ -233,7 +246,7 @@ export async function executeGetOrderBook(
 export async function executeGet24hStats(
   input: unknown
 ): Promise<MarketDataResponse<Stats24hData[]>> {
-  const validInput = validateOrThrow(Get24hStatsInputSchema, input);
+  const validInput = validateOrThrow(Get24hStatsInputSchema, input) as Get24hStatsArgs;
   const cacheKey = `24hstats:${validInput.symbol ?? 'all'}`;
 
   // Check cache first
@@ -286,7 +299,10 @@ export async function executeTestAuthentication(
 export async function executeGetActiveSymbols(
   input: unknown
 ): Promise<MarketDataResponse<string[]>> {
-  const validInput = validateOrThrow(z.object({ limit: z.number().optional().default(50) }), input);
+  const validInput = validateOrThrow(
+    z.object({ limit: z.number().optional().default(50) }),
+    input
+  ) as GetActiveSymbolsArgs;
   const cacheKey = `active_symbols:${validInput.limit}`;
 
   // Check cache first
@@ -320,10 +336,7 @@ export function getMarketDataCacheSize(): number {
 }
 
 export function getCacheStats(): { size: number; keys: string[] } {
-  const keys: string[] = [];
-  for (const key of marketDataCache.cache.keys()) {
-    keys.push(key);
-  }
+  const keys: string[] = Array.from(marketDataCache.cache.keys());
   return {
     size: marketDataCache.size(),
     keys,

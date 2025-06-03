@@ -1,10 +1,50 @@
 import { z } from 'zod';
 
 // Common MCP types
+// JSON Schema types for MCP tool input schemas
+export interface JSONSchemaProperty {
+  type?: string;
+  description?: string;
+  enum?: readonly string[];
+  items?: JSONSchemaProperty;
+  properties?: Record<string, JSONSchemaProperty>;
+  required?: string[];
+  minimum?: number;
+  maximum?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  default?: unknown;
+  const?: unknown;
+  oneOf?: JSONSchemaProperty[];
+  anyOf?: JSONSchemaProperty[];
+  allOf?: JSONSchemaProperty[];
+  not?: JSONSchemaProperty;
+  if?: JSONSchemaProperty;
+  then?: JSONSchemaProperty;
+  else?: JSONSchemaProperty;
+  additionalProperties?: boolean | JSONSchemaProperty;
+  additionalItems?: boolean | JSONSchemaProperty;
+  minItems?: number;
+  maxItems?: number;
+  uniqueItems?: boolean;
+  multipleOf?: number;
+  format?: string;
+}
+
+export interface JSONSchema extends JSONSchemaProperty {
+  $schema?: string;
+  $id?: string;
+  title?: string;
+  description?: string;
+  definitions?: Record<string, JSONSchemaProperty>;
+  $ref?: string;
+}
+
 export const MCPToolSchema = z.object({
   name: z.string(),
   description: z.string(),
-  inputSchema: z.record(z.any()),
+  inputSchema: z.record(z.unknown()),
 });
 
 export const MCPResourceSchema = z.object({
@@ -39,7 +79,7 @@ export const MEXCOrderSchema = z.object({
 export const APIErrorSchema = z.object({
   code: z.number(),
   message: z.string(),
-  details: z.record(z.any()).optional(),
+  details: z.record(z.unknown()).optional(),
 });
 
 // Export TypeScript types
@@ -180,4 +220,65 @@ export function formatSymbolForDisplay(symbol: string): string {
 // Helper function to convert display format back to MEXC format
 export function formatSymbolForAPI(symbol: string): string {
   return symbol.replace('_', '');
+}
+
+// Tool argument types
+export interface GetTickerArgs {
+  symbol: string;
+  convert?: string;
+}
+
+export interface GetOrderBookArgs {
+  symbol: string;
+  limit?: number;
+}
+
+export interface Get24hStatsArgs {
+  symbol?: string;
+}
+
+export interface GetActiveSymbolsArgs {
+  limit?: number;
+}
+
+// Validation error types
+export interface ValidationError {
+  path: (string | number)[];
+  message: string;
+  code: string;
+}
+
+export interface ValidationResult<T> {
+  success: boolean;
+  data?: T;
+  error?: {
+    message: string;
+    issues: ValidationError[];
+  };
+}
+
+// Tool execution result types
+export type ToolExecutionResult<T = unknown> = Promise<MarketDataResponse<T>>;
+
+// Cache types
+export interface CacheConfig {
+  ttlTicker: number;
+  ttlOrderbook: number;
+  ttlStats: number;
+  enabled: boolean;
+}
+
+// Health check types
+export interface HealthCheckResult {
+  status: 'pass' | 'fail';
+  message: string;
+  timestamp?: number;
+  duration?: number;
+}
+
+export interface SystemHealthCheck {
+  status: 'healthy' | 'unhealthy';
+  checks: Record<string, HealthCheckResult>;
+  timestamp: number;
+  version?: string;
 }

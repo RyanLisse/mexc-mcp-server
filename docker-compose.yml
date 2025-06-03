@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  mexc-mcp-server:
+    image: mexc-mcp-server:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - MEXC_API_KEY=${MEXC_API_KEY}
+      - MEXC_SECRET_KEY=${MEXC_SECRET_KEY}
+      - MEXC_BASE_URL=${MEXC_BASE_URL:-https://api.mexc.com}
+      - MEXC_WEBSOCKET_URL=${MEXC_WEBSOCKET_URL:-wss://wbs.mexc.com/ws}
+      - NODE_ENV=${NODE_ENV:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PORT=${PORT:-3000}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-60000}
+      - CACHE_TTL_TICKER=${CACHE_TTL_TICKER:-5000}
+      - CACHE_TTL_ORDERBOOK=${CACHE_TTL_ORDERBOOK:-2000}
+      - CACHE_TTL_STATS=${CACHE_TTL_STATS:-10000}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

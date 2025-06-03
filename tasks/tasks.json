@@ -19,7 +19,7 @@
       "testStrategy": "Test secret retrieval in a local environment. Verify secrets are not exposed in logs or error messages.",
       "priority": "high",
       "dependencies": [1],
-      "status": "in-progress",
+      "status": "done",
       "subtasks": []
     },
     {
@@ -30,7 +30,7 @@
       "testStrategy": "Test with valid/invalid API keys. Verify error messages and logging. Check for rate limiting integration.",
       "priority": "high",
       "dependencies": [2],
-      "status": "pending",
+      "status": "in-progress",
       "subtasks": []
     },
     {

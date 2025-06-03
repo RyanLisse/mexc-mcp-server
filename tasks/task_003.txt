@@ -1,6 +1,6 @@
 # Task ID: 3
 # Title: Implement Authentication Middleware
-# Status: pending
+# Status: in-progress
 # Dependencies: 2
 # Priority: high
 # Description: Develop middleware for MEXC API key validation and secure request handling.

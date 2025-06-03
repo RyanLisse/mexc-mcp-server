@@ -1,6 +1,3 @@
 {
-  "id": "mexc-mcp-server",
-  "experiments": {
-    "typescript": true
-  }
+  "id": "mexc-mcp-server"
 }
