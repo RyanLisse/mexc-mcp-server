@@ -3,19 +3,18 @@
  * TDD tests for Task #26: Intelligent Risk Assessment API with Vercel AI SDK
  */
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { RiskAssessment } from '../shared/types/ai-types';
 
-// Setup mocks manually for compatibility
+// Setup mocks using Bun's testing API
 const mockGeminiClient = {
-  generateObject: globalThis.vi?.fn() || (() => Promise.resolve({ success: false })),
+  generateObject: mock(() => Promise.resolve({ success: false })),
 };
 
 const mockErrors = {
-  handleAIError: globalThis.vi?.fn() || (() => ({})),
-  isAIOperationAllowed: globalThis.vi?.fn(() => true) || (() => true),
-  createErrorResponse:
-    globalThis.vi?.fn((error) => ({
+  handleAIError: mock(() => ({})),
+  isAIOperationAllowed: mock(() => true),
+  createErrorResponse: mock((error) => ({
       success: false,
       error: { message: error.message },
       timestamp: Date.now(),
@@ -48,7 +47,10 @@ import { mcpService } from './encore.service';
 
 describe('Portfolio Risk Assessment - Task #26', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockGeminiClient.generateObject.mockClear();
+    mockErrors.handleAIError.mockClear();
+    mockErrors.isAIOperationAllowed.mockClear();
+    mockErrors.createErrorResponse.mockClear();
   });
 
   describe('performRiskAssessment', () => {
