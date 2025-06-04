@@ -31,7 +31,7 @@ export const getTickerEnhanced = api(
     expose: true,
     method: 'POST',
     path: '/market-data/v2/ticker',
-    auth: auth,
+    auth: true,
   },
   async (req: { symbol: string; convert?: string }): Promise<MarketDataResponse<TickerData>> => {
     return await executeGetTicker(req);
@@ -44,7 +44,7 @@ export const getOrderBookEnhanced = api(
     expose: true,
     method: 'POST',
     path: '/market-data/v2/order-book',
-    auth: auth,
+    auth: true,
   },
   async (req: { symbol: string; limit?: number }): Promise<MarketDataResponse<OrderBookData>> => {
     return await executeGetOrderBook(req);
@@ -57,7 +57,7 @@ export const get24hStatsEnhanced = api(
     expose: true,
     method: 'POST',
     path: '/market-data/v2/24h-stats',
-    auth: auth,
+    auth: true,
   },
   async (req: { symbol?: string }): Promise<MarketDataResponse<Stats24hData[]>> => {
     return await executeGet24hStats(req);
@@ -78,7 +78,7 @@ export const getBulkTickers = api(
     expose: true,
     method: 'POST',
     path: '/market-data/v2/tickers/bulk',
-    auth: auth,
+    auth: true,
   },
   async (req: { symbols: string[]; convert?: string }): Promise<
     MarketDataResponse<TickerData[]>
@@ -126,7 +126,7 @@ export const getHistoricalData = api(
     expose: true,
     method: 'POST',
     path: '/market-data/v2/historical',
-    auth: auth,
+    auth: true,
   },
   async (req: {
     symbol: string;
@@ -162,7 +162,7 @@ export const getMarketDepth = api(
     expose: true,
     method: 'POST',
     path: '/market-data/v2/market-depth',
-    auth: auth,
+    auth: true,
   },
   async (req: { symbol: string; limit?: number }): Promise<
     MarketDataResponse<{
@@ -190,7 +190,7 @@ export const getPriceAggregation = api(
     expose: true,
     method: 'POST',
     path: '/market-data/v2/price-aggregation',
-    auth: auth,
+    auth: true,
   },
   async (req: {
     symbols: string[];
@@ -223,7 +223,7 @@ export const manageSubscription = api(
     expose: true,
     method: 'POST',
     path: '/market-data/v2/subscription',
-    auth: auth,
+    auth: true,
   },
   async (req: {
     action: 'subscribe' | 'unsubscribe' | 'list';
@@ -252,7 +252,7 @@ export const getPerformanceMetrics = api(
     expose: true,
     method: 'GET',
     path: '/market-data/v2/metrics',
-    auth: auth,
+    auth: true,
   },
   async (): Promise<
     MarketDataResponse<{
@@ -344,7 +344,7 @@ export const getWebSocketInfo = api(
     expose: true,
     method: 'GET',
     path: '/market-data/v2/websocket-info',
-    auth: auth,
+    auth: true,
   },
   async (): Promise<
     MarketDataResponse<{

@@ -32,6 +32,10 @@ interface MCPResponse {
   id: string | number | null;
 }
 
+interface MCPBatchRequest {
+  requests: MCPRequest[];
+}
+
 export const mcpProtocol = api(
   { expose: true, method: 'POST', path: '/mcp/protocol' },
   async (req: MCPRequest): Promise<MCPResponse> => {
@@ -45,8 +49,8 @@ export const mcpProtocol = api(
  */
 export const mcpBatchProtocol = api(
   { expose: true, method: 'POST', path: '/mcp/protocol/batch' },
-  async (req: MCPRequest[]): Promise<MCPResponse[]> => {
-    return await jsonRpcHandler.handleBatchRequest(req);
+  async (req: MCPBatchRequest): Promise<MCPResponse[]> => {
+    return await jsonRpcHandler.handleBatchRequest(req.requests);
   }
 );
 
