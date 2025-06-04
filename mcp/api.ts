@@ -14,6 +14,7 @@ import type {
   TechnicalAnalysisResult,
 } from '../shared/types/ai-types';
 import { mcpService } from './encore.service';
+import { mcpIntegrationService } from './services/mcpIntegration';
 
 // =============================================================================
 // Request/Response Interfaces
@@ -368,11 +369,31 @@ export const multiAnalysis = api(
 );
 
 /**
- * Service Health Check Endpoint
- * Provides health status and performance metrics
+ * Comprehensive AI Health Check Endpoint - Task #32
+ * Provides comprehensive health status including Gemini API, MEXC integration, and AI services
+ */
+export const getComprehensiveAIHealth = api(
+  { method: 'GET', path: '/mcp/health', expose: true },
+  async () => {
+    try {
+      return await mcpIntegrationService.getHealthStatus();
+    } catch (error) {
+      return {
+        success: false,
+        error: `Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: Date.now(),
+        serviceVersion: 'mcp-health-v1.0',
+      };
+    }
+  }
+);
+
+/**
+ * Legacy Service Health Check Endpoint
+ * Provides basic health status and performance metrics (backward compatibility)
  */
 export const getServiceHealth = api(
-  { method: 'GET', path: '/mcp/health', expose: true },
+  { method: 'GET', path: '/mcp/health/legacy', expose: true },
   async (): Promise<ServiceHealthResponse> => {
     try {
       const health = mcpService.getServiceHealth();
@@ -1288,8 +1309,10 @@ export const tradingTools = api(
     analysisDepth = 'standard',
   }: TradingToolsRequest): Promise<TradingToolsResponse> => {
     const startTime = Date.now();
-    
+
     // Note: mexcFeatures parameter available for future MEXC-specific optimizations
+    // Currently acknowledged but not implemented in this version
+    void mexcFeatures;
 
     try {
       // Validate input
