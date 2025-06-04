@@ -5,7 +5,8 @@
 
 import { api } from 'encore.dev/api';
 import type { Max, Min, MinLen } from 'encore.dev/validate';
-import { createErrorResponse, isAIOperationAllowed, logAndNotify } from '../shared/errors';
+import { createErrorResponse, logAndNotify } from '../shared/errors';
+import { isAIOperationAllowed } from '../shared/config';
 import type {
   AIAnalysisResult,
   AnalysisType,
