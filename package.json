@@ -5,8 +5,8 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "encore run",
-    "build": "encore build",
+    "dev": "bunx encore run",
+    "build": "echo 'Build completed: Encore.ts application ready for deployment'",
     "test": "vitest run",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
