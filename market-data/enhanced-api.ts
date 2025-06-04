@@ -167,8 +167,8 @@ export const getMarketDepth = api(
   async (req: { symbol: string; limit?: number }): Promise<
     MarketDataResponse<{
       symbol: string;
-      bids: Array<[string, string]>;
-      asks: Array<[string, string]>;
+      bids: Array<{ price: string; quantity: string }>;
+      asks: Array<{ price: string; quantity: string }>;
       lastUpdateId: number;
       analysis: {
         bidTotal: string;
