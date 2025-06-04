@@ -304,21 +304,22 @@ describe('MCP Service Refactor - Task #31', () => {
       expect(result).toHaveProperty('serviceVersion');
     });
 
-    it('should provide placeholder for strategy optimizer (Task #27)', async () => {
+    it('should provide working strategy optimizer (Task #27)', async () => {
       const request = {
-        portfolio: [{ symbol: 'BTC', allocation: 0.6 }],
+        portfolio: [{ symbol: 'BTC', allocation: 1.0 }], // Fixed: total allocation = 1.0
         objectiveFunction: 'sharpe_ratio' as const,
         constraints: { maxRisk: 0.2 },
       };
 
       const result = await mcpIntegrationService.strategyOptimizer(request);
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('not implemented');
-      expect(result.message).toContain('Task #27');
+      // Strategy optimizer should succeed
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+      expect(result.data?.optimizationType).toBeDefined();
     });
 
-    it('should provide placeholder for trading tools (Task #28)', async () => {
+    it('should provide working trading tools (Task #28)', async () => {
       const request = {
         action: 'position_sizing' as const,
         symbol: 'ETH_USDT',
@@ -328,9 +329,9 @@ describe('MCP Service Refactor - Task #31', () => {
 
       const result = await mcpIntegrationService.tradingTools(request);
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('not implemented');
-      expect(result.message).toContain('Task #28');
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+      expect(result.data?.toolType).toBe('position_sizing');
     });
 
     it('should handle service failures gracefully', async () => {
