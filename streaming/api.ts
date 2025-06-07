@@ -174,7 +174,10 @@ export const portfolioStream = api.streamOut<PortfolioUpdate>(
   { path: '/streaming/portfolio', expose: true, auth: true },
   async (stream) => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw new Error('Authentication required');
+      }
       console.log('💼 Starting portfolio stream for user:', authData.userId);
 
       // Simulate portfolio updates
@@ -227,7 +230,10 @@ export const notificationStream = api.streamOut<TradingNotification>(
   { path: '/streaming/notifications', expose: true, auth: true },
   async (stream) => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw new Error('Authentication required');
+      }
       console.log('🔔 Starting notification stream for user:', authData.userId);
 
       // Send welcome notification
@@ -417,7 +423,10 @@ export const tradingStream = api.streamInOut<TradingCommand, TradingResponse>(
   { path: '/streaming/trading', expose: true, auth: true },
   async (stream) => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw new Error('Authentication required');
+      }
       console.log('⚡ Starting bidirectional trading stream for user:', authData.userId);
 
       // Send welcome message

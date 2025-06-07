@@ -241,7 +241,10 @@ export const logout = api(
   { method: 'POST', path: '/auth/logout', auth: true },
   async (): Promise<{ success: boolean; message: string }> => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw APIError.unauthenticated('Authentication required');
+      }
 
       // Invalidate current session
       await db.exec`
@@ -273,7 +276,10 @@ export const setCredentials = api(
   { method: 'POST', path: '/user/credentials', auth: true },
   async (req: SetCredentialsRequest): Promise<CredentialsResponse> => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw APIError.unauthenticated('Authentication required');
+      }
       const { mexcApiKey, mexcSecretKey } = req;
 
       // Validate MEXC API key format
@@ -343,7 +349,10 @@ export const getCredentialStatus = api(
   { method: 'GET', path: '/user/credentials/status', auth: true },
   async (): Promise<GetCredentialsResponse> => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw APIError.unauthenticated('Authentication required');
+      }
 
       const credentials = await db.queryRow<UserCredentialsRow>`
         SELECT created_at, last_used_at
@@ -376,7 +385,10 @@ export const createSnipingTarget = api(
   { method: 'POST', path: '/user/targets', auth: true },
   async (req: CreateSnipingTargetRequest): Promise<SnipingTargetResponse> => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw APIError.unauthenticated('Authentication required');
+      }
       const { targetSymbol, quantity, maxPrice } = req;
 
       // Validate inputs
@@ -440,7 +452,10 @@ export const getSnipingTargets = api(
   { method: 'GET', path: '/user/targets', auth: true },
   async (): Promise<SnipingTargetsResponse> => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw APIError.unauthenticated('Authentication required');
+      }
 
       const targets = await db.query<UserSnipingTargetRow>`
         SELECT * FROM user_sniping_targets 
@@ -479,7 +494,10 @@ export const updateSnipingTarget = api(
     req: UpdateSnipingTargetRequest & { targetId: number }
   ): Promise<SnipingTargetResponse> => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw APIError.unauthenticated('Authentication required');
+      }
       const { targetId, quantity, maxPrice, isActive } = req;
 
       // Build update query dynamically
@@ -503,7 +521,7 @@ export const updateSnipingTarget = api(
         throw new Error('No updates provided');
       }
 
-      updates.push(`updated_at = NOW()`);
+      updates.push('updated_at = NOW()');
       updates.push(`user_id = $${values.length + 1}`);
       values.push(authData.userId);
       updates.push(`id = $${values.length + 1}`);
@@ -552,7 +570,10 @@ export const getPortfolio = api(
   { method: 'GET', path: '/user/portfolio', auth: true },
   async (): Promise<UserPortfolioResponse> => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw APIError.unauthenticated('Authentication required');
+      }
 
       // Get portfolio statistics
       const stats = await db.queryRow`
@@ -604,7 +625,10 @@ export const getTrades = api(
   { method: 'POST', path: '/user/trades', auth: true },
   async (req: GetTradesRequest): Promise<TradesResponse> => {
     try {
-      const authData = (await import('~encore/auth')).getAuthData()!;
+      const authData = (await import('~encore/auth')).getAuthData();
+      if (!authData) {
+        throw APIError.unauthenticated('Authentication required');
+      }
       const { symbol, startDate, endDate, isSnipeOnly, limit = 50, offset = 0 } = req;
 
       // Build query conditions
