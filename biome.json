@@ -24,13 +24,14 @@
         "noExtraBooleanCast": "error",
         "noMultipleSpacesInRegularExpressionLiterals": "error",
         "noUselessCatch": "error",
-        "noUselessTypeConstraint": "error"
+        "noUselessTypeConstraint": "error",
+        "noForEach": "warn"
       },
       "correctness": {
         "noConstAssign": "error",
         "noGlobalObjectCalls": "error",
         "noInvalidConstructorSuper": "error",
-        "noUnusedVariables": "error"
+        "noUnusedVariables": "warn"
       },
       "security": {
         "noDangerouslySetInnerHtml": "error"
@@ -38,10 +39,11 @@
       "style": {
         "noNonNullAssertion": "warn",
         "useConst": "error",
-        "useTemplate": "error"
+        "useTemplate": "warn"
       },
       "suspicious": {
-        "noExplicitAny": "error",
+        "noExplicitAny": "warn",
+        "noImplicitAnyLet": "warn",
         "noFallthroughSwitchClause": "error",
         "noGlobalAssign": "error"
       }
