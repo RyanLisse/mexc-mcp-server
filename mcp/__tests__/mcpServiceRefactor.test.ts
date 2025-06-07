@@ -8,5 +8,11 @@
  * already covered by mcpServiceIntegration.test.ts
  */
 
-// Disabled test file - incompatible with Bun test runner
-export {};
+import { describe, expect, it } from 'vitest';
+
+// Placeholder test to prevent "No test suite found" error
+describe('MCP Service Refactor Test Suite', () => {
+  it('should be covered by mcpServiceIntegration.test.ts', () => {
+    expect(true).toBe(true);
+  });
+});

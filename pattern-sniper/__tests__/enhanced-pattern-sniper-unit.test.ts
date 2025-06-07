@@ -156,7 +156,7 @@ describe('Enhanced Pattern Sniper - Unit Tests', () => {
   describe('Schema Integration', () => {
     it('should maintain backward compatibility with existing schemas', () => {
       // Test that existing CalendarEntry and SymbolV2Entry schemas still work
-      const { CalendarEntrySchema, SymbolV2EntrySchema } = require('../schemas.js');
+      const { CalendarEntrySchema, SymbolV2EntrySchema } = require('../schemas');
 
       const calendarEntry = CalendarEntrySchema.parse({
         vcoinId: 'test123',

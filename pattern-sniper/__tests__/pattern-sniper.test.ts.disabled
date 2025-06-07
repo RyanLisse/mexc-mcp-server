@@ -1,16 +1,16 @@
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi as mock } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Set up Encore environment for testing
 process.env.ENCORE_RUNTIME_LIB = path.resolve(__dirname, '../../__mocks__/encore-runtime.cjs');
 process.env.NODE_ENV = 'test';
 
 // Mock Encore runtime before importing anything else
-mock.module('encore.dev/api', () => ({
+vi.mock('encore.dev/api', () => ({
   api: (_config: any, handler: any) => handler,
 }));
 
-mock.module('encore.dev/service', () => ({
+vi.mock('encore.dev/service', () => ({
   Service: class MockService {
     constructor(name: string) {
       this.name = name;
@@ -19,7 +19,7 @@ mock.module('encore.dev/service', () => ({
 }));
 
 // Mock the MEXCApiClient to prevent import issues
-mock.module('../../market-data/mexc-client.js', () => ({
+vi.mock('../../market-data/mexc-client.js', () => ({
   MEXCApiClient: class MockMEXCApiClient {
     async getNewCoinCalendar() {
       return { code: 200, data: [] };
@@ -80,7 +80,7 @@ interface TestSniperState {
 
 // Mock the MEXCApiClient
 const mockMexcClient = {
-  getNewCoinCalendar: mock(async () => ({
+  getNewCoinCalendar: vi.fn(async () => ({
     code: 200,
     data: [
       {
@@ -91,7 +91,7 @@ const mockMexcClient = {
       },
     ],
   })),
-  getSymbolsV2: mock(async () => ({
+  getSymbolsV2: vi.fn(async () => ({
     code: 200,
     data: {
       symbols: [
@@ -108,7 +108,7 @@ const mockMexcClient = {
       ],
     },
   })),
-  getTicker: mock(async (symbol: string) => ({
+  getTicker: vi.fn(async (symbol: string) => ({
     symbol,
     price: '0.50',
     priceChange: '0.05',
@@ -121,7 +121,7 @@ const mockMexcClient = {
     count: 1000,
     timestamp: Date.now(),
   })),
-  placeOrder: mock(
+  placeOrder: vi.fn(
     async (params: { symbol: string; side: string; type: string; quantity: number }) => ({
       orderId: 'order123',
       symbol: params.symbol,
@@ -160,7 +160,7 @@ describe('Enhanced Pattern Sniper Service', () => {
 
   afterEach(() => {
     // Clear all mocks
-    mock.restore();
+    vi.restoreAllMocks();
   });
 
   describe.skip('EnhancedPatternSniperState', () => {
@@ -373,7 +373,7 @@ describe('Enhanced Pattern Sniper Service', () => {
         // Mock an error from the MEXC client
         const errorMockClient = {
           ...mockMexcClient,
-          placeOrder: mock(async () => {
+          placeOrder: vi.fn(async () => {
             throw new Error('Order placement failed');
           }),
           getTicker: mockMexcClient.getTicker,
