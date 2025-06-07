@@ -162,7 +162,7 @@ describe('Gemini AI Integration', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
       expect(typeof result.error).toBe('string');
-    });
+    }, 10000); // 10 second timeout for network error test
 
     it('should handle invalid prompts gracefully', async () => {
       const result = await client.generateText('');

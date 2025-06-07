@@ -10,7 +10,7 @@ import type { AIAnalysisResult, AnalysisParameters } from '../../shared/types/ai
 // Import the enhanced MCP service implementation
 import { type EnhancedMCPService, enhancedMCPService } from '../enhanced-ai-service';
 
-// Enhanced MCP Service interface (for reference)
+// Enhanced MCP Service interface for testing enhanced AI integration capabilities
 interface EnhancedMCPServiceInterface {
   // Core AI Market Analysis (Task #24)
   aiMarketAnalysis(params: {
@@ -52,9 +52,9 @@ interface EnhancedMCPServiceInterface {
     depth?: 'quick' | 'standard' | 'comprehensive' | 'deep';
   }): Promise<{
     success: boolean;
-    optimizedStrategy: any;
+    optimizedStrategy: unknown;
     confidence: number;
-    mexcAdvantages?: any;
+    mexcAdvantages?: unknown;
   }>;
 
   // Trading Tools (Task #28)
@@ -64,7 +64,7 @@ interface EnhancedMCPServiceInterface {
     depth?: 'quick' | 'standard' | 'comprehensive' | 'deep';
   }): Promise<{
     success: boolean;
-    result: any;
+    result: unknown;
     confidence: number;
     recommendations?: string[];
   }>;
@@ -113,14 +113,14 @@ interface EnhancedMCPServiceInterface {
   batchAnalysis(
     requests: Array<{
       type: 'market' | 'risk' | 'strategy' | 'tools';
-      params: any;
+      params: unknown;
       id: string;
     }>
   ): Promise<
     Array<{
       id: string;
       success: boolean;
-      result?: any;
+      result?: unknown;
       error?: string;
     }>
   >;
@@ -132,7 +132,7 @@ interface EnhancedMCPServiceInterface {
     updateInterval?: number;
   }): AsyncGenerator<{
     progress: number;
-    partialResult?: any;
+    partialResult?: unknown;
     completed: boolean;
     error?: string;
   }>;

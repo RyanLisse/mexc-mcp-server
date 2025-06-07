@@ -1,8 +1,6 @@
-import type {
-  MarketDataResponse,
-} from '../shared/types/index.js';
-import type { MCPTool, MCPToolResult, ToolExecutionContext } from '../tools/types.js';
+import type { MarketDataResponse } from '../shared/types/index.js';
 import { createSuccessResponse } from '../shared/utils/index.js';
+import type { MCPTool, MCPToolResult, ToolExecutionContext } from '../tools/types.js';
 import { marketDataConfig } from './config.js';
 import { mexcClient } from './mexc-client.js';
 
@@ -168,18 +166,21 @@ export const getTickerTool: MCPTool = {
     },
     required: ['symbol'],
   },
-  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+  async execute(
+    args: Record<string, unknown>,
+    _context?: ToolExecutionContext
+  ): Promise<MCPToolResult> {
     try {
       // Validate required symbol parameter
       if (typeof args.symbol !== 'string') {
         throw new Error('symbol parameter is required and must be a string');
       }
-      
+
       const validatedArgs: GetTickerInputSchema = {
         symbol: args.symbol,
         convert: typeof args.convert === 'string' ? args.convert : undefined,
       };
-      
+
       const result = await executeGetTicker(validatedArgs);
       return {
         content: [
@@ -225,18 +226,21 @@ export const getOrderBookTool: MCPTool = {
     },
     required: ['symbol'],
   },
-  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+  async execute(
+    args: Record<string, unknown>,
+    _context?: ToolExecutionContext
+  ): Promise<MCPToolResult> {
     try {
       // Validate required symbol parameter
       if (typeof args.symbol !== 'string') {
         throw new Error('symbol parameter is required and must be a string');
       }
-      
+
       const validatedArgs: GetOrderBookInputSchema = {
         symbol: args.symbol,
         limit: typeof args.limit === 'number' ? args.limit : undefined,
       };
-      
+
       const result = await executeGetOrderBook(validatedArgs);
       return {
         content: [
@@ -275,12 +279,15 @@ export const get24hStatsTool: MCPTool = {
     },
     required: [],
   },
-  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+  async execute(
+    args: Record<string, unknown>,
+    _context?: ToolExecutionContext
+  ): Promise<MCPToolResult> {
     try {
       const validatedArgs: Get24hStatsInputSchema = {
         symbol: typeof args.symbol === 'string' ? args.symbol : undefined,
       };
-      
+
       const result = await executeGet24hStats(validatedArgs);
       return {
         content: [
@@ -313,7 +320,10 @@ export const testConnectivityTool: MCPTool = {
     properties: {},
     required: [],
   },
-  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+  async execute(
+    args: Record<string, unknown>,
+    _context?: ToolExecutionContext
+  ): Promise<MCPToolResult> {
     try {
       const result = await executeTestConnectivity(args);
       return {
@@ -347,7 +357,10 @@ export const testAuthenticationTool: MCPTool = {
     properties: {},
     required: [],
   },
-  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+  async execute(
+    args: Record<string, unknown>,
+    _context?: ToolExecutionContext
+  ): Promise<MCPToolResult> {
     try {
       const result = await executeTestAuthentication(args);
       return {
@@ -389,7 +402,10 @@ export const getActiveSymbolsTool: MCPTool = {
     },
     required: [],
   },
-  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+  async execute(
+    args: Record<string, unknown>,
+    _context?: ToolExecutionContext
+  ): Promise<MCPToolResult> {
     try {
       const result = await executeGetActiveSymbols(args as { limit?: number });
       return {

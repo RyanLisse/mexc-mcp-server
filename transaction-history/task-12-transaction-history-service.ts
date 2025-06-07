@@ -127,6 +127,19 @@ export interface TransactionExportResponse {
   timestamp: number;
 }
 
+// Database stats query result interface
+interface TransactionStatsQueryResult {
+  total_volume: string | number;
+  total_fees: string | number;
+  avg_value: string | number;
+  trade_count: string | number;
+  deposit_count: string | number;
+  withdrawal_count: string | number;
+  fee_count?: string | number;
+  dividend_count?: string | number;
+  interest_count?: string | number;
+}
+
 export interface TransactionStatsResponse {
   success: boolean;
   data?: {
@@ -353,20 +366,20 @@ export class TaskTwelveTransactionHistoryService {
       }
 
       const { transactions } = transactionsResult.data;
-      const stats = statsResult.rows[0] || {};
+      const stats = statsResult.rows[0] as TransactionStatsQueryResult | undefined;
 
       // Calculate transaction type distribution (include standard types even if zero)
       const transactionsByType: Record<string, number> = {
-        trade: Number((stats as any).trade_count) || 0,
-        deposit: Number((stats as any).deposit_count) || 0,
-        withdrawal: Number((stats as any).withdrawal_count) || 0,
+        trade: Number(stats?.trade_count) || 0,
+        deposit: Number(stats?.deposit_count) || 0,
+        withdrawal: Number(stats?.withdrawal_count) || 0,
       };
 
       const responseData = {
         totalTransactions: transactions.length,
-        totalVolume: String((stats as any).total_volume || '0.00'),
-        totalFees: String((stats as any).total_fees || '0.00'),
-        avgTransactionValue: String((stats as any).avg_value || '0.00'),
+        totalVolume: String(stats?.total_volume || '0.00'),
+        totalFees: String(stats?.total_fees || '0.00'),
+        avgTransactionValue: String(stats?.avg_value || '0.00'),
         transactionsByType,
         timeRange: {
           start: filter.startTime?.toISOString() || transactions[0]?.timestamp || '',

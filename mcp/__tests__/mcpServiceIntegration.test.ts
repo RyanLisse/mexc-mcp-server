@@ -102,11 +102,52 @@ describe('MCP Service Integration - Task #31', () => {
       ];
 
       for (const analysisType of validTypes) {
-        const result = await mcpIntegrationService.aiMarketAnalysis({
-          symbol: 'BTCUSDT',
-          analysisType,
-          depth: 'quick',
-        });
+        // Create appropriate request data for each analysis type
+        let request;
+
+        switch (analysisType) {
+          case 'sentiment':
+          case 'risk':
+            request = {
+              symbol: 'BTCUSDT',
+              analysisType,
+              depth: 'quick' as const,
+            };
+            break;
+          case 'technical':
+            request = {
+              symbol: 'BTCUSDT',
+              analysisType,
+              depth: 'quick' as const,
+              marketData: {
+                open: 49000,
+                high: 51000,
+                low: 48500,
+                close: 50000,
+                volume: 1000000,
+              },
+            };
+            break;
+          case 'trend':
+            request = {
+              symbol: 'BTCUSDT',
+              analysisType,
+              depth: 'quick' as const,
+              ohlcv: [
+                [Date.now() - 86400000, 49000, 51000, 48500, 50000, 1000000],
+                [Date.now(), 50000, 51500, 49500, 50500, 1100000],
+              ],
+            };
+            break;
+          default:
+            request = {
+              symbol: 'BTCUSDT',
+              analysisType,
+              depth: 'quick' as const,
+            };
+        }
+
+        const result = await mcpIntegrationService.aiMarketAnalysis(request);
 
         // Should attempt analysis (may fail due to API keys, but structure should be correct)
         expect(result).toBeDefined();

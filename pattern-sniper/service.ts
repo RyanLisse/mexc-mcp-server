@@ -184,7 +184,7 @@ class RateLimiter {
     // Wait for next token - limit wait time to prevent infinite loops
     const waitTime = Math.min(1000 / this.requestsPerSecond, 5000); // Max 5 second wait
     await new Promise((resolve) => setTimeout(resolve, waitTime));
-    
+
     // Check tokens again after wait, don't recurse indefinitely
     this.refillTokens();
     if (this.tokens > 0) {

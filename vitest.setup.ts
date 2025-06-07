@@ -37,21 +37,87 @@ vi.mock('encore.dev', () => ({
 }));
 
 // Mock Gemini client to prevent actual AI API calls in tests
-vi.mock('./ai/gemini-client.ts', () => ({
+vi.mock('./ai/gemini-client', () => ({
   GeminiClient: class MockGeminiClient {
     async generateObject() {
       return {
         success: true,
         data: {
+          // Strategy optimizer mock response
+          optimizationType: 'sharpe_ratio',
+          confidence: 0.85,
+          optimizedMetrics: {
+            expectedReturn: 0.12,
+            volatility: 0.15,
+            sharpeRatio: 0.8,
+            maxDrawdown: 0.08,
+            informationRatio: 0.6,
+          },
+          allocations: [
+            {
+              symbol: 'BTCUSDT',
+              currentWeight: 0.4,
+              optimizedWeight: 0.35,
+              adjustment: -0.05,
+              reasoning: 'Slight reduction for risk balance',
+            },
+            {
+              symbol: 'ETHUSDT',
+              currentWeight: 0.3,
+              optimizedWeight: 0.35,
+              adjustment: 0.05,
+              reasoning: 'Increase allocation for better returns',
+            },
+            {
+              symbol: 'BNBUSDT',
+              currentWeight: 0.2,
+              optimizedWeight: 0.2,
+              adjustment: 0,
+              reasoning: 'Maintain current allocation',
+            },
+            {
+              symbol: 'ADAUSDT',
+              currentWeight: 0.1,
+              optimizedWeight: 0.1,
+              adjustment: 0,
+              reasoning: 'Maintain current allocation',
+            },
+          ],
+          mexcAdvantages: {
+            feeSavingsUSD: 100,
+            leverageOpportunities: [
+              {
+                symbol: 'ETHUSDT',
+                recommendedLeverage: 2,
+                expectedBoost: 0.02,
+              },
+            ],
+          },
+          backtestResults: {
+            periodMonths: 12,
+            totalReturn: 0.15,
+            annualizedReturn: 0.12,
+            maxDrawdown: 0.08,
+            winRate: 0.65,
+            vsBaseline: {
+              baselineReturn: 0.08,
+              outperformance: 0.04,
+            },
+          },
+          // Fallback for other analysis types
           analysis: 'Mock AI analysis result',
-          confidence: 0.8,
           recommendations: ['Mock recommendation'],
+        },
+        usage: {
+          promptTokens: 1500,
+          completionTokens: 800,
+          totalTokens: 2300,
         },
         processingTimeMs: 50,
         modelVersion: 'mock-model-v1.0',
       };
     }
-    
+
     async generateStructuredAnalysis() {
       return {
         success: true,
@@ -70,9 +136,75 @@ vi.mock('./ai/gemini-client.ts', () => ({
       return {
         success: true,
         data: {
+          // Strategy optimizer mock response
+          optimizationType: 'sharpe_ratio',
+          confidence: 0.85,
+          optimizedMetrics: {
+            expectedReturn: 0.12,
+            volatility: 0.15,
+            sharpeRatio: 0.8,
+            maxDrawdown: 0.08,
+            informationRatio: 0.6,
+          },
+          allocations: [
+            {
+              symbol: 'BTCUSDT',
+              currentWeight: 0.4,
+              optimizedWeight: 0.35,
+              adjustment: -0.05,
+              reasoning: 'Slight reduction for risk balance',
+            },
+            {
+              symbol: 'ETHUSDT',
+              currentWeight: 0.3,
+              optimizedWeight: 0.35,
+              adjustment: 0.05,
+              reasoning: 'Increase allocation for better returns',
+            },
+            {
+              symbol: 'BNBUSDT',
+              currentWeight: 0.2,
+              optimizedWeight: 0.2,
+              adjustment: 0,
+              reasoning: 'Maintain current allocation',
+            },
+            {
+              symbol: 'ADAUSDT',
+              currentWeight: 0.1,
+              optimizedWeight: 0.1,
+              adjustment: 0,
+              reasoning: 'Maintain current allocation',
+            },
+          ],
+          mexcAdvantages: {
+            feeSavingsUSD: 100,
+            leverageOpportunities: [
+              {
+                symbol: 'ETHUSDT',
+                recommendedLeverage: 2,
+                expectedBoost: 0.02,
+              },
+            ],
+          },
+          backtestResults: {
+            periodMonths: 12,
+            totalReturn: 0.15,
+            annualizedReturn: 0.12,
+            maxDrawdown: 0.08,
+            winRate: 0.65,
+            vsBaseline: {
+              baselineReturn: 0.08,
+              outperformance: 0.04,
+            },
+          },
+          // Fallback for other analysis types
           analysis: 'Mock AI analysis result',
-          confidence: 0.8,
           recommendations: ['Mock recommendation'],
+        },
+        usage: {
+          promptTokens: 1500,
+          completionTokens: 800,
+          totalTokens: 2300,
         },
         processingTimeMs: 50,
         modelVersion: 'mock-model-v1.0',

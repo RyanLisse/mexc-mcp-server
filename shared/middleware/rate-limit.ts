@@ -54,9 +54,10 @@ function extractUserIdentifier(req: Request): { userId: string; isAuthenticated:
   // Use IP address for unauthenticated users
   const forwardedFor = req.headers['x-forwarded-for'];
   const realIp = req.headers['x-real-ip'];
-  const clientIp = (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor) || 
-                   (Array.isArray(realIp) ? realIp[0] : realIp) || 
-                   'unknown';
+  const clientIp =
+    (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor) ||
+    (Array.isArray(realIp) ? realIp[0] : realIp) ||
+    'unknown';
   const userId = crypto.createHash('sha256').update(clientIp).digest('hex').slice(0, 16);
   return { userId, isAuthenticated: false };
 }

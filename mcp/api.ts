@@ -3,6 +3,8 @@
  * AI-enhanced Model Context Protocol endpoints for trading analysis
  */
 
+import type { Max, Min, MinLen } from 'encore.dev/validate';
+import { createErrorResponse, logAndNotify } from '../shared/errors';
 import type {
   AIAnalysisResult,
   AnalysisType,
@@ -10,13 +12,11 @@ import type {
   SentimentAnalysisResult,
   TechnicalAnalysisResult,
 } from '../shared/types/ai-types';
-import type { Max, Min, MinLen } from 'encore.dev/validate';
-import { createErrorResponse, logAndNotify } from '../shared/errors';
 
 import { api } from 'encore.dev/api';
 import { isAIOperationAllowed } from '../shared/config';
-import { mcpIntegrationService } from './services/mcpIntegration';
 import { mcpService } from './encore.service';
+import { mcpIntegrationService } from './services/mcpIntegration';
 
 // =============================================================================
 // Request/Response Interfaces

@@ -58,11 +58,50 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
       analysisTypes.forEach((analysisType) => {
         depths.forEach((depth) => {
           it(`should support ${depth} analysis for ${analysisType}`, async () => {
-            const mockData = {
-              symbol: testSymbol,
-              price: 50000,
-              volume: 1000000,
-            };
+            // Create appropriate mock data for each analysis type
+            let mockData;
+
+            switch (analysisType) {
+              case 'sentiment':
+              case 'risk':
+                mockData = {
+                  symbol: testSymbol,
+                  price: 50000,
+                  volume: 1000000,
+                };
+                break;
+              case 'technical':
+                mockData = {
+                  symbol: testSymbol,
+                  price: 50000,
+                  volume: 1000000,
+                  marketData: {
+                    open: 49000,
+                    high: 51000,
+                    low: 48500,
+                    close: 50000,
+                    volume: 1000000,
+                  },
+                };
+                break;
+              case 'trend':
+                mockData = {
+                  symbol: testSymbol,
+                  price: 50000,
+                  volume: 1000000,
+                  ohlcv: [
+                    [Date.now() - 86400000, 49000, 51000, 48500, 50000, 1000000],
+                    [Date.now(), 50000, 51500, 49500, 50500, 1100000],
+                  ],
+                };
+                break;
+              default:
+                mockData = {
+                  symbol: testSymbol,
+                  price: 50000,
+                  volume: 1000000,
+                };
+            }
 
             // This will likely fail due to API keys, but structure should be correct
             const result = await mcpAnalysisService.performMarketAnalysis(

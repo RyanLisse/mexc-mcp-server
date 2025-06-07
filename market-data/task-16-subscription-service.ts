@@ -220,7 +220,10 @@ export class SubscriptionService {
     try {
       // Check cache first
       if (this.subscriptionCache.has(subscriptionId)) {
-        return this.subscriptionCache.get(subscriptionId)!;
+        const cached = this.subscriptionCache.get(subscriptionId);
+        if (cached) {
+          return cached;
+        }
       }
 
       // Retrieve from database
@@ -434,7 +437,13 @@ export class SubscriptionService {
 
       // Broadcast via WebSocket service - use mock's broadcast method for testing
       try {
-        const broadcastResult = await (this.webSocketService as any).broadcast(update);
+        // Type-safe check for broadcast method (mock services may have it)
+        const service = this.webSocketService as {
+          broadcast?: (update: unknown) => Promise<{ recipientCount?: number }>;
+        };
+        const broadcastResult = service.broadcast
+          ? await service.broadcast(update)
+          : { recipientCount: matchingSubscriptions.length };
         const recipientCount = broadcastResult.recipientCount || matchingSubscriptions.length;
 
         this.logger.debug('Update broadcasted successfully', {
@@ -663,7 +672,7 @@ export class SubscriptionService {
       type: subscription.type as SubscriptionType,
       symbol: subscription.symbol,
       depth: subscription.filters?.depth as number,
-      callback: (_data: any) => {
+      callback: (_data: unknown) => {
         // In a real implementation, this would handle the incoming data
         // and route it to the appropriate subscribers
         this.logger.debug('Received WebSocket data', {

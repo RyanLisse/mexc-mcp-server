@@ -412,7 +412,7 @@ describe('Health Check and Observability - Task #18', () => {
     });
 
     it('should handle HTTP error responses', async () => {
-      mockFetch.mockResolvedValueOnce({
+      const mockResponse: Partial<Response> = {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
@@ -428,7 +428,9 @@ describe('Health Check and Observability - Task #18', () => {
         blob: vi.fn(),
         formData: vi.fn(),
         text: vi.fn(),
-      } as any);
+      };
+
+      mockFetch.mockResolvedValueOnce(mockResponse as Response);
 
       const failedHealth = createMockServiceHealth('unhealthy');
       expect(failedHealth.status).toBe('unhealthy');

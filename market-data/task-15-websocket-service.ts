@@ -36,6 +36,13 @@ export interface WebSocketSubscription {
   callback: (data: WebSocketMessage) => void;
 }
 
+// Raw WebSocket message from MEXC
+interface RawWebSocketMessage {
+  c: string; // channel
+  s: string; // symbol
+  d: unknown; // data
+}
+
 // WebSocket message interfaces
 export interface WebSocketMessage {
   type: string;
@@ -156,8 +163,8 @@ export class TaskFifteenWebSocketService {
   }
 
   async connect(): Promise<WebSocketConnectionResponse> {
-    if (this.isConnected) {
-      return { success: true, connectionId: this.connectionId! };
+    if (this.isConnected && this.connectionId) {
+      return { success: true, connectionId: this.connectionId };
     }
 
     try {
@@ -193,7 +200,11 @@ export class TaskFifteenWebSocketService {
             wsUrl: this.config.baseWsUrl,
           });
 
-          resolve({ success: true, connectionId: this.connectionId! });
+          if (this.connectionId) {
+            resolve({ success: true, connectionId: this.connectionId });
+          } else {
+            resolve({ success: false, error: 'Connection ID not set' });
+          }
         };
 
         this.websocket.onerror = (error) => {
@@ -428,7 +439,7 @@ export class TaskFifteenWebSocketService {
     }
   }
 
-  private routeMessage(message: any): void {
+  private routeMessage(message: RawWebSocketMessage): void {
     const channel = message.c;
     const symbol = message.s;
     const data = message.d;
@@ -438,7 +449,7 @@ export class TaskFifteenWebSocketService {
       (sub) => sub.mexcChannel === channel
     );
 
-    matchingSubscriptions.forEach((subscription) => {
+    for (const subscription of matchingSubscriptions) {
       try {
         const parsedData = this.parseMessageData(subscription.type, data);
         const webSocketMessage: WebSocketMessage = {
@@ -454,51 +465,60 @@ export class TaskFifteenWebSocketService {
           error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
-    });
+    }
   }
 
   private parseMessageData(
     type: SubscriptionType,
-    data: any
+    data: unknown
   ): LivePriceUpdate | OrderBookUpdate | TradeUpdate | AccountUpdate {
+    // Type guard to ensure data is an object
+    const dataObj = data as Record<string, unknown>;
+
     switch (type) {
       case 'ticker':
         return {
-          price: data.c || '0',
-          high: data.h || '0',
-          low: data.l || '0',
-          open: data.o || '0',
-          volume: data.v || '0',
-          timestamp: data.t || Date.now(),
+          price: String(dataObj?.c || '0'),
+          high: String(dataObj?.h || '0'),
+          low: String(dataObj?.l || '0'),
+          open: String(dataObj?.o || '0'),
+          volume: String(dataObj?.v || '0'),
+          timestamp: Number(dataObj?.t) || Date.now(),
         };
 
       case 'orderbook':
         return {
-          bids: (data.bids || []).map(([price, quantity]: [string, string]) => ({
-            price,
-            quantity,
-          })),
-          asks: (data.asks || []).map(([price, quantity]: [string, string]) => ({
-            price,
-            quantity,
-          })),
-          timestamp: data.t || Date.now(),
+          bids: (Array.isArray(dataObj?.bids) ? dataObj.bids : []).map((bid: unknown) => {
+            const bidArray = Array.isArray(bid) ? bid : [];
+            return {
+              price: String(bidArray[0] || '0'),
+              quantity: String(bidArray[1] || '0'),
+            };
+          }),
+          asks: (Array.isArray(dataObj?.asks) ? dataObj.asks : []).map((ask: unknown) => {
+            const askArray = Array.isArray(ask) ? ask : [];
+            return {
+              price: String(askArray[0] || '0'),
+              quantity: String(askArray[1] || '0'),
+            };
+          }),
+          timestamp: Number(dataObj?.t) || Date.now(),
         };
 
       case 'trades':
         return {
-          side: data.S === 1 ? 'buy' : 'sell',
-          price: data.p || '0',
-          quantity: data.v || '0',
-          timestamp: data.t || Date.now(),
+          side: dataObj?.S === 1 ? 'buy' : 'sell',
+          price: String(dataObj?.p || '0'),
+          quantity: String(dataObj?.v || '0'),
+          timestamp: Number(dataObj?.t) || Date.now(),
         };
 
       case 'account':
         return {
-          balance: data.b || '0',
-          locked: data.l || '0',
-          asset: data.a || '',
-          timestamp: data.t || Date.now(),
+          balance: String(dataObj?.b || '0'),
+          locked: String(dataObj?.l || '0'),
+          asset: String(dataObj?.a || ''),
+          timestamp: Number(dataObj?.t) || Date.now(),
         };
 
       default:

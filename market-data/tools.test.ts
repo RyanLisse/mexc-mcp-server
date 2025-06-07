@@ -34,8 +34,26 @@ type Stats24hData = {
   timestamp: number;
 };
 
+// Validation input interfaces
+interface ValidationInput {
+  [key: string]: unknown;
+}
+
+interface TickerInput extends ValidationInput {
+  symbol?: string;
+}
+
+interface OrderBookInput extends ValidationInput {
+  symbol?: string;
+  limit?: number;
+}
+
+interface Stats24hInput extends ValidationInput {
+  symbol?: string;
+}
+
 // Simple validation helpers
-function validateTicker(data: any): { success: boolean; error?: string } {
+function validateTicker(data: ValidationInput): { success: boolean; error?: string } {
   const required = ['symbol', 'price', 'priceChange', 'priceChangePercent', 'volume', 'timestamp'];
   for (const field of required) {
     if (!(field in data)) {
@@ -45,14 +63,14 @@ function validateTicker(data: any): { success: boolean; error?: string } {
   return { success: true };
 }
 
-function validateOrderBook(data: any): { success: boolean; error?: string } {
+function validateOrderBook(data: ValidationInput): { success: boolean; error?: string } {
   if (!data.symbol || !Array.isArray(data.bids) || !Array.isArray(data.asks)) {
     return { success: false, error: 'Invalid order book structure' };
   }
   return { success: true };
 }
 
-function validateStats24h(data: any): { success: boolean; error?: string } {
+function validateStats24h(data: ValidationInput): { success: boolean; error?: string } {
   const required = ['symbol', 'volume', 'priceChange', 'timestamp'];
   for (const field of required) {
     if (!(field in data)) {
@@ -62,7 +80,7 @@ function validateStats24h(data: any): { success: boolean; error?: string } {
   return { success: true };
 }
 
-function validateTickerInput(data: any): { success: boolean; error?: string } {
+function validateTickerInput(data: TickerInput): { success: boolean; error?: string } {
   if (!data || !data.symbol || typeof data.symbol !== 'string') {
     return { success: false, error: 'Symbol is required and must be a string' };
   }
@@ -72,7 +90,7 @@ function validateTickerInput(data: any): { success: boolean; error?: string } {
   return { success: true };
 }
 
-function validateOrderBookInput(data: any): { success: boolean; error?: string } {
+function validateOrderBookInput(data: OrderBookInput): { success: boolean; error?: string } {
   if (!data.symbol || typeof data.symbol !== 'string') {
     return { success: false, error: 'Symbol is required' };
   }
@@ -82,7 +100,7 @@ function validateOrderBookInput(data: any): { success: boolean; error?: string }
   return { success: true };
 }
 
-function validateStats24hInput(data: any): { success: boolean; error?: string } {
+function validateStats24hInput(data: Stats24hInput): { success: boolean; error?: string } {
   if (data.symbol && typeof data.symbol !== 'string') {
     return { success: false, error: 'Symbol must be a string' };
   }

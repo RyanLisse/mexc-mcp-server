@@ -7,7 +7,7 @@ process.env.NODE_ENV = 'test';
 
 // Mock Encore runtime before importing anything else
 mock.module('encore.dev/api', () => ({
-  api: (config: any, handler: any) => handler,
+  api: (_config: any, handler: any) => handler,
 }));
 
 mock.module('encore.dev/service', () => ({
@@ -36,8 +36,8 @@ mock.module('../../market-data/mexc-client.js', () => ({
   },
 }));
 
-import type { PatternSniperConfig, SnipeTarget } from '../schemas.js';
 import type { MEXCApiClient } from '../../market-data/mexc-client.js';
+import type { PatternSniperConfig, SnipeTarget } from '../schemas.js';
 
 // Type for the EnhancedPatternSniperState methods used in tests
 interface TestSniperState {
@@ -142,7 +142,7 @@ const mockMexcClient = {
 
 // Helper function to add timeout to async tests
 const withTimeout = async <T>(testFn: () => Promise<T>, timeoutMs = 3000): Promise<T> => {
-  const timeoutPromise = new Promise<never>((_, reject) => 
+  const timeoutPromise = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error(`Test timeout after ${timeoutMs}ms`)), timeoutMs)
   );
   return Promise.race([testFn(), timeoutPromise]);
@@ -168,7 +168,7 @@ describe('Enhanced Pattern Sniper Service', () => {
 
     beforeEach(() => {
       sniperState = new EnhancedPatternSniperState();
-      
+
       // Configure with shorter intervals for testing to prevent timeouts
       // Must respect schema minimums: symbolsRefreshInterval >= 1000, healthCheckIntervalMs >= 10000
       sniperState.updateConfig({
@@ -184,7 +184,7 @@ describe('Enhanced Pattern Sniper Service', () => {
 
     afterEach(async () => {
       // Ensure monitoring is stopped after each test to prevent timeouts
-      if (sniperState && sniperState.getStatus().isMonitoring) {
+      if (sniperState?.getStatus().isMonitoring) {
         await sniperState.stopMonitoring();
       }
     });
@@ -409,10 +409,10 @@ describe('Enhanced Pattern Sniper Service', () => {
       // addError is a private method, so we'll test through the public interface
       // by triggering an error scenario (like API failures)
       const status = sniperState.getStatus();
-      
+
       // Test that the errors array exists and starts empty
       expect(status.errors).toEqual([]);
-      
+
       // The service creates errors internally during monitoring failures
       // so we can't directly test the addError method, but we can verify
       // the error tracking infrastructure is in place
@@ -422,11 +422,11 @@ describe('Enhanced Pattern Sniper Service', () => {
     it('should limit error history to 100 entries with enhanced error tracking', () => {
       // Since we can't access the private state directly, just test the error array structure
       const status = sniperState.getStatus();
-      
+
       // Test that the errors array exists and is bounded
       expect(Array.isArray(status.errors)).toBe(true);
       expect(status.errors.length).toBeLessThanOrEqual(100);
-      
+
       // The service internally limits errors to 100, so we can't directly test the limit
       // but we can verify the structure is correct
       expect(status.errors).toEqual([]);
@@ -446,7 +446,7 @@ describe('Enhanced Pattern Sniper Service', () => {
 
     beforeEach(() => {
       sniperState = new EnhancedPatternSniperState();
-      
+
       // Configure with shorter intervals for testing to prevent timeouts
       // Must respect schema minimums: symbolsRefreshInterval >= 1000, healthCheckIntervalMs >= 10000
       sniperState.updateConfig({
@@ -462,7 +462,7 @@ describe('Enhanced Pattern Sniper Service', () => {
 
     afterEach(async () => {
       // Ensure monitoring is stopped after each test to prevent timeouts
-      if (sniperState && sniperState.getStatus().isMonitoring) {
+      if (sniperState?.getStatus().isMonitoring) {
         await sniperState.stopMonitoring();
       }
     });

@@ -60,7 +60,7 @@ describe('Strategy Optimizer Structure - Task #27', () => {
     it('should require objective function', async () => {
       const noObjectiveRequest = {
         ...validPortfolioRequest,
-        objectiveFunction: undefined as any,
+        objectiveFunction: undefined as unknown,
       };
 
       const result = await mcpIntegrationService.strategyOptimizer(noObjectiveRequest);
@@ -94,7 +94,7 @@ describe('Strategy Optimizer Structure - Task #27', () => {
         'min_drawdown',
       ];
 
-      objectives.forEach((objective) => {
+      for (const objective of objectives) {
         const request = {
           ...validPortfolioRequest,
           objectiveFunction: objective,
@@ -106,7 +106,7 @@ describe('Strategy Optimizer Structure - Task #27', () => {
 
         const totalWeight = request.portfolio.reduce((sum, asset) => sum + asset.allocation, 0);
         expect(Math.abs(totalWeight - 1)).toBeLessThan(0.01);
-      });
+      }
     });
 
     it('should have correct response structure on success path', async () => {
@@ -205,14 +205,14 @@ describe('Strategy Optimizer Structure - Task #27', () => {
       const validObjectives = ['sharpe_ratio', 'max_return', 'min_risk', 'min_drawdown'];
       const invalidObjectives = ['invalid', '', null, undefined, 123];
 
-      validObjectives.forEach((objective) => {
+      for (const objective of validObjectives) {
         expect(typeof objective).toBe('string');
         expect(objective.length).toBeGreaterThan(0);
-      });
+      }
 
-      invalidObjectives.forEach((objective) => {
+      for (const objective of invalidObjectives) {
         expect(validObjectives).not.toContain(objective);
-      });
+      }
     });
 
     it('should validate portfolio structure', () => {
@@ -238,19 +238,19 @@ describe('Strategy Optimizer Structure - Task #27', () => {
         [{ symbol: '', allocation: 0.5 }], // Empty symbol
       ];
 
-      validPortfolios.forEach((portfolio) => {
+      for (const portfolio of validPortfolios) {
         expect(Array.isArray(portfolio)).toBe(true);
         expect(portfolio.length).toBeGreaterThan(0);
-        portfolio.forEach((asset) => {
+        for (const asset of portfolio) {
           expect(typeof asset.symbol).toBe('string');
           expect(asset.symbol.length).toBeGreaterThan(0);
           expect(typeof asset.allocation).toBe('number');
           expect(asset.allocation).toBeGreaterThanOrEqual(0);
           expect(asset.allocation).toBeLessThanOrEqual(1);
-        });
-      });
+        }
+      }
 
-      invalidPortfolios.forEach((portfolio) => {
+      for (const portfolio of invalidPortfolios) {
         if (portfolio === null || portfolio === undefined) {
           expect(portfolio).toBeFalsy();
         } else if (Array.isArray(portfolio)) {
@@ -268,7 +268,7 @@ describe('Strategy Optimizer Structure - Task #27', () => {
             expect(hasInvalidAsset).toBe(true);
           }
         }
-      });
+      }
     });
   });
 

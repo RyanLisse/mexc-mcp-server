@@ -183,7 +183,7 @@ export class GeminiClient {
       const result = await generateObject({
         model: this.google(this.config.model),
         prompt,
-        schema: schema as any, // Use any to resolve schema property type issue
+        schema: schema as Record<string, unknown>,
         maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
       });

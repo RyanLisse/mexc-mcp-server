@@ -31,7 +31,6 @@ interface RateLimitResult {
   weight?: number;
 }
 
-
 describe('Enhanced Rate Limiting System - Task #5', () => {
   beforeEach(() => {
     // Reset any cached state

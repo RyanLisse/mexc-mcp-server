@@ -33,7 +33,14 @@ const mockMEXCClient = {
 };
 
 // Global mock availability for the service
-(globalThis as any).__HEALTH_CHECK_MOCKS__ = {
+interface GlobalWithMocks {
+  __HEALTH_CHECK_MOCKS__?: {
+    geminiAnalyzer: typeof mockGeminiAnalyzer;
+    mexcClient: typeof mockMEXCClient;
+  };
+}
+
+(globalThis as GlobalWithMocks).__HEALTH_CHECK_MOCKS__ = {
   geminiAnalyzer: mockGeminiAnalyzer,
   mexcClient: mockMEXCClient,
 };
@@ -52,62 +59,7 @@ globalThis.require = vi.fn((module: string) => {
 // Import the service after mocks
 import { mcpIntegrationService } from '../services/mcpIntegration';
 
-// Test interfaces for comprehensive health check
-interface ComprehensiveHealthResponse {
-  geminiApi: {
-    status: 'OK' | 'WARNING' | 'ERROR';
-    timestamp: number;
-    latency?: number;
-    modelVersion?: string;
-    budgetStatus?: {
-      costUSD: number;
-      remainingBudget: number;
-      utilizationPercentage: number;
-    };
-    cachePerformance?: {
-      hitRate: number;
-      efficiency: string;
-    };
-    recoveryActions?: string[];
-  };
-  mexcIntegration: {
-    status: 'OK' | 'WARNING' | 'ERROR';
-    timestamp: number;
-    connectivity?: {
-      ping: boolean;
-      latency: number;
-      serverSync: boolean;
-    };
-    dataFreshness?: {
-      lastUpdate: number;
-      staleness: string;
-    };
-    recoveryActions?: string[];
-  };
-  aiServices: {
-    status: 'OK' | 'WARNING' | 'ERROR';
-    timestamp: number;
-    serviceHealth?: {
-      analyzer: boolean;
-      client: boolean;
-      models: boolean;
-    };
-    performanceMetrics?: {
-      averageResponseTime: number;
-      successRate: number;
-      errorRate: number;
-    };
-    recoveryActions?: string[];
-  };
-  overall: {
-    status: 'OK' | 'WARNING' | 'ERROR';
-    timestamp: number;
-    uptime: number;
-    healthScore: number;
-    criticalIssues: number;
-    recommendations: string[];
-  };
-}
+// Test comprehensive health check functionality with structured responses
 
 describe('AI Health Check Endpoint - Task #32', () => {
   beforeEach(() => {
@@ -361,10 +313,10 @@ describe('AI Health Check Endpoint - Task #32', () => {
 
       const results = await Promise.all(promises);
 
-      results.forEach((result) => {
+      for (const result of results) {
         expect(result.success).toBe(true);
         expect(result.data).toBeDefined();
-      });
+      }
     });
   });
 });

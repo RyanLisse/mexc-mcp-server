@@ -177,7 +177,7 @@ async function executeAnalysisByType(
     case 'sentiment':
       return await geminiAnalyzer.analyzeSentiment(data);
 
-    case 'technical':
+    case 'technical': {
       if (!data.ohlcv && !data.marketData) {
         throw createAIAnalysisError(
           'Technical analysis requires OHLCV data or market data',
@@ -185,7 +185,10 @@ async function executeAnalysisByType(
           { severity: 'error', recoverable: false }
         );
       }
-      return await geminiAnalyzer.performTechnicalAnalysis(data.marketData || data);
+      // Combine symbol with market data for technical analysis
+      const technicalData = data.marketData ? { symbol: data.symbol, ...data.marketData } : data;
+      return await geminiAnalyzer.performTechnicalAnalysis(technicalData);
+    }
 
     case 'risk':
       return await geminiAnalyzer.assessRisk(data);
