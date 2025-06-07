@@ -191,7 +191,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
   describe('Streaming Analysis (Task #25)', () => {
     it('should provide real-time progress updates during analysis', async () => {
       // Mock streaming analysis functionality
-      const mockStreamingResult = {
+      const _mockStreamingResult = {
         success: true,
         streamId: 'stream_123',
         progressUpdates: [
