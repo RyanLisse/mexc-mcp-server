@@ -3,7 +3,8 @@
  * Comprehensive type definitions for AI analysis, streaming, and responses
  */
 
-import type { Max, Min, MinLen } from 'encore.dev/validate';
+// Removed Encore validation decorators to fix compilation issues
+// import type { Max, Min, MinLen } from 'encore.dev/validate';
 
 // =============================================================================
 // Core AI Analysis Interfaces
@@ -34,7 +35,7 @@ export interface AIAnalysisResult {
  */
 export interface EnhancedAnalysisResponse extends AIAnalysisResult {
   /** Confidence score between 0 and 1 */
-  confidence: number & Min<0> & Max<1>;
+  confidence: number;
   /** Token usage statistics for the analysis */
   usage?: TokenUsage;
   /** Cache status information */
@@ -54,7 +55,7 @@ export interface SentimentAnalysisResult extends EnhancedAnalysisResponse {
     /** Overall market sentiment */
     sentiment: 'bullish' | 'bearish' | 'neutral';
     /** Confidence in sentiment assessment (0-1) */
-    confidence: number & Min<0> & Max<1>;
+    confidence: number;
     /** Risk level assessment */
     riskLevel: 'low' | 'medium' | 'high';
     /** Actionable recommendations */
@@ -62,11 +63,11 @@ export interface SentimentAnalysisResult extends EnhancedAnalysisResponse {
     /** Detailed sentiment breakdown */
     breakdown?: {
       /** Price sentiment score (-1 to 1) */
-      priceScore: number & Min<-1> & Max<1>;
+      priceScore: number;
       /** Volume sentiment score (-1 to 1) */
-      volumeScore: number & Min<-1> & Max<1>;
+      volumeScore: number;
       /** Market momentum score (-1 to 1) */
-      momentumScore: number & Min<-1> & Max<1>;
+      momentumScore: number;
     };
   };
 }
@@ -90,7 +91,7 @@ export interface TechnicalAnalysisResult extends EnhancedAnalysisResponse {
     /** Trend direction */
     direction?: 'up' | 'down' | 'sideways';
     /** Trend strength (0-1) */
-    strength?: number & Min<0> & Max<1>;
+    strength?: number;
   };
 }
 
@@ -103,26 +104,26 @@ export interface RiskAssessment extends EnhancedAnalysisResponse {
     /** Overall risk level */
     riskLevel: 'low' | 'medium' | 'high';
     /** Risk confidence score (0-1) */
-    confidence: number & Min<0> & Max<1>;
+    confidence: number;
     /** Risk mitigation recommendations */
     recommendations: string[];
     /** Detailed risk factors */
     riskFactors?: {
       /** Market volatility risk (0-1) */
-      volatilityRisk: number & Min<0> & Max<1>;
+      volatilityRisk: number;
       /** Liquidity risk (0-1) */
-      liquidityRisk: number & Min<0> & Max<1>;
+      liquidityRisk: number;
       /** Position size risk (0-1) */
-      positionSizeRisk: number & Min<0> & Max<1>;
+      positionSizeRisk: number;
       /** Correlation risk (0-1) */
-      correlationRisk: number & Min<0> & Max<1>;
+      correlationRisk: number;
     };
     /** Potential loss scenarios */
     lossScenarios?: Array<{
       /** Scenario name */
       scenario: string;
       /** Probability of occurrence (0-1) */
-      probability: number & Min<0> & Max<1>;
+      probability: number;
       /** Potential loss percentage */
       potentialLoss: number;
     }>;
@@ -138,7 +139,7 @@ export interface OptimizationResult extends EnhancedAnalysisResponse {
     /** Type of optimization performed */
     optimizationType: 'portfolio' | 'risk' | 'return' | 'sharpe';
     /** Optimization confidence score (0-1) */
-    confidence: number & Min<0> & Max<1>;
+    confidence: number;
     /** Optimized performance metrics */
     optimizedMetrics: {
       /** Expected return improvement */
@@ -155,26 +156,26 @@ export interface OptimizationResult extends EnhancedAnalysisResponse {
     /** Optimized asset allocations */
     allocations?: Array<{
       /** Asset symbol */
-      symbol: string & MinLen<1>;
+      symbol: string;
       /** Current allocation weight (0-1) */
-      currentWeight: number & Min<0> & Max<1>;
+      currentWeight: number;
       /** Optimized allocation weight (0-1) */
-      optimizedWeight: number & Min<0> & Max<1>;
+      optimizedWeight: number;
       /** Recommended adjustment */
       adjustment: number;
     }>;
     /** Backtest results for optimization */
     backtestResults?: {
       /** Backtest period in months */
-      periodMonths: number & Min<1>;
+      periodMonths: number;
       /** Total return achieved */
       totalReturn: number;
       /** Portfolio volatility */
-      volatility: number & Min<0>;
+      volatility: number;
       /** Maximum drawdown */
       maxDrawdown: number;
       /** Win rate percentage */
-      winRate: number & Min<0> & Max<1>;
+      winRate: number;
     };
   };
 }
@@ -193,7 +194,7 @@ export interface StreamingAnalysisUpdate {
   /** Whether this is the final update */
   isFinal: boolean;
   /** Progress percentage (0-100) */
-  progress: number & Min<0> & Max<100>;
+  progress: number;
   /** Current analysis stage */
   stage: AnalysisStage;
   /** Partial results available so far */
@@ -235,7 +236,7 @@ export interface AIAnalysisRequest {
   /** Whether to enable streaming updates */
   enableStreaming?: boolean;
   /** Request timeout in milliseconds */
-  timeoutMs?: number & Min<1000> & Max<300000>;
+  timeoutMs?: number;
 }
 
 /**
@@ -245,11 +246,11 @@ export interface SentimentAnalysisRequest extends AIAnalysisRequest {
   analysisType: 'sentiment';
   data: {
     /** Trading symbol */
-    symbol: string & MinLen<1>;
+    symbol: string;
     /** Current price */
-    price?: number & Min<0>;
+    price?: number;
     /** Trading volume */
-    volume?: number & Min<0>;
+    volume?: number;
     /** Historical prices */
     prices?: number[];
     /** Historical volumes */
@@ -266,19 +267,19 @@ export interface TechnicalAnalysisRequest extends AIAnalysisRequest {
   analysisType: 'technical';
   data: {
     /** Trading symbol */
-    symbol: string & MinLen<1>;
+    symbol: string;
     /** OHLCV data for analysis */
     ohlcv: Array<{
       /** Opening price */
-      open: number & Min<0>;
+      open: number;
       /** Highest price */
-      high: number & Min<0>;
+      high: number;
       /** Lowest price */
-      low: number & Min<0>;
+      low: number;
       /** Closing price */
-      close: number & Min<0>;
+      close: number;
       /** Trading volume */
-      volume: number & Min<0>;
+      volume: number;
       /** Timestamp */
       timestamp?: number;
     }>;
@@ -292,27 +293,27 @@ export interface RiskAssessmentRequest extends AIAnalysisRequest {
   analysisType: 'risk';
   data: {
     /** Trading symbol */
-    symbol: string & MinLen<1>;
+    symbol: string;
     /** Position side */
     side: 'long' | 'short';
     /** Position size */
-    size: number & Min<0>;
+    size: number;
     /** Entry price */
-    entryPrice: number & Min<0>;
+    entryPrice: number;
     /** Current market price */
-    currentPrice: number & Min<0>;
+    currentPrice: number;
     /** Market data context */
     marketData: {
       /** Market volatility */
-      volatility: number & Min<0>;
+      volatility: number;
       /** 24h trading volume */
-      volume24h: number & Min<0>;
+      volume24h: number;
       /** Liquidity indicators */
       liquidity?: {
         /** Bid-ask spread */
-        bidAskSpread: number & Min<0>;
+        bidAskSpread: number;
         /** Market depth */
-        marketDepth: number & Min<0>;
+        marketDepth: number;
       };
     };
   };
@@ -326,7 +327,7 @@ export interface StreamingAnalysisRequest extends AIAnalysisRequest {
   /** Callback URL for streaming updates */
   callbackUrl?: string;
   /** Update frequency in milliseconds */
-  updateIntervalMs?: number & Min<100> & Max<10000>;
+  updateIntervalMs?: number;
 }
 
 // =============================================================================
@@ -351,15 +352,15 @@ export type AnalysisType =
  */
 export interface AnalysisParameters {
   /** AI model temperature (0-2) */
-  temperature?: number & Min<0> & Max<2>;
+  temperature?: number;
   /** Maximum tokens for response */
-  maxTokens?: number & Min<1> & Max<32768>;
+  maxTokens?: number;
   /** Analysis depth level */
   depth?: 'basic' | 'detailed' | 'comprehensive';
   /** Include confidence intervals */
   includeConfidenceIntervals?: boolean;
   /** Historical context window in hours */
-  contextWindowHours?: number & Min<1> & Max<168>;
+  contextWindowHours?: number;
 }
 
 /**
@@ -387,7 +388,7 @@ export interface CacheInfo {
   /** Cache expiration timestamp */
   expiresAt?: number;
   /** Cache hit rate */
-  hitRate?: number & Min<0> & Max<1>;
+  hitRate?: number;
 }
 
 /**
@@ -401,7 +402,7 @@ export interface AnalysisContext {
     /** Overall market sentiment */
     overallSentiment: 'bullish' | 'bearish' | 'neutral';
     /** Volatility index */
-    volatilityIndex: number & Min<0> & Max<100>;
+    volatilityIndex: number;
   };
   /** User context if available */
   userContext?: {
@@ -447,7 +448,7 @@ export interface AICacheStats {
   /** Cache misses */
   misses: number;
   /** Hit rate (0-1) */
-  hitRate: number & Min<0> & Max<1>;
+  hitRate: number;
   /** Total cached entries */
   totalEntries: number;
   /** Memory usage in bytes */
@@ -596,7 +597,7 @@ export function createAnalysisCacheKey(
 /**
  * Validate analysis confidence score
  */
-export function isValidConfidence(confidence: number): confidence is number & Min<0> & Max<1> {
+export function isValidConfidence(confidence: number): confidence is number {
   return typeof confidence === 'number' && confidence >= 0 && confidence <= 1;
 }
 

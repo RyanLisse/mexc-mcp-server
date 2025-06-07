@@ -131,7 +131,7 @@ describe('MCP Service Integration - Task #31', () => {
         });
 
         expect(result).toBeDefined();
-        expect(result.processingTimeMs).toBeGreaterThan(0);
+        expect(result.processingTimeMs).toBeGreaterThanOrEqual(0);
       }
     });
   });

@@ -266,7 +266,7 @@ describe('Market Data Tools Validation', () => {
       };
 
       // Validate TTL values are reasonable
-      for (const [key, ttl] of Object.entries(expectedCacheTTLs)) {
+      for (const [_key, ttl] of Object.entries(expectedCacheTTLs)) {
         expect(typeof ttl).toBe('number');
         expect(ttl).toBeGreaterThan(0);
         expect(ttl).toBeLessThanOrEqual(300000); // Max 5 minutes

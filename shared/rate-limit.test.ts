@@ -31,12 +31,6 @@ interface RateLimitResult {
   weight?: number;
 }
 
-interface RateLimitHeaders {
-  'X-RateLimit-Limit': string;
-  'X-RateLimit-Remaining': string;
-  'X-RateLimit-Reset': string;
-  'Retry-After'?: string;
-}
 
 describe('Enhanced Rate Limiting System - Task #5', () => {
   beforeEach(() => {

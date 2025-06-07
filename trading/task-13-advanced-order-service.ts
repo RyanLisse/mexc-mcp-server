@@ -82,10 +82,10 @@ export interface ConditionalOrderArgs extends BaseAdvancedOrder {
 }
 
 // Union type for all advanced order types
-export type AdvancedOrderArgs = 
-  | StopLossOrderArgs 
-  | TakeProfitOrderArgs 
-  | OCOOrderArgs 
+export type AdvancedOrderArgs =
+  | StopLossOrderArgs
+  | TakeProfitOrderArgs
+  | OCOOrderArgs
   | TrailingStopOrderArgs
   | StandardOrderArgs
   | (StandardOrderArgs & ConditionalOrderArgs)
@@ -178,9 +178,6 @@ export interface OrderCostCalculation {
 export class TaskThirteenAdvancedOrderService {
   private logger: Logger;
   private mexcClient: MexcClient;
-  private readonly PRICE_TOLERANCE = 0.001; // 0.1% price tolerance
-  private readonly MIN_ORDER_VALUE = 10; // $10 minimum order value
-  private readonly MAX_ORDER_VALUE = 100000; // $100k maximum order value
 
   constructor(logger: Logger, mexcClient: MexcClient) {
     this.logger = logger;
@@ -190,7 +187,8 @@ export class TaskThirteenAdvancedOrderService {
   async validateAdvancedOrder(order: AdvancedOrderArgs): Promise<AdvancedOrderValidationResult> {
     const startTime = Date.now();
     const errors: Array<{ field: string; message: string; code?: string }> = [];
-    const warnings: Array<{ field: string; message: string; severity: 'low' | 'medium' | 'high' }> = [];
+    const warnings: Array<{ field: string; message: string; severity: 'low' | 'medium' | 'high' }> =
+      [];
 
     try {
       this.logger.info('Validating advanced order', {
@@ -242,10 +240,12 @@ export class TaskThirteenAdvancedOrderService {
       return {
         isValid: false,
         orderType: order.type,
-        errors: [{ 
-          field: 'validation', 
-          message: error instanceof Error ? error.message : 'Validation failed' 
-        }],
+        errors: [
+          {
+            field: 'validation',
+            message: error instanceof Error ? error.message : 'Validation failed',
+          },
+        ],
         warnings,
       };
     }
@@ -258,7 +258,9 @@ export class TaskThirteenAdvancedOrderService {
       // Validate order first
       const validation = await this.validateAdvancedOrder(order);
       if (!validation.isValid) {
-        throw new Error(`Order validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+        throw new Error(
+          `Order validation failed: ${validation.errors.map((e) => e.message).join(', ')}`
+        );
       }
 
       this.logger.info('Placing advanced order', {
@@ -291,7 +293,7 @@ export class TaskThirteenAdvancedOrderService {
       // Handle test mode response
       if (order.testMode) {
         this.logger.info('TEST MODE - Order simulation completed', { order });
-        
+
         // For OCO orders, return with orderListId and linkedOrders
         if (order.type === 'oco') {
           return {
@@ -312,7 +314,7 @@ export class TaskThirteenAdvancedOrderService {
             timestamp: startTime,
           };
         }
-        
+
         return {
           success: true,
           data: {
@@ -359,7 +361,10 @@ export class TaskThirteenAdvancedOrderService {
     }
   }
 
-  async getAdvancedOrderStatus(orderId: string, symbol: string): Promise<AdvancedOrderStatusResponse> {
+  async getAdvancedOrderStatus(
+    orderId: string,
+    symbol: string
+  ): Promise<AdvancedOrderStatusResponse> {
     const startTime = Date.now();
 
     try {
@@ -397,9 +402,9 @@ export class TaskThirteenAdvancedOrderService {
 
   async calculateOrderCost(order: AdvancedOrderArgs): Promise<OrderCostCalculation> {
     try {
-      const currentPrice = parseFloat(await this.mexcClient.getCurrentPrice(order.symbol));
+      const currentPrice = Number.parseFloat(await this.mexcClient.getCurrentPrice(order.symbol));
       const quantity = order.quantity;
-      
+
       let price: number;
       if ('price' in order && order.price) {
         price = order.price;
@@ -421,15 +426,20 @@ export class TaskThirteenAdvancedOrderService {
         breakdown: {
           baseAmount: baseAmount.toFixed(8),
           feeAmount: feeAmount.toFixed(8),
-          feeRate: (feeRate * 100).toFixed(2) + '%',
+          feeRate: `${(feeRate * 100).toFixed(2)}%`,
         },
       };
     } catch (error) {
-      throw new Error(`Failed to calculate order cost: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to calculate order cost: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  private validateBasicFields(order: AdvancedOrderArgs, errors: Array<{ field: string; message: string; code?: string }>): void {
+  private validateBasicFields(
+    order: AdvancedOrderArgs,
+    errors: Array<{ field: string; message: string; code?: string }>
+  ): void {
     // Symbol validation
     if (!order.symbol || typeof order.symbol !== 'string') {
       errors.push({ field: 'symbol', message: 'Symbol is required and must be a string' });
@@ -443,7 +453,11 @@ export class TaskThirteenAdvancedOrderService {
     }
 
     // Quantity validation
-    if (typeof order.quantity !== 'number' || order.quantity <= 0 || !isFinite(order.quantity)) {
+    if (
+      typeof order.quantity !== 'number' ||
+      order.quantity <= 0 ||
+      !Number.isFinite(order.quantity)
+    ) {
       errors.push({ field: 'quantity', message: 'Quantity must be a positive finite number' });
     } else if (order.quantity < 0.000001) {
       errors.push({ field: 'quantity', message: 'Quantity too small, minimum 0.000001' });
@@ -496,8 +510,8 @@ export class TaskThirteenAdvancedOrderService {
     }
 
     try {
-      const currentPrice = parseFloat(await this.mexcClient.getCurrentPrice(order.symbol));
-      
+      const currentPrice = Number.parseFloat(await this.mexcClient.getCurrentPrice(order.symbol));
+
       if (order.side === 'sell' && order.stopPrice >= currentPrice) {
         errors.push({
           field: 'stopPrice',
@@ -522,13 +536,16 @@ export class TaskThirteenAdvancedOrderService {
     errors: Array<{ field: string; message: string; code?: string }>
   ): Promise<void> {
     if (!order.takeProfitPrice || order.takeProfitPrice <= 0) {
-      errors.push({ field: 'takeProfitPrice', message: 'Take profit price is required and must be positive' });
+      errors.push({
+        field: 'takeProfitPrice',
+        message: 'Take profit price is required and must be positive',
+      });
       return;
     }
 
     try {
-      const currentPrice = parseFloat(await this.mexcClient.getCurrentPrice(order.symbol));
-      
+      const currentPrice = Number.parseFloat(await this.mexcClient.getCurrentPrice(order.symbol));
+
       if (order.side === 'sell' && order.takeProfitPrice <= currentPrice) {
         errors.push({
           field: 'takeProfitPrice',
@@ -560,7 +577,10 @@ export class TaskThirteenAdvancedOrderService {
       errors.push({ field: 'limitPrice', message: 'Limit price is required and must be positive' });
     }
     if (!order.stopLimitPrice || order.stopLimitPrice <= 0) {
-      errors.push({ field: 'stopLimitPrice', message: 'Stop limit price is required and must be positive' });
+      errors.push({
+        field: 'stopLimitPrice',
+        message: 'Stop limit price is required and must be positive',
+      });
     }
 
     // Validate price relationships
@@ -607,12 +627,12 @@ export class TaskThirteenAdvancedOrderService {
 
   private async validateMarketConditions(
     order: AdvancedOrderArgs,
-    errors: Array<{ field: string; message: string; code?: string }>,
+    _errors: Array<{ field: string; message: string; code?: string }>,
     warnings: Array<{ field: string; message: string; severity: 'low' | 'medium' | 'high' }>
   ): Promise<void> {
     try {
-      const currentPrice = parseFloat(await this.mexcClient.getCurrentPrice(order.symbol));
-      
+      const currentPrice = Number.parseFloat(await this.mexcClient.getCurrentPrice(order.symbol));
+
       // Check if market price is reasonable
       let orderPrice: number | undefined;
       if ('price' in order && order.price) {
@@ -623,7 +643,8 @@ export class TaskThirteenAdvancedOrderService {
 
       if (orderPrice) {
         const priceDeviation = Math.abs(orderPrice - currentPrice) / currentPrice;
-        if (priceDeviation > 0.1) { // 10% deviation
+        if (priceDeviation > 0.1) {
+          // 10% deviation
           warnings.push({
             field: 'price',
             message: `Order price deviates ${(priceDeviation * 100).toFixed(1)}% from market price`,
@@ -647,25 +668,25 @@ export class TaskThirteenAdvancedOrderService {
   ): Promise<void> {
     try {
       const accountInfo = await this.mexcClient.getAccountInfo();
-      
+
       // Determine required asset and amount
       const baseAsset = order.symbol.replace('USDT', '');
       const quoteAsset = 'USDT';
-      
+
       let requiredAsset: string;
       let requiredAmount: number;
-      
+
       if (order.side === 'sell') {
         requiredAsset = baseAsset;
         requiredAmount = order.quantity;
       } else {
         requiredAsset = quoteAsset;
-        const currentPrice = parseFloat(await this.mexcClient.getCurrentPrice(order.symbol));
+        const currentPrice = Number.parseFloat(await this.mexcClient.getCurrentPrice(order.symbol));
         requiredAmount = order.quantity * currentPrice;
       }
 
       const balance = accountInfo.balances.find((b: any) => b.asset === requiredAsset);
-      const availableBalance = balance ? parseFloat(balance.free) : 0;
+      const availableBalance = balance ? Number.parseFloat(balance.free) : 0;
 
       if (availableBalance < requiredAmount) {
         errors.push({
@@ -800,7 +821,7 @@ export class TaskThirteenAdvancedOrderService {
       return type;
     }
     // Default to stop_loss for testing
-    if (orderData.orderId && orderData.orderId.includes('sl_')) return 'stop_loss';
+    if (orderData.orderId?.includes('sl_')) return 'stop_loss';
     return 'unknown';
   }
 

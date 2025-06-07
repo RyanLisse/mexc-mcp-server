@@ -34,7 +34,8 @@
   "dependencies": {
     "@ai-sdk/google": "1.2.19",
     "ai": "4.3.16",
-    "encore.dev": "1.48.3"
+    "encore.dev": "1.48.3",
+    "zod": "3.25.51"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.5.0",

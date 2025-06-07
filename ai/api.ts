@@ -110,7 +110,12 @@ export const generateObject = api(
   async ({ prompt, schema, description }: ObjectGenerationRequest): Promise<ObjectResponse> => {
     try {
       const result = await aiService.generateObject(prompt, schema, description);
-      return result;
+      return {
+        success: result.success,
+        data: result.data as Record<string, unknown>,
+        error: result.error,
+        usage: result.usage,
+      };
     } catch (error) {
       return {
         success: false,

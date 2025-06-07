@@ -3,8 +3,7 @@
  * Focused tests for Task #6 enhanced functionality
  */
 
-import { describe, expect, it } from 'bun:test';
-import type { MarketDataResponse } from '../shared/types/index.js';
+import { describe, expect, it } from 'vitest';
 
 describe('Enhanced Market Data Tools', () => {
   describe('Historical Data Function', () => {

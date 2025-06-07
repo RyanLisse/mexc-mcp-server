@@ -3,33 +3,33 @@
  * TDD implementation of comprehensive AI service monitoring
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Create global mocks that the service can access
 const mockGeminiAnalyzer = {
-  getBudgetStatus: mock(() => ({
+  getBudgetStatus: vi.fn(() => ({
     costUSD: 0.45,
     remainingBudget: 9.55,
     requestCount: 50,
     resetTime: Date.now() + 24 * 60 * 60 * 1000,
   })),
-  getCacheStats: mock(() => ({
+  getCacheStats: vi.fn(() => ({
     hitRate: 0.85,
     missRate: 0.15,
     totalRequests: 100,
     cacheSize: 25,
   })),
-  getConfig: mock(() => ({
+  getConfig: vi.fn(() => ({
     model: 'gemini-2.5-flash-preview-05-20',
     temperature: 0.7,
     maxTokens: 4096,
   })),
-  isHealthy: mock(() => true),
+  isHealthy: vi.fn(() => true),
 };
 
 const mockMEXCClient = {
-  ping: mock(() => Promise.resolve({ success: true, latency: 45 })),
-  getServerTime: mock(() => Promise.resolve({ success: true, serverTime: Date.now() })),
+  ping: vi.fn(() => Promise.resolve({ success: true, latency: 45 })),
+  getServerTime: vi.fn(() => Promise.resolve({ success: true, serverTime: Date.now() })),
 };
 
 // Global mock availability for the service
@@ -39,7 +39,7 @@ const mockMEXCClient = {
 };
 
 // Mock imports
-globalThis.require = mock((module: string) => {
+globalThis.require = vi.fn((module: string) => {
   if (module.includes('gemini-analyzer')) {
     return { geminiAnalyzer: mockGeminiAnalyzer };
   }

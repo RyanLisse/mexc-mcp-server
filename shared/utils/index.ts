@@ -217,7 +217,7 @@ export function sanitizeStringArray(arr: unknown): string[] {
  * Ensures a value is a valid confidence score (0-1)
  */
 export function ensureValidConfidence(value: unknown, fallback = 0.5): number {
-  if (typeof value !== 'number' || isNaN(value)) return fallback;
+  if (typeof value !== 'number' || Number.isNaN(value)) return fallback;
   return clamp(value, 0, 1);
 }
 

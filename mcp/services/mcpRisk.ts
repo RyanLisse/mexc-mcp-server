@@ -4,6 +4,7 @@
  * Extracted from original encore.service.ts to maintain under 500 lines
  */
 
+import { z } from 'zod';
 import { geminiClient } from '../../ai/gemini-client';
 import { handleAIError, retryWithBackoff } from '../../shared/errors';
 import {
@@ -11,7 +12,6 @@ import {
   configureAnalyzerForDepth,
   getAnalysisDepthConfig,
   getRetryConfigForDepth,
-  validateAnalysisInput,
 } from './mcpCore';
 
 // =============================================================================
@@ -379,91 +379,51 @@ Focus on practical, actionable insights for a ${data.riskTolerance || 'moderate'
 }
 
 /**
- * Build JSON schema for structured AI response
- * @returns JSON schema for risk assessment response
+ * Build zod schema for structured AI response
+ * @returns Zod schema for risk assessment response
  */
-function buildRiskAnalysisSchema(): object {
-  return {
-    type: 'object',
-    properties: {
-      overallRiskLevel: { type: 'string', enum: ['low', 'medium', 'high', 'extreme'] },
-      riskScore: { type: 'number', minimum: 0, maximum: 100 },
-      confidence: { type: 'number', minimum: 0, maximum: 1 },
-      diversificationScore: { type: 'number', minimum: 0, maximum: 1 },
-      volatility: {
-        type: 'object',
-        properties: {
-          daily: { type: 'number', minimum: 0 },
-          weekly: { type: 'number', minimum: 0 },
-          monthly: { type: 'number', minimum: 0 },
-        },
-        required: ['daily', 'weekly', 'monthly'],
-      },
-      riskFactors: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            factor: { type: 'string' },
-            impact: { type: 'string', enum: ['low', 'medium', 'high'] },
-            description: { type: 'string' },
-          },
-          required: ['factor', 'impact', 'description'],
-        },
-      },
-      assetAllocation: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            symbol: { type: 'string' },
-            percentage: { type: 'number', minimum: 0, maximum: 100 },
-            riskLevel: { type: 'string', enum: ['low', 'medium', 'high'] },
-            riskContribution: { type: 'number', minimum: 0, maximum: 100 },
-          },
-          required: ['symbol', 'percentage', 'riskLevel', 'riskContribution'],
-        },
-      },
-      recommendations: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            type: {
-              type: 'string',
-              enum: ['reduce_position', 'diversify', 'hedge', 'rebalance', 'hold', 'exit'],
-            },
-            target: { type: 'string' },
-            description: { type: 'string' },
-            priority: { type: 'string', enum: ['low', 'medium', 'high'] },
-          },
-          required: ['type', 'description', 'priority'],
-        },
-      },
-      stressTests: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            scenario: { type: 'string' },
-            potentialLoss: { type: 'number', minimum: 0, maximum: 100 },
-            probability: { type: 'number', minimum: 0, maximum: 1 },
-          },
-          required: ['scenario', 'potentialLoss', 'probability'],
-        },
-      },
-    },
-    required: [
-      'overallRiskLevel',
-      'riskScore',
-      'confidence',
-      'diversificationScore',
-      'volatility',
-      'riskFactors',
-      'assetAllocation',
-      'recommendations',
-    ],
-  };
+function buildRiskAnalysisSchema() {
+  return z.object({
+    overallRiskLevel: z.enum(['low', 'medium', 'high', 'extreme']),
+    riskScore: z.number().min(0).max(100),
+    confidence: z.number().min(0).max(1),
+    diversificationScore: z.number().min(0).max(1),
+    volatility: z.object({
+      daily: z.number().min(0),
+      weekly: z.number().min(0),
+      monthly: z.number().min(0),
+    }),
+    riskFactors: z.array(
+      z.object({
+        factor: z.string(),
+        impact: z.enum(['low', 'medium', 'high']),
+        description: z.string(),
+      })
+    ),
+    assetAllocation: z.array(
+      z.object({
+        symbol: z.string(),
+        percentage: z.number().min(0).max(100),
+        riskLevel: z.enum(['low', 'medium', 'high']),
+        riskContribution: z.number().min(0).max(100),
+      })
+    ),
+    recommendations: z.array(
+      z.object({
+        type: z.enum(['reduce_position', 'diversify', 'hedge', 'rebalance', 'hold', 'exit']),
+        target: z.string().optional(),
+        description: z.string(),
+        priority: z.enum(['low', 'medium', 'high']),
+      })
+    ),
+    stressTests: z.array(
+      z.object({
+        scenario: z.string(),
+        potentialLoss: z.number().min(0).max(100),
+        probability: z.number().min(0).max(1),
+      })
+    ),
+  });
 }
 
 // =============================================================================

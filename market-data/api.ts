@@ -5,9 +5,6 @@ import type {
   TickerData,
 } from '../shared/types/index.js';
 import {
-  type Get24hStatsInputSchema,
-  type GetOrderBookInputSchema,
-  type GetTickerInputSchema,
   executeGet24hStats,
   executeGetActiveSymbols,
   executeGetOrderBook,

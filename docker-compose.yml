@@ -3,21 +3,37 @@ version: '3.8'
 services:
   mexc-mcp-server:
     image: mexc-mcp-server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
-      - MEXC_API_KEY=${MEXC_API_KEY}
-      - MEXC_SECRET_KEY=${MEXC_SECRET_KEY}
+      # Required: MEXC API credentials (set these in .env file or environment)
+      - MEXC_API_KEY=${MEXC_API_KEY:?Please set MEXC_API_KEY in environment or .env file}
+      - MEXC_SECRET_KEY=${MEXC_SECRET_KEY:?Please set MEXC_SECRET_KEY in environment or .env file}
+      
+      # Optional: MEXC API endpoints
       - MEXC_BASE_URL=${MEXC_BASE_URL:-https://api.mexc.com}
       - MEXC_WEBSOCKET_URL=${MEXC_WEBSOCKET_URL:-wss://wbs.mexc.com/ws}
+      
+      # Application settings
       - NODE_ENV=${NODE_ENV:-production}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - PORT=${PORT:-3000}
+      
+      # Rate limiting
       - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-60000}
+      
+      # Cache TTL settings (in milliseconds)
       - CACHE_TTL_TICKER=${CACHE_TTL_TICKER:-5000}
       - CACHE_TTL_ORDERBOOK=${CACHE_TTL_ORDERBOOK:-2000}
       - CACHE_TTL_STATS=${CACHE_TTL_STATS:-10000}
+      
+      # AI Integration (optional)
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -25,3 +41,15 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    
+    # Mount logs for debugging (optional)
+    volumes:
+      - ./logs:/app/logs:rw
+    
+    # Networks for isolation
+    networks:
+      - mexc-network
+
+networks:
+  mexc-network:
+    driver: bridge

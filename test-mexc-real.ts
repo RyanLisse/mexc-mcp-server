@@ -39,7 +39,7 @@ async function testMexcIntegration() {
 
     // Test ticker
     console.log('Testing ticker for BTCUSDT...');
-    const tickerResult = await mexcClient.get24hrTicker('BTCUSDT');
+    const tickerResult = await mexcClient.getTicker('BTCUSDT');
     console.log('✅ Ticker result:', tickerResult);
 
     console.log('\n🎉 MEXC integration test completed successfully!');

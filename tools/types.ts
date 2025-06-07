@@ -2,8 +2,8 @@
 export interface MCPTool {
   name: string;
   description: string;
-  inputSchema: any;
-  execute: any;
+  inputSchema: Record<string, unknown>;
+  execute?: any; // Simplified for Encore compatibility
 }
 
 export interface MCPToolCall {
@@ -55,17 +55,17 @@ export interface ToolExecutionContext {
 export interface ToolHandler {
   name: string;
   description: string;
-  inputSchema: any;
-  execute: any;
+  inputSchema: Record<string, unknown>;
+  execute: any; // Simplified for Encore compatibility
 }
 
 // Tool Registry Interface
 export interface ToolRegistry {
-  register: any;
-  unregister: any;
-  get: any;
-  list: any;
-  execute: any;
+  register: any; // Simplified for Encore compatibility
+  unregister: any; // Simplified for Encore compatibility
+  get: any; // Simplified for Encore compatibility
+  list: any; // Simplified for Encore compatibility
+  execute: any; // Simplified for Encore compatibility
 }
 
 // Tool Execution Error

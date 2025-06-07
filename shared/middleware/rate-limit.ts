@@ -3,9 +3,22 @@
  * Task #5: Comprehensive rate limiting with MEXC API integration
  */
 
-import crypto from 'node:crypto';
-import type { Request, Response } from 'encore.dev/api';
+import * as crypto from 'node:crypto';
 import { config } from '../config';
+
+// Simple types for middleware compatibility
+interface Request {
+  url?: string;
+  method?: string;
+  headers: Record<string, string | string[] | undefined>;
+}
+
+interface Response {
+  status(code: number): Response;
+  send(data: any): void;
+  setHeader(key: string, value: string): void;
+}
+
 import {
   AuthAwareRateLimiter,
   EnhancedRateLimiter,
@@ -28,18 +41,23 @@ const authAwareRateLimiter = new AuthAwareRateLimiter({
  */
 function extractUserIdentifier(req: Request): { userId: string; isAuthenticated: boolean } {
   const authHeader = req.headers.authorization;
-  const isAuthenticated = !!authHeader && authHeader.startsWith('Bearer ');
+  const authHeaderStr = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+  const isAuthenticated = !!authHeaderStr && authHeaderStr.startsWith('Bearer ');
 
-  if (isAuthenticated && authHeader) {
+  if (isAuthenticated && authHeaderStr) {
     // Create a hash of the API key for user identification
-    const apiKey = authHeader.replace('Bearer ', '');
+    const apiKey = authHeaderStr.replace('Bearer ', '');
     const userId = crypto.createHash('sha256').update(apiKey).digest('hex').slice(0, 16);
     return { userId, isAuthenticated: true };
   }
 
   // Use IP address for unauthenticated users
-  const clientIp = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
-  const userId = crypto.createHash('sha256').update(clientIp.toString()).digest('hex').slice(0, 16);
+  const forwardedFor = req.headers['x-forwarded-for'];
+  const realIp = req.headers['x-real-ip'];
+  const clientIp = (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor) || 
+                   (Array.isArray(realIp) ? realIp[0] : realIp) || 
+                   'unknown';
+  const userId = crypto.createHash('sha256').update(clientIp).digest('hex').slice(0, 16);
   return { userId, isAuthenticated: false };
 }
 
@@ -48,11 +66,11 @@ function extractUserIdentifier(req: Request): { userId: string; isAuthenticated:
  */
 function applyRateLimitHeaders(res: Response, result: RateLimitResult, limit: number): void {
   const headers = generateRateLimitHeaders(result, limit);
-  Object.entries(headers).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(headers)) {
     if (value !== undefined) {
       res.setHeader(key, value);
     }
-  });
+  }
 }
 
 /**
@@ -209,7 +227,6 @@ export async function getRateLimitStatus(
   // Don't actually consume the rate limit, just check
   general.allowed = true; // Reset since this is just a status check
 
-  const mexcWeight = getEndpointWeight(endpoint);
   const mexc = await mexcRateLimiter.checkWeightLimit(userId, endpoint, 0); // 0 weight for status check
   mexc.allowed = true; // Reset since this is just a status check
 

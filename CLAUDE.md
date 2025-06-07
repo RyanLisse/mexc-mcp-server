@@ -11,6 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run dev` - Start Encore development server
 - `bun run build` - Build the application
 - `bun run check` - Run linting and type checking
+- `encore test ./... -v` - Run all tests with verbose output
 
 ### Code Quality
 - `bun run lint` - Check code with Biome.js linter

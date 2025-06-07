@@ -5,8 +5,8 @@
 
 import { api } from 'encore.dev/api';
 import type { Min, MinLen } from 'encore.dev/validate';
-import { createErrorResponse, logAndNotify } from '../shared/errors';
 import { isAIOperationAllowed } from '../shared/config';
+import { createErrorResponse, logAndNotify } from '../shared/errors';
 import { mcpService } from './encore.service';
 
 // =============================================================================

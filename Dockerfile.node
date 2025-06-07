@@ -1,0 +1,92 @@
+# Node.js-based Docker build for MEXC MCP Server
+# This is a fallback for environments where Encore Docker build is not available
+
+FROM node:20-alpine AS base
+
+# Install dependencies
+FROM base AS deps
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies using npm
+RUN npm ci --only=production
+
+# Build stage
+FROM base AS builder
+WORKDIR /app
+
+# Copy package files and install all dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Set build environment variables
+ENV NODE_ENV=production
+ENV MEXC_API_KEY=placeholder-for-build
+ENV MEXC_SECRET_KEY=placeholder-for-build
+
+# Build TypeScript to JavaScript
+RUN npm run type-check && npm run build
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
+# Create non-root user
+RUN addgroup --system --gid 1001 mexc
+RUN adduser --system --uid 1001 mexc
+
+# Copy production dependencies
+COPY --from=deps --chown=mexc:mexc /app/node_modules ./node_modules
+COPY --from=builder --chown=mexc:mexc /app/package.json ./package.json
+
+# Copy application files (use the generated files if available, otherwise source)
+COPY --from=builder --chown=mexc:mexc /app/encore.gen ./encore.gen 2>/dev/null || \
+COPY --from=builder --chown=mexc:mexc /app/dist ./dist 2>/dev/null || \
+COPY --from=builder --chown=mexc:mexc /app/src ./src
+
+# Copy service directories
+COPY --from=builder --chown=mexc:mexc /app/shared ./shared
+COPY --from=builder --chown=mexc:mexc /app/auth ./auth
+COPY --from=builder --chown=mexc:mexc /app/market-data ./market-data
+COPY --from=builder --chown=mexc:mexc /app/mcp ./mcp
+COPY --from=builder --chown=mexc:mexc /app/health-observability ./health-observability
+COPY --from=builder --chown=mexc:mexc /app/portfolio ./portfolio
+COPY --from=builder --chown=mexc:mexc /app/trading ./trading
+COPY --from=builder --chown=mexc:mexc /app/tools ./tools
+COPY --from=builder --chown=mexc:mexc /app/ai ./ai
+COPY --from=builder --chown=mexc:mexc /app/pattern-sniper ./pattern-sniper
+COPY --from=builder --chown=mexc:mexc /app/transaction-history ./transaction-history
+
+# Set user
+USER mexc
+
+# Expose port
+EXPOSE 3000
+
+# Environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV MEXC_BASE_URL=https://api.mexc.com
+ENV MEXC_WEBSOCKET_URL=wss://wbs.mexc.com/ws
+ENV LOG_LEVEL=info
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Start command - try different entry points
+CMD if [ -f "encore.gen/internal/entrypoints/combined/main.ts" ]; then \
+        node encore.gen/internal/entrypoints/combined/main.js; \
+    elif [ -f "dist/main.js" ]; then \
+        node dist/main.js; \
+    else \
+        npm start; \
+    fi

@@ -439,7 +439,7 @@ export const portfolioService = {
    */
   getRiskMetrics: async (args: GetRiskMetricsArgs = {}): Promise<RiskMetrics> => {
     try {
-      const { period = '30d' } = args;
+      const { period: _period = '30d' } = args;
 
       // Basic risk metrics implementation
       // In full implementation, would calculate VaR, beta, etc.

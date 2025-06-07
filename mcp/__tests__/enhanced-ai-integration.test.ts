@@ -4,11 +4,11 @@
  * Written first following TDD methodology
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AIAnalysisResult, AnalysisParameters } from '../../shared/types/ai-types';
 
 // Import the enhanced MCP service implementation
-import { enhancedMCPService, type EnhancedMCPService } from '../enhanced-ai-service';
+import { type EnhancedMCPService, enhancedMCPService } from '../enhanced-ai-service';
 
 // Enhanced MCP Service interface (for reference)
 interface EnhancedMCPServiceInterface {
@@ -92,7 +92,10 @@ interface EnhancedMCPServiceInterface {
   }>;
 
   // Rate Limiting
-  checkRateLimit(userId: string, endpoint: string): Promise<{
+  checkRateLimit(
+    userId: string,
+    endpoint: string
+  ): Promise<{
     allowed: boolean;
     remaining: number;
     resetTime: number;
@@ -107,16 +110,20 @@ interface EnhancedMCPServiceInterface {
   }>;
 
   // Batch Operations
-  batchAnalysis(requests: Array<{
-    type: 'market' | 'risk' | 'strategy' | 'tools';
-    params: any;
-    id: string;
-  }>): Promise<Array<{
-    id: string;
-    success: boolean;
-    result?: any;
-    error?: string;
-  }>>;
+  batchAnalysis(
+    requests: Array<{
+      type: 'market' | 'risk' | 'strategy' | 'tools';
+      params: any;
+      id: string;
+    }>
+  ): Promise<
+    Array<{
+      id: string;
+      success: boolean;
+      result?: any;
+      error?: string;
+    }>
+  >;
 
   // Real-time Streaming (Task #25)
   streamMarketAnalysis(params: {
@@ -141,7 +148,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
     vi.clearAllMocks();
     mockApiKey = 'test-api-key-123';
     mockUserId = 'test-user-456';
-    
+
     // Use the actual enhanced service
     mcpService = enhancedMCPService;
   });
@@ -154,7 +161,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
     it('should authenticate users with valid API keys', async () => {
       // Test that service is properly instantiated
       expect(typeof mcpService).toBe('object');
-      
+
       const result = await mcpService.authenticate(mockApiKey);
       expect(result.success).toBe(true);
       expect(result.userId).toBeTruthy();
@@ -194,7 +201,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
 
   describe('AI Market Analysis Integration (Task #24)', () => {
     it('should perform quick market analysis with minimal resource usage', async () => {
-      const params = {
+      const _params = {
         symbol: 'BTCUSDT',
         depth: 'quick' as const,
         timeframe: '1h',
@@ -209,7 +216,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
     });
 
     it('should perform comprehensive market analysis with detailed insights', async () => {
-      const params = {
+      const _params = {
         symbol: 'ETHUSDT',
         depth: 'comprehensive' as const,
         timeframe: '4h',
@@ -224,7 +231,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
     });
 
     it('should cache analysis results to improve performance', async () => {
-      const params = {
+      const _params = {
         symbol: 'BTCUSDT',
         depth: 'standard' as const,
       };
@@ -242,7 +249,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
 
     it('should handle analysis failures gracefully', async () => {
       // Mock AI service failure
-      const params = {
+      const _params = {
         symbol: 'INVALID_SYMBOL',
         depth: 'standard' as const,
       };
@@ -256,7 +263,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
 
   describe('Risk Assessment Integration (Task #26)', () => {
     it('should assess portfolio risk with multiple metrics', async () => {
-      const portfolio = [
+      const _portfolio = [
         { symbol: 'BTC', quantity: 0.5, currentPrice: 50000, allocation: 0.6 },
         { symbol: 'ETH', quantity: 2.0, currentPrice: 3000, allocation: 0.3 },
         { symbol: 'ADA', quantity: 1000, currentPrice: 0.5, allocation: 0.1 },
@@ -271,9 +278,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
     });
 
     it('should provide detailed risk breakdown for comprehensive analysis', async () => {
-      const portfolio = [
-        { symbol: 'BTC', quantity: 1.0, currentPrice: 50000, allocation: 1.0 },
-      ];
+      const _portfolio = [{ symbol: 'BTC', quantity: 1.0, currentPrice: 50000, allocation: 1.0 }];
 
       // const result = await mcpService.riskAssessment({ portfolio, depth: 'comprehensive' });
       // expect(result.confidence).toBeGreaterThan(0.7);
@@ -285,7 +290,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
 
   describe('Strategy Optimizer Integration (Task #27)', () => {
     it('should optimize portfolio strategy with MEXC advantages', async () => {
-      const params = {
+      const _params = {
         strategy: {
           portfolio: [
             { symbol: 'BTC', currentWeight: 0.6 },
@@ -310,7 +315,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
     });
 
     it('should provide backtesting results for strategy optimization', async () => {
-      const params = {
+      const _params = {
         strategy: {
           portfolio: [{ symbol: 'BTC', currentWeight: 1.0 }],
           objectiveFunction: 'max_return',
@@ -327,7 +332,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
 
   describe('Trading Tools Integration (Task #28)', () => {
     it('should calculate position sizing with risk management', async () => {
-      const params = {
+      const _params = {
         tool: 'positionSizing' as const,
         toolParams: {
           symbol: 'BTCUSDT',
@@ -346,7 +351,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
     });
 
     it('should perform technical analysis with multiple indicators', async () => {
-      const params = {
+      const _params = {
         tool: 'technicalAnalysis' as const,
         toolParams: {
           symbol: 'ETHUSDT',
@@ -363,7 +368,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
     });
 
     it('should assess market conditions with volatility analysis', async () => {
-      const params = {
+      const _params = {
         tool: 'marketConditions' as const,
         toolParams: {
           symbol: 'BTCUSDT',
@@ -404,13 +409,11 @@ describe('Enhanced MCP Service - AI Integration', () => {
     it('should cache analysis results with appropriate TTL', async () => {
       // const stats1 = await mcpService.getCacheStats();
       // const initialSize = stats1.totalItems;
-
       // Perform analysis that should be cached
       // await mcpService.aiMarketAnalysis({
       //   symbol: 'BTCUSDT',
       //   depth: 'standard',
       // });
-
       // const stats2 = await mcpService.getCacheStats();
       // expect(stats2.totalItems).toBeGreaterThan(initialSize);
     });
@@ -418,11 +421,9 @@ describe('Enhanced MCP Service - AI Integration', () => {
     it('should clear cache when requested', async () => {
       // Add some cached items
       // await mcpService.aiMarketAnalysis({ symbol: 'BTCUSDT', depth: 'quick' });
-      
       // const clearResult = await mcpService.clearCache();
       // expect(clearResult.success).toBe(true);
       // expect(clearResult.clearedItems).toBeGreaterThan(0);
-
       // const stats = await mcpService.getCacheStats();
       // expect(stats.totalItems).toBe(0);
     });
@@ -430,7 +431,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
 
   describe('Batch Operations', () => {
     it('should process multiple analysis requests in batch', async () => {
-      const requests = [
+      const _requests = [
         {
           id: 'req1',
           type: 'market' as const,
@@ -439,7 +440,9 @@ describe('Enhanced MCP Service - AI Integration', () => {
         {
           id: 'req2',
           type: 'risk' as const,
-          params: { portfolio: [{ symbol: 'ETH', quantity: 1, currentPrice: 3000, allocation: 1 }] },
+          params: {
+            portfolio: [{ symbol: 'ETH', quantity: 1, currentPrice: 3000, allocation: 1 }],
+          },
         },
       ];
 
@@ -451,7 +454,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
     });
 
     it('should handle partial failures in batch operations', async () => {
-      const requests = [
+      const _requests = [
         {
           id: 'good',
           type: 'market' as const,
@@ -467,7 +470,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
       // const results = await mcpService.batchAnalysis(requests);
       // const goodResult = results.find(r => r.id === 'good');
       // const badResult = results.find(r => r.id === 'bad');
-      
+
       // expect(goodResult?.success).toBe(true);
       // expect(badResult?.success).toBe(false);
       // expect(badResult?.error).toBeTruthy();
@@ -476,7 +479,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
 
   describe('Streaming Analysis (Task #25)', () => {
     it('should provide real-time progress updates during analysis', async () => {
-      const params = {
+      const _params = {
         symbol: 'BTCUSDT',
         depth: 'comprehensive' as const,
         updateInterval: 1000,
@@ -497,7 +500,7 @@ describe('Enhanced MCP Service - AI Integration', () => {
     });
 
     it('should handle streaming errors gracefully', async () => {
-      const params = {
+      const _params = {
         symbol: 'INVALID_SYMBOL',
         depth: 'standard' as const,
       };

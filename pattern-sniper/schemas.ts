@@ -168,13 +168,133 @@ export const SymbolsV2ResponseSchema = z.object({
   }),
 });
 
-// Type inference
-export type CalendarEntry = z.infer<typeof CalendarEntrySchema>;
-export type SymbolV2Entry = z.infer<typeof SymbolV2EntrySchema>;
-export type SnipeTarget = z.infer<typeof SnipeTargetSchema>;
-export type PatternSniperStatus = z.infer<typeof PatternSniperStatusSchema>;
-export type PatternSniperConfig = z.infer<typeof PatternSniperConfigSchema>;
-export type CalendarResponse = z.infer<typeof CalendarResponseSchema>;
-export type SymbolsV2Response = z.infer<typeof SymbolsV2ResponseSchema>;
-export type ErrorEntry = z.infer<typeof ErrorEntrySchema>;
-export type PerformanceMetrics = z.infer<typeof PerformanceMetricsSchema>;
+// Explicit type definitions for Encore compatibility
+export interface CalendarEntry {
+  vcoinId: string;
+  symbol: string;
+  projectName: string;
+  firstOpenTime: number;
+}
+
+export interface SymbolV2Entry {
+  cd: string; // vcoinId
+  ca?: string; // contract address
+  ps?: number; // price scale
+  qs?: number; // quantity scale
+  sts: number; // symbol trading status
+  st: number; // state
+  tt: number; // trading type
+  ot?: number; // open time
+}
+
+export interface SnipeTarget {
+  vcoinId: string;
+  symbol: string;
+  projectName: string;
+  priceDecimalPlaces: number;
+  quantityDecimalPlaces: number;
+  launchTime: Date;
+  discoveredAt: Date;
+  hoursAdvanceNotice: number;
+  orderParameters: {
+    symbol: string;
+    side: 'BUY' | 'SELL';
+    type: 'MARKET' | 'LIMIT';
+    quoteOrderQty?: number;
+    quantity?: number;
+    price?: number;
+  };
+}
+
+export interface PatternSniperStatus {
+  isMonitoring: boolean;
+  totalListings: number;
+  pendingDetection: number;
+  readyToSnipe: number;
+  executed: number;
+  lastUpdate: Date;
+  errors: string[];
+  performance: {
+    successfulExecutions: number;
+    failedExecutions: number;
+    averageDetectionTimeMs: number;
+    averageExecutionTimeMs: number;
+    totalApiCalls: number;
+    failedApiCalls: number;
+  };
+  circuitBreakerStatus: {
+    isOpen: boolean;
+    failureCount: number;
+    lastFailureTime?: Date;
+    nextAttemptTime?: Date;
+  };
+  resourceUsage: {
+    activeIntervals: number;
+    memoryUsageMB: number;
+    queuedOperations: number;
+  };
+}
+
+export interface PatternSniperConfig {
+  defaultOrderAmount: number;
+  maxPositionSize: number;
+  enableAutoExecution: boolean;
+  calendarRefreshInterval: number;
+  symbolsRefreshInterval: number;
+  testMode: boolean;
+  retryStrategy: {
+    maxRetries: number;
+    initialDelayMs: number;
+    maxDelayMs: number;
+    backoffMultiplier: number;
+    jitterPercentage: number;
+  };
+  circuitBreaker: {
+    failureThreshold: number;
+    recoveryTimeoutMs: number;
+    monitoringWindowMs: number;
+  };
+  timing: {
+    executionDelayMs: number;
+    preExecutionBufferMs: number;
+    maxExecutionWindowMs: number;
+  };
+  rateLimiting: {
+    maxConcurrentRequests: number;
+    requestsPerSecond: number;
+    burstSize: number;
+  };
+  monitoring: {
+    healthCheckIntervalMs: number;
+    metricsRetentionHours: number;
+    enableDetailedLogging: boolean;
+  };
+}
+
+export interface CalendarResponse {
+  data: CalendarEntry[];
+}
+
+export interface SymbolsV2Response {
+  data: {
+    symbols: SymbolV2Entry[];
+  };
+}
+
+export interface ErrorEntry {
+  timestamp: Date;
+  type: 'API_ERROR' | 'EXECUTION_ERROR' | 'VALIDATION_ERROR' | 'TIMEOUT_ERROR';
+  message: string;
+  context?: Record<string, unknown>;
+  retryCount: number;
+  resolved: boolean;
+}
+
+export interface PerformanceMetrics {
+  timestamp: Date;
+  detectionLatencyMs: number;
+  executionLatencyMs: number;
+  apiResponseTimeMs: number;
+  memoryUsageMB: number;
+  cpuUsagePercent?: number;
+}

@@ -4,7 +4,8 @@
  */
 
 import crypto from 'node:crypto';
-import { type GeminiObjectResponse, type GeminiResponse, geminiClient } from './gemini-client';
+import { z } from 'zod';
+import { type GeminiObjectResponse, geminiClient } from './gemini-client';
 
 export interface AnalyzerConfig {
   temperature?: number;
@@ -202,7 +203,7 @@ export class GeminiAnalyzer {
     const cacheKey = this.generateCacheKey('sentiment', data);
     const cached = this.getFromCache(cacheKey);
     if (cached) {
-      return { success: true, ...cached };
+      return { success: true, ...cached } as AnalysisResult;
     }
 
     const prompt = `Analyze the market sentiment for ${data.symbol} based on the following data:
@@ -212,16 +213,12 @@ ${data.prices ? `Price history: ${data.prices.join(', ')}` : ''}
 
 Provide sentiment analysis with confidence level and risk assessment.`;
 
-    const schema = {
-      type: 'object',
-      properties: {
-        sentiment: { type: 'string', enum: ['bullish', 'bearish', 'neutral'] },
-        confidence: { type: 'number', minimum: 0, maximum: 1 },
-        riskLevel: { type: 'string', enum: ['low', 'medium', 'high'] },
-        recommendations: { type: 'array', items: { type: 'string' } },
-      },
-      required: ['sentiment', 'confidence', 'riskLevel', 'recommendations'],
-    };
+    const schema = z.object({
+      sentiment: z.enum(['bullish', 'bearish', 'neutral']),
+      confidence: z.number().min(0).max(1),
+      riskLevel: z.enum(['low', 'medium', 'high']),
+      recommendations: z.array(z.string()),
+    });
 
     try {
       const result = await this.performAnalysisWithRetry(() =>
@@ -232,14 +229,15 @@ Provide sentiment analysis with confidence level and risk assessment.`;
         return { success: false, error: result.error };
       }
 
+      const data = result.data as Record<string, unknown>;
       const analysisResult: AnalysisResult = {
         success: true,
-        sentiment: result.data.sentiment,
-        confidence: result.data.confidence,
-        riskLevel: result.data.riskLevel,
-        recommendations: result.data.recommendations,
+        sentiment: data.sentiment as 'bullish' | 'bearish' | 'neutral',
+        confidence: data.confidence as number,
+        riskLevel: data.riskLevel as 'low' | 'medium' | 'high',
+        recommendations: data.recommendations as string[],
       };
-      this.setCache(cacheKey, result.data);
+      this.setCache(cacheKey, data);
       return analysisResult;
     } catch (error) {
       return {
@@ -257,7 +255,7 @@ Provide sentiment analysis with confidence level and risk assessment.`;
     const cacheKey = this.generateCacheKey('technical', marketData);
     const cached = this.getFromCache(cacheKey);
     if (cached) {
-      return cached;
+      return cached as unknown as MarketAnalysis;
     }
 
     const prompt = `Perform technical analysis on ${marketData.symbol}:
@@ -265,17 +263,13 @@ ${JSON.stringify(marketData, null, 2)}
 
 Analyze price action, volume patterns, momentum, and identify key support/resistance levels.`;
 
-    const schema = {
-      type: 'object',
-      properties: {
-        priceAction: { type: 'string' },
-        volume: { type: 'string' },
-        momentum: { type: 'string' },
-        support: { type: 'array', items: { type: 'number' } },
-        resistance: { type: 'array', items: { type: 'number' } },
-      },
-      required: ['priceAction', 'volume', 'momentum', 'support', 'resistance'],
-    };
+    const schema = z.object({
+      priceAction: z.string(),
+      volume: z.string(),
+      momentum: z.string(),
+      support: z.array(z.number()),
+      resistance: z.array(z.number()),
+    });
 
     const result = await this.performAnalysisWithRetry(() =>
       geminiClient.generateObject(prompt, schema, 'Technical Analysis')
@@ -285,8 +279,9 @@ Analyze price action, volume patterns, momentum, and identify key support/resist
       throw new Error(result.error || 'Technical analysis failed');
     }
 
-    this.setCache(cacheKey, result.data);
-    return result.data as MarketAnalysis;
+    const analysisData = result.data as Record<string, unknown>;
+    this.setCache(cacheKey, analysisData);
+    return analysisData as unknown as MarketAnalysis;
   }
 
   async assessRisk(position: MarketData): Promise<AnalysisResult> {
@@ -297,7 +292,7 @@ Analyze price action, volume patterns, momentum, and identify key support/resist
     const cacheKey = this.generateCacheKey('risk', position);
     const cached = this.getFromCache(cacheKey);
     if (cached) {
-      return { success: true, ...cached };
+      return { success: true, ...cached } as AnalysisResult;
     }
 
     const prompt = `Assess risk for this trading position:
@@ -305,15 +300,11 @@ ${JSON.stringify(position, null, 2)}
 
 Evaluate market conditions, position size, volatility, and provide risk level with confidence.`;
 
-    const schema = {
-      type: 'object',
-      properties: {
-        riskLevel: { type: 'string', enum: ['low', 'medium', 'high'] },
-        confidence: { type: 'number', minimum: 0, maximum: 1 },
-        recommendations: { type: 'array', items: { type: 'string' } },
-      },
-      required: ['riskLevel', 'confidence', 'recommendations'],
-    };
+    const schema = z.object({
+      riskLevel: z.enum(['low', 'medium', 'high']),
+      confidence: z.number().min(0).max(1),
+      recommendations: z.array(z.string()),
+    });
 
     const result = await this.performAnalysisWithRetry(() =>
       geminiClient.generateObject(prompt, schema, 'Risk Assessment')
@@ -323,13 +314,14 @@ Evaluate market conditions, position size, volatility, and provide risk level wi
       return { success: false, error: result.error };
     }
 
+    const riskData = result.data as Record<string, unknown>;
     const analysisResult: AnalysisResult = {
       success: true,
-      riskLevel: result.data.riskLevel,
-      confidence: result.data.confidence,
-      recommendations: result.data.recommendations,
+      riskLevel: riskData.riskLevel as 'low' | 'medium' | 'high',
+      confidence: riskData.confidence as number,
+      recommendations: riskData.recommendations as string[],
     };
-    this.setCache(cacheKey, result.data);
+    this.setCache(cacheKey, riskData);
     return analysisResult;
   }
 
@@ -341,7 +333,7 @@ Evaluate market conditions, position size, volatility, and provide risk level wi
     const cacheKey = this.generateCacheKey('trend', trendData);
     const cached = this.getFromCache(cacheKey);
     if (cached) {
-      return cached;
+      return cached as unknown as MarketAnalysis;
     }
 
     const prompt = `Analyze market trend for ${trendData.symbol}:
@@ -352,27 +344,15 @@ ${JSON.stringify(trendData.dataPoints.slice(-10), null, 2)}
 
 Determine trend direction and strength.`;
 
-    const schema = {
-      type: 'object',
-      properties: {
-        direction: { type: 'string', enum: ['up', 'down', 'sideways'] },
-        strength: { type: 'number', minimum: 0, maximum: 1 },
-        priceAction: { type: 'string' },
-        volume: { type: 'string' },
-        momentum: { type: 'string' },
-        support: { type: 'array', items: { type: 'number' } },
-        resistance: { type: 'array', items: { type: 'number' } },
-      },
-      required: [
-        'direction',
-        'strength',
-        'priceAction',
-        'volume',
-        'momentum',
-        'support',
-        'resistance',
-      ],
-    };
+    const schema = z.object({
+      direction: z.enum(['up', 'down', 'sideways']),
+      strength: z.number().min(0).max(1),
+      priceAction: z.string(),
+      volume: z.string(),
+      momentum: z.string(),
+      support: z.array(z.number()),
+      resistance: z.array(z.number()),
+    });
 
     const result = await this.performAnalysisWithRetry(() =>
       geminiClient.generateObject(prompt, schema, 'Trend Analysis')
@@ -382,8 +362,9 @@ Determine trend direction and strength.`;
       throw new Error(result.error || 'Trend analysis failed');
     }
 
-    this.setCache(cacheKey, result.data);
-    return result.data as MarketAnalysis;
+    const analysisData = result.data as Record<string, unknown>;
+    this.setCache(cacheKey, analysisData);
+    return analysisData as unknown as MarketAnalysis;
   }
 
   getBudgetStatus(): BudgetStatus {

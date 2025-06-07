@@ -3,9 +3,9 @@
  * TDD implementation - these tests verify that comprehensive AI integration documentation exists
  */
 
-import { describe, expect, it } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
 
 const DOCS_DIR = join(__dirname, '..');
 

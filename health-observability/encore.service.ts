@@ -84,7 +84,15 @@ class MetricsCollector {
     const p95Index = Math.floor(sortedResponseTimes.length * 0.95);
     const p99Index = Math.floor(sortedResponseTimes.length * 0.99);
 
-    const endpoints: Record<string, any> = {};
+    const endpoints: Record<
+      string,
+      {
+        requestCount: number;
+        averageResponseTime: number;
+        errorCount: number;
+        successRate: number;
+      }
+    > = {};
     for (const [endpoint, data] of this.endpointMetrics) {
       endpoints[endpoint] = {
         requestCount: data.count,
@@ -155,7 +163,7 @@ export const healthService = {
         usagePercentage: (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100,
       },
       cpu: {
-        loadAverage: require('os').loadavg(),
+        loadAverage: require('node:os').loadavg(),
       },
       requests: {
         total: metrics.requestCount,
@@ -295,7 +303,7 @@ export const healthService = {
         },
         cpu: {
           usage: 0, // TODO: Implement CPU usage calculation
-          loadAverage: require('os').loadavg(),
+          loadAverage: require('node:os').loadavg(),
         },
         eventLoop: {
           delay: 0, // TODO: Implement event loop delay measurement
@@ -344,10 +352,30 @@ export const healthService = {
    * Get dashboard data
    */
   async getDashboardData(): Promise<{
-    overview: any;
-    services: any[];
-    charts: any;
-    alerts: any[];
+    overview: {
+      status: string;
+      uptime: number;
+      totalRequests: number;
+      errorRate: number;
+      averageResponseTime: number;
+    };
+    services: Array<{
+      name: string;
+      status: string;
+      responseTime: number;
+      errorCount: number;
+    }>;
+    charts: {
+      requestsOverTime: Array<{ timestamp: number; value: number }>;
+      errorRateOverTime: Array<{ timestamp: number; value: number }>;
+      responseTimeOverTime: Array<{ timestamp: number; value: number }>;
+    };
+    alerts: Array<{
+      level: 'info' | 'warning' | 'critical';
+      message: string;
+      timestamp: number;
+      service?: string;
+    }>;
   }> {
     const systemHealth = await this.getSystemHealth();
     const metrics = metricsCollector.getMetrics();
@@ -415,19 +443,18 @@ export const healthService = {
       if (response.ok) {
         const data = await response.json();
         return {
-          status: data.status === 'healthy' ? 'healthy' : 'degraded',
+          status: (data as { status?: string }).status === 'healthy' ? 'healthy' : 'degraded',
           lastCheck: Date.now(),
           responseTime,
-          metrics: data,
-        };
-      } else {
-        return {
-          status: 'unhealthy',
-          lastCheck: Date.now(),
-          responseTime,
-          errors: [`HTTP ${response.status}: ${response.statusText}`],
+          metrics: data as Record<string, unknown>,
         };
       }
+      return {
+        status: 'unhealthy',
+        lastCheck: Date.now(),
+        responseTime,
+        errors: [`HTTP ${response.status}: ${response.statusText}`],
+      };
     } catch (error) {
       return {
         status: 'unhealthy',
@@ -471,21 +498,20 @@ export const healthService = {
       const responseTime = Date.now() - startTime;
 
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as { success: boolean; [key: string]: unknown };
         return {
           status: data.success ? 'healthy' : 'degraded',
           lastCheck: Date.now(),
           responseTime,
-          metrics: data,
-        };
-      } else {
-        return {
-          status: 'unhealthy',
-          lastCheck: Date.now(),
-          responseTime,
-          errors: [`Market data health check failed: ${response.status}`],
+          metrics: data as Record<string, unknown>,
         };
       }
+      return {
+        status: 'unhealthy',
+        lastCheck: Date.now(),
+        responseTime,
+        errors: [`Market data health check failed: ${response.status}`],
+      };
     } catch (error) {
       return {
         status: 'unhealthy',
@@ -530,25 +556,30 @@ export const healthService = {
       const responseTime = Date.now() - startTime;
 
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as {
+          status: string;
+          budgetStatus?: unknown;
+          cacheStats?: unknown;
+          configuration?: unknown;
+          [key: string]: unknown;
+        };
         return {
           status: data.status === 'healthy' ? 'healthy' : 'degraded',
           lastCheck: Date.now(),
           responseTime,
-          metrics: data.budgetStatus,
+          metrics: data.budgetStatus as Record<string, unknown> | undefined,
           details: {
-            cacheStats: data.cacheStats,
-            configuration: data.configuration,
+            cacheStats: data.cacheStats as Record<string, unknown> | undefined,
+            configuration: data.configuration as Record<string, unknown> | undefined,
           },
         };
-      } else {
-        return {
-          status: 'unhealthy',
-          lastCheck: Date.now(),
-          responseTime,
-          errors: ['AI service health check failed'],
-        };
       }
+      return {
+        status: 'unhealthy',
+        lastCheck: Date.now(),
+        responseTime,
+        errors: ['AI service health check failed'],
+      };
     } catch (error) {
       return {
         status: 'unhealthy',
@@ -566,25 +597,30 @@ export const healthService = {
       const responseTime = Date.now() - startTime;
 
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as {
+          status: 'healthy' | 'degraded' | 'unhealthy';
+          activeStreams?: unknown;
+          capacity?: unknown;
+          uptime?: unknown;
+          [key: string]: unknown;
+        };
         return {
           status: data.status,
           lastCheck: Date.now(),
           responseTime,
           metrics: {
-            activeStreams: data.activeStreams,
-            capacity: data.capacity,
-            uptime: data.uptime,
+            activeStreams: data.activeStreams as number | undefined,
+            capacity: data.capacity as number | undefined,
+            uptime: data.uptime as number | undefined,
           },
         };
-      } else {
-        return {
-          status: 'unhealthy',
-          lastCheck: Date.now(),
-          responseTime,
-          errors: ['Streaming service health check failed'],
-        };
       }
+      return {
+        status: 'unhealthy',
+        lastCheck: Date.now(),
+        responseTime,
+        errors: ['Streaming service health check failed'],
+      };
     } catch (error) {
       return {
         status: 'unhealthy',
@@ -683,7 +719,7 @@ export const healthService = {
     };
   },
 
-  generateAlerts(systemHealth: SystemHealthResponse, metrics: any) {
+  generateAlerts(systemHealth: SystemHealthResponse, _metrics: unknown) {
     const alerts: Array<{
       level: 'info' | 'warning' | 'critical';
       message: string;
@@ -737,7 +773,7 @@ export const healthService = {
     }
 
     // Service-specific alerts
-    Object.entries(systemHealth.services).forEach(([serviceName, health]) => {
+    for (const [serviceName, health] of Object.entries(systemHealth.services)) {
       if (health.status === 'unhealthy') {
         alerts.push({
           level: 'critical',
@@ -753,7 +789,7 @@ export const healthService = {
           service: serviceName,
         });
       }
-    });
+    }
 
     return alerts.sort((a, b) => b.timestamp - a.timestamp);
   },

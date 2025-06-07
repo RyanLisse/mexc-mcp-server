@@ -3,7 +3,7 @@
  * Task #17: Tests for complete MCP protocol service
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 // Note: Since this is an Encore.ts service, we test the handler logic
 // The actual API endpoints would be tested through Encore's testing framework
@@ -20,13 +20,13 @@ describe('MCP Service Integration', () => {
         params: {
           protocolVersion: '2024-11-05',
           capabilities: { tools: {} },
-          clientInfo: { name: 'test-client', version: '1.0.0' }
+          clientInfo: { name: 'test-client', version: '1.0.0' },
         },
-        id: 1
+        id: 1,
       };
 
       const response = await handler.handleRequest(request);
-      
+
       expect(response.jsonrpc).toBe('2.0');
       expect(response.id).toBe(1);
       expect(response.result.protocolVersion).toBe('2024-11-05');
@@ -38,16 +38,16 @@ describe('MCP Service Integration', () => {
       const request = {
         jsonrpc: '2.0' as const,
         method: 'tools/list',
-        id: 2
+        id: 2,
       };
 
       const response = await handler.handleRequest(request);
-      
+
       expect(response.jsonrpc).toBe('2.0');
       expect(response.id).toBe(2);
       expect(response.result.tools).toBeInstanceOf(Array);
       expect(response.result.tools.length).toBeGreaterThan(0);
-      
+
       // Verify each tool has required fields
       for (const tool of response.result.tools) {
         expect(tool.name).toBeTruthy();
@@ -62,13 +62,13 @@ describe('MCP Service Integration', () => {
         method: 'tools/call',
         params: {
           name: 'mexc_get_ticker',
-          arguments: { symbol: 'BTCUSDT' }
+          arguments: { symbol: 'BTCUSDT' },
         },
-        id: 3
+        id: 3,
       };
 
       const response = await handler.handleRequest(request);
-      
+
       expect(response.jsonrpc).toBe('2.0');
       expect(response.id).toBe(3);
       expect(response.result.content).toBeInstanceOf(Array);
@@ -83,27 +83,27 @@ describe('MCP Service Integration', () => {
         {
           jsonrpc: '2.0' as const,
           method: 'tools/list',
-          id: 1
+          id: 1,
         },
         {
           jsonrpc: '2.0' as const,
           method: 'tools/call',
           params: {
             name: 'mexc_get_ticker',
-            arguments: { symbol: 'ETHUSDT' }
+            arguments: { symbol: 'ETHUSDT' },
           },
-          id: 2
-        }
+          id: 2,
+        },
       ];
 
       const responses = await handler.handleBatchRequest(batchRequest);
-      
+
       expect(Array.isArray(responses)).toBe(true);
       expect(responses).toHaveLength(2);
-      
+
       expect(responses[0].id).toBe(1);
       expect(responses[0].result.tools).toBeDefined();
-      
+
       expect(responses[1].id).toBe(2);
       expect(responses[1].result.content[0].text).toContain('ETHUSDT');
     });
@@ -114,11 +114,11 @@ describe('MCP Service Integration', () => {
       const request = {
         jsonrpc: '2.0' as const,
         method: 'unknown/method',
-        id: 4
+        id: 4,
       };
 
       const response = await handler.handleRequest(request);
-      
+
       expect(response.jsonrpc).toBe('2.0');
       expect(response.id).toBe(4);
       expect(response.error).toBeDefined();
@@ -130,14 +130,14 @@ describe('MCP Service Integration', () => {
         jsonrpc: '2.0' as const,
         method: 'tools/call',
         params: {
-          name: 'mexc_get_ticker'
+          name: 'mexc_get_ticker',
           // Missing required arguments
         },
-        id: 5
+        id: 5,
       };
 
       const response = await handler.handleRequest(request);
-      
+
       expect(response.jsonrpc).toBe('2.0');
       expect(response.id).toBe(5);
       // Should handle gracefully without crashing
@@ -147,9 +147,9 @@ describe('MCP Service Integration', () => {
   describe('Service Registration', () => {
     it('should allow registering new methods', () => {
       const customHandler = async (params: any) => ({ custom: 'response', params });
-      
+
       handler.registerMethod('custom/test', customHandler);
-      
+
       const methods = handler.getRegisteredMethods();
       expect(methods).toContain('custom/test');
     });
@@ -157,7 +157,7 @@ describe('MCP Service Integration', () => {
     it('should allow unregistering methods', () => {
       handler.registerMethod('temp/method', async () => ({}));
       expect(handler.getRegisteredMethods()).toContain('temp/method');
-      
+
       handler.unregisterMethod('temp/method');
       expect(handler.getRegisteredMethods()).not.toContain('temp/method');
     });

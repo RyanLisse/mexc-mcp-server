@@ -447,12 +447,11 @@ export async function retryWithBackoff<T>(
       let delay = strategy.retryDelayMs;
       switch (strategy.backoffStrategy) {
         case 'exponential':
-          delay = strategy.retryDelayMs * Math.pow(2, attempt);
+          delay = strategy.retryDelayMs * 2 ** attempt;
           break;
         case 'linear':
           delay = strategy.retryDelayMs * (attempt + 1);
           break;
-        case 'fixed':
         default:
           delay = strategy.retryDelayMs;
           break;
@@ -480,8 +479,8 @@ export async function retryWithBackoff<T>(
  */
 export function getFallbackAnalysisResult(
   analysisType: AnalysisType,
-  inputData: unknown,
-  error: Error
+  _inputData: unknown,
+  _error: Error
 ): AIAnalysisResult {
   const fallbackResults: Record<AnalysisType, () => AIAnalysisResult> = {
     sentiment: () => ({

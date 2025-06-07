@@ -525,6 +525,11 @@ describe('Comprehensive AI Integration Test Suite - Task #29', () => {
           riskPercentage: 0.02,
           leverageRecommendation: 2,
         },
+        riskManagement: {
+          stopLossPrice: 45000,
+          takeProfitPrice: 55000,
+          riskRewardRatio: 2.5,
+        },
         recommendations: [
           {
             type: 'position_size',

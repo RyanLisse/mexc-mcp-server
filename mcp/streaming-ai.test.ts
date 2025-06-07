@@ -3,14 +3,14 @@
  * Task #25: TDD tests for streaming AI market analysis endpoint
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock stream utilities
-const mockWriteToStream = mock((_data: unknown) => Promise.resolve());
-const mockCreateStream = mock(() => ({
+const mockWriteToStream = vi.fn((_data: unknown) => Promise.resolve());
+const mockCreateStream = vi.fn(() => ({
   write: mockWriteToStream,
-  end: mock(() => {}),
-  destroy: mock(() => {}),
+  end: vi.fn(() => {}),
+  destroy: vi.fn(() => {}),
 }));
 
 // Test interfaces

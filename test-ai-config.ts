@@ -149,7 +149,7 @@ function testTypeSafety() {
   console.log('\n🛡️  Testing Type Safety...\n');
 
   // Test that config conforms to ServerConfig interface
-  const serverConfig: ServerConfig = config;
+  const _serverConfig: ServerConfig = config;
   console.log('✅ ServerConfig interface compliance verified');
 
   // Test that ai section conforms to AIConfig interface
@@ -161,19 +161,19 @@ function testTypeSafety() {
   const budgetConfig = aiConfig.budget;
   const cacheConfig = aiConfig.cache;
   const riskConfig = aiConfig.risk;
-  const rateLimitConfig = aiConfig.rateLimit;
+  const _rateLimitConfig = aiConfig.rateLimit;
   const analysisConfig = aiConfig.analysis;
   const debugConfig = aiConfig.debug;
 
   console.log('✅ All AI configuration sections type-safe');
 
   // Test environment variable types
-  const temperature: number = googleConfig.temperature;
-  const maxCost: number = budgetConfig.maxCostPerDay;
-  const cacheEnabled: boolean = cacheConfig.enabled;
-  const riskLevel: 'low' | 'medium' | 'high' = riskConfig.maxRiskLevel;
-  const analysisDepth: 'basic' | 'detailed' | 'comprehensive' = analysisConfig.defaultDepth;
-  const logLevel: 'error' | 'warn' | 'info' | 'debug' = debugConfig.logLevel;
+  const _temperature: number = googleConfig.temperature;
+  const _maxCost: number = budgetConfig.maxCostPerDay;
+  const _cacheEnabled: boolean = cacheConfig.enabled;
+  const _riskLevel: 'low' | 'medium' | 'high' = riskConfig.maxRiskLevel;
+  const _analysisDepth: 'basic' | 'detailed' | 'comprehensive' = analysisConfig.defaultDepth;
+  const _logLevel: 'error' | 'warn' | 'info' | 'debug' = debugConfig.logLevel;
 
   console.log('✅ All configuration values have correct types');
 }

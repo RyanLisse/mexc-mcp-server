@@ -10,15 +10,12 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  TaskThirteenAdvancedOrderService,
-  type AdvancedOrderArgs,
-  type StopLossOrderArgs,
-  type TakeProfitOrderArgs,
-  type OCOOrderArgs,
-  type AdvancedOrderResponse,
-  type AdvancedOrderValidationResult,
   type Logger,
   type MexcClient,
+  type OCOOrderArgs,
+  type StopLossOrderArgs,
+  type TakeProfitOrderArgs,
+  TaskThirteenAdvancedOrderService,
 } from '../task-13-advanced-order-service';
 
 // Mock implementations
@@ -48,7 +45,7 @@ describe('Task #13: Advanced Order Types Implementation', () => {
     side: 'sell',
     type: 'stop_loss',
     quantity: 0.001,
-    stopPrice: 45000.00,
+    stopPrice: 45000.0,
     timeInForce: 'GTC',
     clientOrderId: 'stop_loss_001',
     testMode: true,
@@ -59,7 +56,7 @@ describe('Task #13: Advanced Order Types Implementation', () => {
     side: 'sell',
     type: 'take_profit',
     quantity: 0.001,
-    takeProfitPrice: 55000.00,
+    takeProfitPrice: 55000.0,
     timeInForce: 'GTC',
     clientOrderId: 'take_profit_001',
     testMode: true,
@@ -70,9 +67,9 @@ describe('Task #13: Advanced Order Types Implementation', () => {
     side: 'sell',
     type: 'oco',
     quantity: 0.001,
-    stopPrice: 45000.00,
-    limitPrice: 55000.00,
-    stopLimitPrice: 44500.00,
+    stopPrice: 45000.0,
+    limitPrice: 55000.0,
+    stopLimitPrice: 44500.0,
     timeInForce: 'GTC',
     clientOrderId: 'oco_001',
     testMode: true,
@@ -139,21 +136,23 @@ describe('Task #13: Advanced Order Types Implementation', () => {
     it('should reject stop-loss with invalid trigger price', async () => {
       const invalidOrder = {
         ...mockStopLossOrder,
-        stopPrice: 60000.00, // Above current price for sell order (invalid)
+        stopPrice: 60000.0, // Above current price for sell order (invalid)
       };
 
       const result = await advancedOrderService.validateAdvancedOrder(invalidOrder);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.field === 'stopPrice')).toBe(true);
-      expect(result.errors[0].message).toContain('Stop price must be below current price for sell orders');
+      expect(result.errors.some((e) => e.field === 'stopPrice')).toBe(true);
+      expect(result.errors[0].message).toContain(
+        'Stop price must be below current price for sell orders'
+      );
     });
 
     it('should validate stop-loss price relationships for buy orders', async () => {
       const buyStopLoss = {
         ...mockStopLossOrder,
         side: 'buy' as const,
-        stopPrice: 55000.00, // Above current price for buy order (valid)
+        stopPrice: 55000.0, // Above current price for buy order (valid)
       };
 
       const result = await advancedOrderService.validateAdvancedOrder(buyStopLoss);
@@ -162,7 +161,9 @@ describe('Task #13: Advanced Order Types Implementation', () => {
     });
 
     it('should handle MEXC API errors for stop-loss orders', async () => {
-      (mockMexcClient.placeStopLossOrder as any).mockRejectedValue(new Error('Insufficient balance'));
+      (mockMexcClient.placeStopLossOrder as any).mockRejectedValue(
+        new Error('Insufficient balance')
+      );
 
       const result = await advancedOrderService.placeAdvancedOrder(mockStopLossOrder);
 
@@ -199,21 +200,23 @@ describe('Task #13: Advanced Order Types Implementation', () => {
     it('should reject take-profit with invalid target price', async () => {
       const invalidOrder = {
         ...mockTakeProfitOrder,
-        takeProfitPrice: 40000.00, // Below current price for sell order (invalid)
+        takeProfitPrice: 40000.0, // Below current price for sell order (invalid)
       };
 
       const result = await advancedOrderService.validateAdvancedOrder(invalidOrder);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.field === 'takeProfitPrice')).toBe(true);
-      expect(result.errors[0].message).toContain('Take profit price must be above current price for sell orders');
+      expect(result.errors.some((e) => e.field === 'takeProfitPrice')).toBe(true);
+      expect(result.errors[0].message).toContain(
+        'Take profit price must be above current price for sell orders'
+      );
     });
 
     it('should validate take-profit price relationships for buy orders', async () => {
       const buyTakeProfit = {
         ...mockTakeProfitOrder,
         side: 'buy' as const,
-        takeProfitPrice: 45000.00, // Below current price for buy order (valid)
+        takeProfitPrice: 45000.0, // Below current price for buy order (valid)
       };
 
       const result = await advancedOrderService.validateAdvancedOrder(buyTakeProfit);
@@ -252,26 +255,28 @@ describe('Task #13: Advanced Order Types Implementation', () => {
     it('should validate OCO price relationships', async () => {
       const invalidOCO = {
         ...mockOCOOrder,
-        stopPrice: 56000.00, // Stop price above limit price (invalid)
+        stopPrice: 56000.0, // Stop price above limit price (invalid)
       };
 
       const result = await advancedOrderService.validateAdvancedOrder(invalidOCO);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.field === 'priceRelationship')).toBe(true);
-      expect(result.errors[0].message).toContain('Stop price must be below limit price for sell OCO orders');
+      expect(result.errors.some((e) => e.field === 'priceRelationship')).toBe(true);
+      expect(result.errors[0].message).toContain(
+        'Stop price must be below limit price for sell OCO orders'
+      );
     });
 
     it('should validate stop limit price in OCO orders', async () => {
       const invalidOCO = {
         ...mockOCOOrder,
-        stopLimitPrice: 46000.00, // Stop limit price above stop price (invalid)
+        stopLimitPrice: 46000.0, // Stop limit price above stop price (invalid)
       };
 
       const result = await advancedOrderService.validateAdvancedOrder(invalidOCO);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.field === 'stopLimitPrice')).toBe(true);
+      expect(result.errors.some((e) => e.field === 'stopLimitPrice')).toBe(true);
     });
 
     it('should handle OCO order execution and linking', async () => {
@@ -298,7 +303,7 @@ describe('Task #13: Advanced Order Types Implementation', () => {
       const result = await advancedOrderService.validateAdvancedOrder(incompleteStopLoss as any);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.field === 'stopPrice')).toBe(true);
+      expect(result.errors.some((e) => e.field === 'stopPrice')).toBe(true);
     });
 
     it('should validate quantity precision', async () => {
@@ -310,7 +315,7 @@ describe('Task #13: Advanced Order Types Implementation', () => {
       const result = await advancedOrderService.validateAdvancedOrder(invalidQuantity);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.field === 'quantity')).toBe(true);
+      expect(result.errors.some((e) => e.field === 'quantity')).toBe(true);
     });
 
     it('should check account balance before placing orders', async () => {
@@ -321,7 +326,7 @@ describe('Task #13: Advanced Order Types Implementation', () => {
       const result = await advancedOrderService.validateAdvancedOrder(mockStopLossOrder);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.field === 'balance')).toBe(true);
+      expect(result.errors.some((e) => e.field === 'balance')).toBe(true);
       expect(result.errors[0].message).toContain('Insufficient balance');
     });
 
@@ -334,7 +339,7 @@ describe('Task #13: Advanced Order Types Implementation', () => {
       const result = await advancedOrderService.validateAdvancedOrder(invalidSymbol);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.field === 'symbol')).toBe(true);
+      expect(result.errors.some((e) => e.field === 'symbol')).toBe(true);
     });
   });
 
@@ -345,11 +350,13 @@ describe('Task #13: Advanced Order Types Implementation', () => {
       const result = await advancedOrderService.validateAdvancedOrder(mockStopLossOrder);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.message.includes('Network timeout'))).toBe(true);
+      expect(result.errors.some((e) => e.message.includes('Network timeout'))).toBe(true);
     });
 
     it('should handle MEXC API rate limiting', async () => {
-      (mockMexcClient.placeStopLossOrder as any).mockRejectedValue(new Error('Rate limit exceeded'));
+      (mockMexcClient.placeStopLossOrder as any).mockRejectedValue(
+        new Error('Rate limit exceeded')
+      );
 
       const result = await advancedOrderService.placeAdvancedOrder(mockStopLossOrder);
 
@@ -371,7 +378,7 @@ describe('Task #13: Advanced Order Types Implementation', () => {
 
       expect(result.isValid).toBe(false);
       expect(result.errors.length).toBeGreaterThanOrEqual(3);
-      expect(result.errors.every(e => e.field && e.message)).toBe(true);
+      expect(result.errors.every((e) => e.field && e.message)).toBe(true);
     });
   });
 
@@ -410,7 +417,7 @@ describe('Task #13: Advanced Order Types Implementation', () => {
       const result = await advancedOrderService.validateAdvancedOrder(conditionalOrder);
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings.some(w => w.message.includes('conditional order'))).toBe(true);
+      expect(result.warnings.some((w) => w.message.includes('conditional order'))).toBe(true);
     });
   });
 
@@ -421,7 +428,7 @@ describe('Task #13: Advanced Order Types Implementation', () => {
         side: 'buy' as const,
         type: 'limit' as const,
         quantity: 0.001,
-        price: 49000.00,
+        price: 49000.0,
         timeInForce: 'GTC' as const,
       };
 
@@ -488,8 +495,8 @@ describe('Task #13: Advanced Order Types Implementation', () => {
 
       const result = await advancedOrderService.validateAdvancedOrder(largeOrder);
 
-      expect(result.warnings.some(w => w.severity === 'high')).toBe(true);
-      expect(result.warnings.some(w => w.message.includes('large order'))).toBe(true);
+      expect(result.warnings.some((w) => w.severity === 'high')).toBe(true);
+      expect(result.warnings.some((w) => w.message.includes('large order'))).toBe(true);
     });
   });
 });

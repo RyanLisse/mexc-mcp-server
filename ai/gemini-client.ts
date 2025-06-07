@@ -174,8 +174,8 @@ export class GeminiClient {
    */
   async generateObject<T>(
     prompt: string,
-    schema: Record<string, unknown>,
-    description?: string
+    schema: unknown,
+    _description?: string
   ): Promise<GeminiObjectResponse<T>> {
     try {
       this.checkRateLimit();
@@ -183,9 +183,7 @@ export class GeminiClient {
       const result = await generateObject({
         model: this.google(this.config.model),
         prompt,
-        schema,
-        schemaName: description ? 'GeneratedObject' : undefined,
-        schemaDescription: description,
+        schema: schema as any, // Use any to resolve schema property type issue
         maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
       });

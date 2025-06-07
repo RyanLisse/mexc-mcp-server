@@ -10,15 +10,13 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TaskFifteenWebSocketService } from '../task-15-websocket-service';
+import type { TaskFifteenWebSocketService } from '../task-15-websocket-service';
 import {
   type BroadcastUpdate,
   type SubscriptionData,
   type SubscriptionFilter,
   type SubscriptionRequest,
-  type SubscriptionResponse,
   SubscriptionService,
-  type UserSubscription,
 } from '../task-16-subscription-service';
 
 // Mock Logger
@@ -34,7 +32,9 @@ class MockDatabase {
   private subscriptions: Map<string, SubscriptionData> = new Map();
   private subscriptionsByUser: Map<string, string[]> = new Map();
 
-  async create(subscription: SubscriptionData): Promise<string> {
+  async create(
+    subscription: Omit<SubscriptionData, 'id' | 'createdAt'>
+  ): Promise<SubscriptionData> {
     const id = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const subscriptionWithId = {
       ...subscription,
@@ -48,7 +48,7 @@ class MockDatabase {
     userSubs.push(id);
     this.subscriptionsByUser.set(subscription.userId, userSubs);
 
-    return id;
+    return subscriptionWithId;
   }
 
   async findById(id: string): Promise<SubscriptionData | null> {
@@ -60,6 +60,11 @@ class MockDatabase {
     return userSubIds
       .map((id) => this.subscriptions.get(id))
       .filter((sub): sub is SubscriptionData => sub !== undefined);
+  }
+
+  async countByUserId(userId: string): Promise<number> {
+    const userSubs = await this.findByUserId(userId);
+    return userSubs.length;
   }
 
   async update(id: string, updates: Partial<SubscriptionData>): Promise<boolean> {
@@ -85,9 +90,23 @@ class MockDatabase {
     return true;
   }
 
-  async countByUserId(userId: string): Promise<number> {
-    const userSubs = this.subscriptionsByUser.get(userId) || [];
-    return userSubs.length;
+  async findByFilter(filter: SubscriptionFilter): Promise<SubscriptionData[]> {
+    let results = Array.from(this.subscriptions.values());
+
+    if (filter.type) {
+      results = results.filter((sub) => sub.type === filter.type);
+    }
+    if (filter.status) {
+      results = results.filter((sub) => sub.status === filter.status);
+    }
+    if (filter.symbol) {
+      results = results.filter((sub) => sub.symbol === filter.symbol);
+    }
+    if (filter.userId) {
+      results = results.filter((sub) => sub.userId === filter.userId);
+    }
+
+    return results;
   }
 
   async findActive(): Promise<SubscriptionData[]> {
@@ -107,10 +126,10 @@ class MockDatabase {
 
 // Mock WebSocket Service
 class MockWebSocketService {
-  private subscriptions = new Map<string, any>();
+  private subscriptions = new Map<string, unknown>();
 
   async subscribe(
-    subscription: any
+    subscription: unknown
   ): Promise<{ success: boolean; subscriptionId?: string; error?: string }> {
     const id = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     this.subscriptions.set(id, subscription);
@@ -166,7 +185,7 @@ describe('Task #16: Subscription Management Implementation', () => {
         enableSymbolValidation: true,
       },
       mockDatabase,
-      mockWebSocketService as any // Type assertion for mock
+      mockWebSocketService as unknown as TaskFifteenWebSocketService // Type assertion for mock
     );
   });
 
@@ -193,9 +212,9 @@ describe('Task #16: Subscription Management Implementation', () => {
     });
 
     it('should validate subscription request parameters', async () => {
-      const invalidRequest: any = {
+      const invalidRequest: SubscriptionRequest = {
         userId: '',
-        type: 'invalid_type',
+        type: 'invalid_type' as 'ticker',
         symbol: '',
       };
 
@@ -206,27 +225,23 @@ describe('Task #16: Subscription Management Implementation', () => {
     });
 
     it('should enforce maximum subscriptions per user limit', async () => {
-      const userId = 'user123';
+      // const userId = 'user123';
 
       // Create max allowed subscriptions
       for (let i = 0; i < mockConfig.maxSubscriptionsPerUser; i++) {
-        const _request: SubscriptionRequest = {
-          userId,
-          type: 'ticker',
-          symbol: `SYMBOL${i}USDT`,
-        };
-
-        // await subscriptionService.createSubscription(request);
+        // await subscriptionService.createSubscription({
+        //   userId: 'user123',
+        //   type: 'ticker',
+        //   symbol: `SYMBOL${i}USDT`,
+        // });
       }
 
       // Try to create one more subscription (should fail)
-      const _extraRequest: SubscriptionRequest = {
-        userId,
-        type: 'ticker',
-        symbol: 'EXTRAUSDT',
-      };
-
-      // const result = await subscriptionService.createSubscription(extraRequest);
+      // const result = await subscriptionService.createSubscription({
+      //   userId: 'user123',
+      //   type: 'ticker',
+      //   symbol: 'EXTRAUSDT',
+      // });
 
       // expect(result.success).toBe(false);
       // expect(result.error).toContain('Maximum subscriptions per user reached');
@@ -303,10 +318,10 @@ describe('Task #16: Subscription Management Implementation', () => {
     });
 
     it('should filter subscriptions by criteria', async () => {
-      const _filter: SubscriptionFilter = {
-        type: 'ticker',
-        status: 'active',
-      };
+      // const filter = {
+      //   type: 'ticker',
+      //   status: 'active',
+      // };
 
       // const subscriptions = await subscriptionService.getSubscriptions(filter);
 
@@ -683,9 +698,9 @@ describe('Task #16: Subscription Management Implementation', () => {
     });
 
     it('should handle subscription type validation', async () => {
-      const _invalidTypeRequest: any = {
+      const _invalidTypeRequest: SubscriptionRequest = {
         userId: 'user123',
-        type: 'invalid_subscription_type',
+        type: 'invalid_subscription_type' as 'ticker',
         symbol: 'BTCUSDT',
       };
 

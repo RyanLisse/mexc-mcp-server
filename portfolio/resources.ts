@@ -125,21 +125,6 @@ const PortfolioToolSchemas = {
   },
 };
 
-// Simple validation function
-function validatePortfolioArgs(
-  toolName: string,
-  args: Record<string, unknown>
-): Record<string, unknown> {
-  // Basic validation - just ensure required fields are present
-  if (toolName === PORTFOLIO_TOOLS.GET_ASSET_BALANCE && !args.asset) {
-    throw new Error('Asset parameter is required');
-  }
-  if (toolName === PORTFOLIO_TOOLS.GET_POSITION && !args.symbol) {
-    throw new Error('Symbol parameter is required');
-  }
-  return args;
-}
-
 /**
  * Get account balances MCP tool
  */

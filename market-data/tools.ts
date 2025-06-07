@@ -1,11 +1,7 @@
 import type {
-  Get24hStatsArgs,
-  GetActiveSymbolsArgs,
-  GetOrderBookArgs,
-  GetTickerArgs,
-  MCPTool,
   MarketDataResponse,
 } from '../shared/types/index.js';
+import type { MCPTool, MCPToolResult, ToolExecutionContext } from '../tools/types.js';
 import { createSuccessResponse } from '../shared/utils/index.js';
 import { marketDataConfig } from './config.js';
 import { mexcClient } from './mexc-client.js';
@@ -172,6 +168,40 @@ export const getTickerTool: MCPTool = {
     },
     required: ['symbol'],
   },
+  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+    try {
+      // Validate required symbol parameter
+      if (typeof args.symbol !== 'string') {
+        throw new Error('symbol parameter is required and must be a string');
+      }
+      
+      const validatedArgs: GetTickerInputSchema = {
+        symbol: args.symbol,
+        convert: typeof args.convert === 'string' ? args.convert : undefined,
+      };
+      
+      const result = await executeGetTicker(validatedArgs);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+        isError: false,
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error getting ticker: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  },
 };
 
 export const getOrderBookTool: MCPTool = {
@@ -195,6 +225,40 @@ export const getOrderBookTool: MCPTool = {
     },
     required: ['symbol'],
   },
+  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+    try {
+      // Validate required symbol parameter
+      if (typeof args.symbol !== 'string') {
+        throw new Error('symbol parameter is required and must be a string');
+      }
+      
+      const validatedArgs: GetOrderBookInputSchema = {
+        symbol: args.symbol,
+        limit: typeof args.limit === 'number' ? args.limit : undefined,
+      };
+      
+      const result = await executeGetOrderBook(validatedArgs);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+        isError: false,
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error getting order book: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  },
 };
 
 export const get24hStatsTool: MCPTool = {
@@ -211,6 +275,34 @@ export const get24hStatsTool: MCPTool = {
     },
     required: [],
   },
+  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+    try {
+      const validatedArgs: Get24hStatsInputSchema = {
+        symbol: typeof args.symbol === 'string' ? args.symbol : undefined,
+      };
+      
+      const result = await executeGet24hStats(validatedArgs);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+        isError: false,
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error getting 24h stats: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  },
 };
 
 export const testConnectivityTool: MCPTool = {
@@ -221,6 +313,30 @@ export const testConnectivityTool: MCPTool = {
     properties: {},
     required: [],
   },
+  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+    try {
+      const result = await executeTestConnectivity(args);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+        isError: false,
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error testing connectivity: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  },
 };
 
 export const testAuthenticationTool: MCPTool = {
@@ -230,6 +346,30 @@ export const testAuthenticationTool: MCPTool = {
     type: 'object',
     properties: {},
     required: [],
+  },
+  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+    try {
+      const result = await executeTestAuthentication(args);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+        isError: false,
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error testing authentication: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+        isError: true,
+      };
+    }
   },
 };
 
@@ -248,6 +388,30 @@ export const getActiveSymbolsTool: MCPTool = {
       },
     },
     required: [],
+  },
+  async execute(args: Record<string, unknown>, _context?: ToolExecutionContext): Promise<MCPToolResult> {
+    try {
+      const result = await executeGetActiveSymbols(args as { limit?: number });
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+        isError: false,
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error getting active symbols: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+        isError: true,
+      };
+    }
   },
 };
 
@@ -518,8 +682,8 @@ export async function executeGetMarketDepth(args: {
 }): Promise<
   MarketDataResponse<{
     symbol: string;
-    bids: Array<[string, string]>;
-    asks: Array<[string, string]>;
+    bids: Array<{ price: string; quantity: string }>;
+    asks: Array<{ price: string; quantity: string }>;
     lastUpdateId: number;
     analysis: {
       bidTotal: string;
@@ -543,16 +707,16 @@ export async function executeGetMarketDepth(args: {
     const orderBookData = await mexcClient.getOrderBook(args.symbol, limit);
 
     const bids =
-      orderBookData.bids?.map((bid) => [bid.price, bid.quantity] as [string, string]) || [];
+      orderBookData.bids?.map((bid) => ({ price: bid.price, quantity: bid.quantity })) || [];
     const asks =
-      orderBookData.asks?.map((ask) => [ask.price, ask.quantity] as [string, string]) || [];
+      orderBookData.asks?.map((ask) => ({ price: ask.price, quantity: ask.quantity })) || [];
 
     // Calculate analysis
-    const bidTotal = bids.reduce((sum, [, qty]) => sum + Number.parseFloat(qty), 0).toFixed(6);
-    const askTotal = asks.reduce((sum, [, qty]) => sum + Number.parseFloat(qty), 0).toFixed(6);
+    const bidTotal = bids.reduce((sum, bid) => sum + Number.parseFloat(bid.quantity), 0).toFixed(6);
+    const askTotal = asks.reduce((sum, ask) => sum + Number.parseFloat(ask.quantity), 0).toFixed(6);
 
-    const bestBid = Number.parseFloat(bids[0]?.[0] || '0');
-    const bestAsk = Number.parseFloat(asks[0]?.[0] || '0');
+    const bestBid = Number.parseFloat(bids[0]?.price || '0');
+    const bestAsk = Number.parseFloat(asks[0]?.price || '0');
     const spread = (bestAsk - bestBid).toFixed(6);
     const spreadPercent = bestBid > 0 ? (((bestAsk - bestBid) / bestBid) * 100).toFixed(4) : '0';
 

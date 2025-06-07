@@ -26,7 +26,7 @@ const JsonRpcRequestSchema = JsonRpcBaseSchema.extend({
   id: z.union([z.string(), z.number(), z.null()]).optional(),
 });
 
-const JsonRpcNotificationSchema = JsonRpcBaseSchema.extend({
+const _JsonRpcNotificationSchema = JsonRpcBaseSchema.extend({
   method: z.string(),
   params: z.any().optional(),
 });
@@ -75,7 +75,7 @@ export class JsonRpcHandler {
    */
   private registerDefaultHandlers(): void {
     // Initialize method - MCP handshake
-    this.methodHandlers.set('initialize', async (params) => ({
+    this.methodHandlers.set('initialize', async (_params) => ({
       protocolVersion: '2024-11-05',
       capabilities: {
         tools: {},
@@ -96,10 +96,10 @@ export class JsonRpcHandler {
           inputSchema: {
             type: 'object',
             properties: {
-              symbol: { type: 'string' }
+              symbol: { type: 'string' },
             },
-            required: ['symbol']
-          }
+            required: ['symbol'],
+          },
         },
         {
           name: 'mexc_get_order_book',
@@ -107,40 +107,46 @@ export class JsonRpcHandler {
           inputSchema: {
             type: 'object',
             properties: {
-              symbol: { type: 'string' }
+              symbol: { type: 'string' },
             },
-            required: ['symbol']
-          }
-        }
-      ]
+            required: ['symbol'],
+          },
+        },
+      ],
     }));
 
     // Tools call method
     this.methodHandlers.set('tools/call', async (params) => {
       const { name, arguments: args } = params;
-      
+
       // Mock implementation for testing - will integrate with real services later
       switch (name) {
         case 'mexc_get_ticker':
           return {
-            content: [{
-              type: 'text',
-              text: `Ticker data for ${args.symbol}: Price $50,000`
-            }]
+            content: [
+              {
+                type: 'text',
+                text: `Ticker data for ${args.symbol}: Price $50,000`,
+              },
+            ],
           };
         case 'mexc_place_order':
           return {
-            content: [{
-              type: 'text',
-              text: `Order placed: ${args.side} ${args.quantity} ${args.symbol} at ${args.price}`
-            }]
+            content: [
+              {
+                type: 'text',
+                text: `Order placed: ${args.side} ${args.quantity} ${args.symbol} at ${args.price}`,
+              },
+            ],
           };
         case 'ai_analyze_sentiment':
           return {
-            content: [{
-              type: 'text',
-              text: `Sentiment analysis for ${args.symbol}: Neutral (confidence: 0.75)`
-            }]
+            content: [
+              {
+                type: 'text',
+                text: `Sentiment analysis for ${args.symbol}: Neutral (confidence: 0.75)`,
+              },
+            ],
           };
         default:
           throw new Error(`Unknown tool: ${name}`);
@@ -152,19 +158,15 @@ export class JsonRpcHandler {
    * Validate JSON-RPC request format
    */
   validateRequest(request: any): boolean {
-    try {
-      if (!request.jsonrpc || request.jsonrpc !== '2.0') {
-        throw new Error('Invalid JSON-RPC version');
-      }
-      
-      if (!request.method || typeof request.method !== 'string') {
-        throw new Error('Method is required');
-      }
-
-      return true;
-    } catch (error) {
-      throw error;
+    if (!request.jsonrpc || request.jsonrpc !== '2.0') {
+      throw new Error('Invalid JSON-RPC version');
     }
+
+    if (!request.method || typeof request.method !== 'string') {
+      throw new Error('Method is required');
+    }
+
+    return true;
   }
 
   /**
@@ -183,11 +185,11 @@ export class JsonRpcHandler {
    */
   async handleRequest(request: any): Promise<JsonRpcResponse> {
     const isNotification = request.id === undefined;
-    
+
     try {
       // Validate request format
       this.validateRequest(request);
-      
+
       // Get method handler
       const handler = this.methodHandlers.get(request.method);
       if (!handler) {
@@ -200,7 +202,7 @@ export class JsonRpcHandler {
 
       // Execute handler
       const result = await handler(request.params);
-      
+
       // Don't send response for notifications
       if (isNotification) {
         return null as any;
@@ -221,11 +223,7 @@ export class JsonRpcHandler {
         );
       }
 
-      return this.createErrorResponse(
-        request.id || null,
-        JSON_RPC_ERRORS.INTERNAL_ERROR,
-        message
-      );
+      return this.createErrorResponse(request.id || null, JSON_RPC_ERRORS.INTERNAL_ERROR, message);
     }
   }
 
@@ -234,14 +232,14 @@ export class JsonRpcHandler {
    */
   async handleBatchRequest(requests: any[]): Promise<JsonRpcResponse[]> {
     const responses: JsonRpcResponse[] = [];
-    
+
     for (const request of requests) {
       const response = await this.handleRequest(request);
       if (response !== null) {
         responses.push(response);
       }
     }
-    
+
     return responses;
   }
 
@@ -252,12 +250,8 @@ export class JsonRpcHandler {
     try {
       const request = JSON.parse(rawRequest);
       return await this.handleRequest(request);
-    } catch (error) {
-      return this.createErrorResponse(
-        null,
-        JSON_RPC_ERRORS.PARSE_ERROR,
-        'Parse error'
-      );
+    } catch (_error) {
+      return this.createErrorResponse(null, JSON_RPC_ERRORS.PARSE_ERROR, 'Parse error');
     }
   }
 

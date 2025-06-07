@@ -6,6 +6,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '~encore': path.resolve(__dirname, './encore.gen'),
+      'encore.dev/internal/runtime/napi/napi.cjs': path.resolve(
+        __dirname,
+        '__mocks__/encore-runtime.js'
+      ),
     },
   },
   test: {

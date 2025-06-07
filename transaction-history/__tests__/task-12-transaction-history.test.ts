@@ -14,10 +14,7 @@ import {
   type MexcClient,
   type PostgresDB,
   TaskTwelveTransactionHistoryService,
-  type TransactionExportResponse,
-  type TransactionHistoryResponse,
   type TransactionRecord,
-  type TransactionStatsResponse,
 } from '../task-12-transaction-history-service';
 
 // Mock implementations
@@ -106,13 +103,15 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
     vi.clearAllMocks();
 
     // Setup default mock responses
-    (mockPostgresDB.query as any).mockResolvedValue({
+    (mockPostgresDB.query as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
       rows: mockTransactions,
       rowCount: mockTransactions.length,
     });
-    (mockPostgresDB.insert as any).mockResolvedValue({ insertId: 1 });
-    (mockPostgresDB.transaction as any).mockImplementation(
-      async (fn: any) => await fn(mockPostgresDB)
+    (mockPostgresDB.insert as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      insertId: 1,
+    });
+    (mockPostgresDB.transaction as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      async (fn: (db: PostgresDB) => Promise<unknown>) => await fn(mockPostgresDB)
     );
 
     transactionService = new TaskTwelveTransactionHistoryService(
@@ -302,7 +301,7 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
 
   describe('Transaction Statistics', () => {
     it('should calculate transaction statistics correctly', async () => {
-      (mockPostgresDB.query as any)
+      (mockPostgresDB.query as unknown as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ rows: mockTransactions, rowCount: 3 })
         .mockResolvedValueOnce({
           rows: [
@@ -352,7 +351,7 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
 
   describe('Individual Transaction Retrieval', () => {
     it('should retrieve individual transaction by ID', async () => {
-      (mockPostgresDB.query as any).mockResolvedValue({
+      (mockPostgresDB.query as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         rows: [mockTransactions[0]],
         rowCount: 1,
       });
@@ -369,7 +368,7 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
     });
 
     it('should return null for non-existent transaction', async () => {
-      (mockPostgresDB.query as any).mockResolvedValue({
+      (mockPostgresDB.query as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         rows: [],
         rowCount: 0,
       });
@@ -406,7 +405,9 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
         },
       ];
 
-      (mockMexcClient.getAccountTrades as any).mockResolvedValue(mexcTrades);
+      (mockMexcClient.getAccountTrades as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mexcTrades
+      );
 
       const result = await transactionService.syncTransactionsFromMEXC('user-123');
 
@@ -417,7 +418,9 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
     });
 
     it('should handle MEXC API errors gracefully', async () => {
-      (mockMexcClient.getAccountTrades as any).mockRejectedValue(new Error('MEXC API Error'));
+      (mockMexcClient.getAccountTrades as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(
+        new Error('MEXC API Error')
+      );
 
       const result = await transactionService.syncTransactionsFromMEXC('user-123');
 
@@ -428,7 +431,7 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
 
     it('should avoid duplicate transactions during sync', async () => {
       // Mock existing transaction check
-      (mockPostgresDB.query as any)
+      (mockPostgresDB.query as unknown as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ rows: [{ external_id: 'mexc-001' }] })
         .mockResolvedValueOnce({ rows: [], rowCount: 0 });
 
@@ -457,7 +460,9 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
         },
       ];
 
-      (mockMexcClient.getAccountTrades as any).mockResolvedValue(mexcTrades);
+      (mockMexcClient.getAccountTrades as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mexcTrades
+      );
 
       const result = await transactionService.syncTransactionsFromMEXC('user-123');
 
@@ -572,6 +577,7 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
+      if (!result.data) throw new Error('Expected data to be defined');
       const { transactions } = result.data;
 
       for (const transaction of transactions) {
@@ -595,6 +601,7 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
       });
 
       expect(result.success).toBe(true);
+      if (!result.data) throw new Error('Expected data to be defined');
       const { transactions } = result.data;
 
       for (const transaction of transactions) {
@@ -641,7 +648,9 @@ describe('Task #12: Transaction History API with Export Capabilities', () => {
     });
 
     it('should log sync operations', async () => {
-      (mockMexcClient.getAccountTrades as any).mockResolvedValue([]);
+      (mockMexcClient.getAccountTrades as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        []
+      );
 
       await transactionService.syncTransactionsFromMEXC('user-123');
 

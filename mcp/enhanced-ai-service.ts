@@ -4,10 +4,9 @@
  * Implements all requirements with authentication, rate limiting, caching, and monitoring
  */
 
-import { z } from 'zod';
+import { handleAIError } from '../shared/errors';
 import type { AIAnalysisResult, AnalysisParameters } from '../shared/types/ai-types';
 import { mcpService } from './encore.service';
-import { handleAIError } from '../shared/errors';
 
 // =============================================================================
 // Core Interfaces and Types
@@ -94,7 +93,10 @@ export interface EnhancedMCPService {
   }>;
 
   // Rate Limiting
-  checkRateLimit(userId: string, endpoint: string): Promise<{
+  checkRateLimit(
+    userId: string,
+    endpoint: string
+  ): Promise<{
     allowed: boolean;
     remaining: number;
     resetTime: number;
@@ -109,16 +111,20 @@ export interface EnhancedMCPService {
   }>;
 
   // Batch Operations
-  batchAnalysis(requests: Array<{
-    type: 'market' | 'risk' | 'strategy' | 'tools';
-    params: any;
-    id: string;
-  }>): Promise<Array<{
-    id: string;
-    success: boolean;
-    result?: any;
-    error?: string;
-  }>>;
+  batchAnalysis(
+    requests: Array<{
+      type: 'market' | 'risk' | 'strategy' | 'tools';
+      params: any;
+      id: string;
+    }>
+  ): Promise<
+    Array<{
+      id: string;
+      success: boolean;
+      result?: any;
+      error?: string;
+    }>
+  >;
 
   // Real-time Streaming (Task #25)
   streamMarketAnalysis(params: {
@@ -148,7 +154,7 @@ class InMemoryStore {
     this.users.set('test-api-key-123', {
       userId: 'test-user-456',
       permissions: ['ai_analysis', 'trading_tools', 'risk_assessment', 'strategy_optimization'],
-      tier: 'premium'
+      tier: 'premium',
     });
   }
 
@@ -160,14 +166,14 @@ class InMemoryStore {
     const now = Date.now();
     const rateLimitKey = `${key}_${Math.floor(now / windowMs)}`;
     const current = this.rateLimits.get(rateLimitKey) || { count: 0, resetTime: now + windowMs };
-    
+
     if (current.count >= limit) {
       return { allowed: false, remaining: 0, resetTime: current.resetTime };
     }
 
     current.count++;
     this.rateLimits.set(rateLimitKey, current);
-    
+
     return { allowed: true, remaining: limit - current.count, resetTime: current.resetTime };
   }
 
@@ -238,7 +244,7 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
     try {
       const startTime = Date.now();
       const cacheKey = `market_${params.symbol}_${params.depth}_${params.timeframe}`;
-      
+
       // Check cache first
       const cached = this.store.getCache(cacheKey);
       if (cached) {
@@ -258,11 +264,7 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
         priceHistory: [49000, 49500, 50000],
       };
 
-      const result = await mcpService.performMarketAnalysis(
-        data,
-        'market' as const,
-        params.depth
-      );
+      const result = await mcpService.performMarketAnalysis(data, 'market' as const, params.depth);
 
       // Cache the result
       const cacheTTL = this.getCacheTTLForDepth(params.depth);
@@ -284,7 +286,7 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
           trend: 'neutral',
           confidence: 0.3,
           reason: 'Analysis service unavailable',
-        }
+        },
       });
     }
   }
@@ -309,17 +311,23 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
   }> {
     try {
       const portfolioData = {
-        totalValue: params.portfolio.reduce((sum, asset) => sum + (asset.quantity * asset.currentPrice), 0),
+        totalValue: params.portfolio.reduce(
+          (sum, asset) => sum + asset.quantity * asset.currentPrice,
+          0
+        ),
         positions: params.portfolio,
         diversificationScore: Math.min(params.portfolio.length / 10, 1),
       };
 
-      const result = await mcpService.performRiskAssessment(portfolioData, params.depth || 'standard');
+      const _result = await mcpService.performRiskAssessment(
+        portfolioData,
+        params.depth || 'standard'
+      );
 
       // Calculate risk score based on portfolio characteristics
-      const concentrationRisk = Math.max(...params.portfolio.map(p => p.allocation));
+      const concentrationRisk = Math.max(...params.portfolio.map((p) => p.allocation));
       const volatilityRisk = params.portfolio.length < 3 ? 0.8 : 0.4;
-      const riskScore = Math.round((concentrationRisk * 50) + (volatilityRisk * 50));
+      const riskScore = Math.round(concentrationRisk * 50 + volatilityRisk * 50);
 
       const riskLevel = riskScore < 30 ? 'low' : riskScore < 70 ? 'medium' : 'high';
 
@@ -328,13 +336,15 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
         riskScore,
         riskLevel,
         recommendations: [
-          riskScore > 70 ? 'Consider diversifying portfolio' : 'Portfolio risk within acceptable range',
+          riskScore > 70
+            ? 'Consider diversifying portfolio'
+            : 'Portfolio risk within acceptable range',
           'Monitor position sizes regularly',
-          'Review correlation between assets'
+          'Review correlation between assets',
         ],
         confidence: 0.85,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         riskScore: 100,
@@ -385,7 +395,7 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
         confidence: result.confidence || 0.75,
         mexcAdvantages: result.mexcAdvantages,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         optimizedStrategy: null,
@@ -415,7 +425,10 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
         ...params.toolParams,
       };
 
-      const result = await mcpService.performTradingToolsAnalysis(toolData, params.depth || 'standard');
+      const result = await mcpService.performTradingToolsAnalysis(
+        toolData,
+        params.depth || 'standard'
+      );
 
       return {
         success: result.success,
@@ -423,7 +436,7 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
         confidence: result.confidence || 0.8,
         recommendations: result.recommendations || [],
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         result: null,
@@ -450,9 +463,9 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
     uptime: number;
   }> {
     try {
-      const coreHealth = mcpService.getServiceHealth();
+      const _coreHealth = mcpService.getServiceHealth();
       const cacheStats = this.store.getCacheStats();
-      
+
       // Determine overall status based on various factors
       let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
       let aiServiceStatus: 'operational' | 'limited' | 'down' = 'operational';
@@ -478,7 +491,7 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
         },
         uptime: Date.now() - this.serviceStartTime,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'unhealthy',
         aiServiceStatus: 'down',
@@ -511,16 +524,19 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
   /**
    * Rate Limiting
    */
-  async checkRateLimit(userId: string, endpoint: string): Promise<{
+  async checkRateLimit(
+    userId: string,
+    endpoint: string
+  ): Promise<{
     allowed: boolean;
     remaining: number;
     resetTime: number;
   }> {
     const limits = {
-      'ai_market_analysis': { quick: 100, standard: 50, comprehensive: 20, deep: 10 },
-      'risk_assessment': { quick: 80, standard: 40, comprehensive: 15, deep: 8 },
-      'strategy_optimizer': { quick: 60, standard: 30, comprehensive: 10, deep: 5 },
-      'trading_tools': { quick: 120, standard: 60, comprehensive: 25, deep: 12 },
+      ai_market_analysis: { quick: 100, standard: 50, comprehensive: 20, deep: 10 },
+      risk_assessment: { quick: 80, standard: 40, comprehensive: 15, deep: 8 },
+      strategy_optimizer: { quick: 60, standard: 30, comprehensive: 10, deep: 5 },
+      trading_tools: { quick: 120, standard: 60, comprehensive: 25, deep: 12 },
     };
 
     const limit = limits[endpoint as keyof typeof limits]?.standard || 50;
@@ -536,7 +552,7 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
     try {
       const clearedItems = this.store.clearCache(pattern);
       return { success: true, clearedItems };
-    } catch (error) {
+    } catch (_error) {
       return { success: false, clearedItems: 0 };
     }
   }
@@ -552,16 +568,20 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
   /**
    * Batch Operations
    */
-  async batchAnalysis(requests: Array<{
-    type: 'market' | 'risk' | 'strategy' | 'tools';
-    params: any;
-    id: string;
-  }>): Promise<Array<{
-    id: string;
-    success: boolean;
-    result?: any;
-    error?: string;
-  }>> {
+  async batchAnalysis(
+    requests: Array<{
+      type: 'market' | 'risk' | 'strategy' | 'tools';
+      params: any;
+      id: string;
+    }>
+  ): Promise<
+    Array<{
+      id: string;
+      success: boolean;
+      result?: any;
+      error?: string;
+    }>
+  > {
     const results = await Promise.allSettled(
       requests.map(async (request) => {
         try {
@@ -596,20 +616,19 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
     return results.map((result, index) => {
       if (result.status === 'fulfilled') {
         return result.value;
-      } else {
-        return {
-          id: requests[index].id,
-          success: false,
-          error: result.reason?.message || 'Request failed',
-        };
       }
+      return {
+        id: requests[index].id,
+        success: false,
+        error: result.reason?.message || 'Request failed',
+      };
     });
   }
 
   /**
    * Real-time Streaming (Task #25)
    */
-  async* streamMarketAnalysis(params: {
+  async *streamMarketAnalysis(params: {
     symbol: string;
     depth: 'quick' | 'standard' | 'comprehensive' | 'deep';
     updateInterval?: number;
@@ -625,7 +644,7 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
 
       for (let step = 0; step <= totalSteps; step++) {
         const progress = Math.round((step / totalSteps) * 100);
-        
+
         if (step === totalSteps) {
           // Final result
           const finalResult = await this.aiMarketAnalysis(params);
@@ -645,9 +664,9 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
             },
             completed: false,
           };
-          
+
           // Wait for next update
-          await new Promise(resolve => setTimeout(resolve, updateInterval));
+          await new Promise((resolve) => setTimeout(resolve, updateInterval));
         }
       }
     } catch (error) {
@@ -664,10 +683,10 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
    */
   private getCacheTTLForDepth(depth: string): number {
     const ttlMap = {
-      quick: 2 * 60 * 1000,      // 2 minutes
-      standard: 5 * 60 * 1000,   // 5 minutes
+      quick: 2 * 60 * 1000, // 2 minutes
+      standard: 5 * 60 * 1000, // 5 minutes
       comprehensive: 15 * 60 * 1000, // 15 minutes
-      deep: 30 * 60 * 1000,      // 30 minutes
+      deep: 30 * 60 * 1000, // 30 minutes
     };
     return ttlMap[depth as keyof typeof ttlMap] || ttlMap.standard;
   }

@@ -9,21 +9,9 @@ import type {
   Stats24hData,
   TickerData,
 } from '../shared/types/index.js';
-import {
-  type Get24hStatsInputSchema,
-  type GetOrderBookInputSchema,
-  type GetTickerInputSchema,
-  executeGet24hStats,
-  executeGetActiveSymbols,
-  executeGetOrderBook,
-  executeGetTicker,
-  executeTestAuthentication,
-  executeTestConnectivity,
-  healthCheck,
-} from './tools.js';
+import { executeGet24hStats, executeGetOrderBook, executeGetTicker } from './tools.js';
 
 import { api } from 'encore.dev/api';
-import { auth } from '../auth/api.js';
 
 // Enhanced ticker endpoint with auth and rate limiting
 export const getTickerEnhanced = api(
@@ -100,15 +88,17 @@ export const getBulkTickers = api(
     const tickers: TickerData[] = [];
     const errors: string[] = [];
 
-    results.forEach((result, index) => {
+    for (const [index, result] of results.entries()) {
       if (result.status === 'fulfilled' && result.value.success) {
-        tickers.push(result.value.data!);
+        if (result.value.data) {
+          tickers.push(result.value.data);
+        }
       } else {
         errors.push(
           `Symbol ${req.symbols[index]}: ${result.status === 'rejected' ? result.reason : result.value.error}`
         );
       }
-    });
+    }
 
     return {
       success: true,

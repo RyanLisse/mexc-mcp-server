@@ -4,7 +4,7 @@
  * Extends existing rate limiting with MEXC-specific features
  */
 
-import crypto from 'node:crypto';
+import * as crypto from 'node:crypto';
 
 /**
  * Basic rate limit configuration
@@ -76,8 +76,8 @@ interface RequestEntry {
  * Enhanced rate limiter with sliding window algorithm
  */
 export class EnhancedRateLimiter {
-  private requests = new Map<string, RequestEntry[]>();
-  private config: RateLimitConfig;
+  protected requests = new Map<string, RequestEntry[]>();
+  protected config: RateLimitConfig;
 
   constructor(config: RateLimitConfig) {
     this.config = config;
@@ -129,14 +129,14 @@ export class EnhancedRateLimiter {
   /**
    * Get effective limit (can be overridden for adaptive limiting)
    */
-  protected getEffectiveLimit(identifier: string): number {
+  protected getEffectiveLimit(_identifier: string): number {
     return this.config.maxRequests;
   }
 
   /**
    * Create denied result
    */
-  private createDeniedResult(current: number, max: number, now: number): RateLimitResult {
+  protected createDeniedResult(_current: number, _max: number, now: number): RateLimitResult {
     const resetTime = now + this.config.windowMs;
     const retryAfter = Math.ceil(this.config.windowMs / 1000);
 
@@ -156,14 +156,30 @@ export class EnhancedRateLimiter {
   }
 
   /**
+   * Protected getter for requests map (for subclasses)
+   */
+  protected getRequests(): Map<string, RequestEntry[]> {
+    return this.requests;
+  }
+
+  /**
+   * Protected getter for config (for subclasses)
+   */
+  protected getConfig(): RateLimitConfig {
+    return this.config;
+  }
+
+  /**
    * Clean up expired entries
    */
   async cleanup(): Promise<void> {
     const now = Date.now();
     const windowStart = now - this.config.windowMs;
 
-    for (const [key, requests] of this.requests.entries()) {
-      const validRequests = requests.filter((req) => req.timestamp > windowStart);
+    // Use Array.from to avoid iterator issues
+    const entries = Array.from(this.requests.entries());
+    for (const [key, requests] of entries) {
+      const validRequests = requests.filter((req: RequestEntry) => req.timestamp > windowStart);
       if (validRequests.length === 0) {
         this.requests.delete(key);
       } else {
@@ -298,39 +314,42 @@ export class WeightBasedRateLimiter extends EnhancedRateLimiter {
    */
   async checkLimit(identifier: string, endpoint: string, weight = 1): Promise<RateLimitResult> {
     const now = Date.now();
-    const windowStart = now - this.config.windowMs;
+    const config = this.getConfig();
+    const requests = this.getRequests();
+    const windowStart = now - config.windowMs;
     const key = `${identifier}:${endpoint}`;
 
     // Get existing requests
-    let userRequests = this.requests.get(key) || [];
+    let userRequests = requests.get(key) || [];
 
     // Remove expired requests
     userRequests = userRequests.filter((req) => req.timestamp > windowStart);
 
     // Calculate current weight usage
     const currentWeight = userRequests.reduce((sum, req) => sum + (req.weight || 1), 0);
-    const maxWeight = this.config.maxRequests;
+    const maxWeight = config.maxRequests;
 
     // Check if adding this weight would exceed limit
     if (currentWeight + weight > maxWeight) {
-      return this.createDeniedResult(currentWeight, maxWeight, now);
+      return this.createWeightDeniedResult(currentWeight, maxWeight, now);
     }
 
     // Allow request
     userRequests.push({ timestamp: now, weight });
-    this.requests.set(key, userRequests);
+    requests.set(key, userRequests);
 
     return {
       allowed: true,
       remaining: maxWeight - currentWeight - weight,
-      resetTime: windowStart + this.config.windowMs,
+      resetTime: windowStart + config.windowMs,
       weight,
     };
   }
 
-  private createDeniedResult(current: number, max: number, now: number): RateLimitResult {
-    const resetTime = now + this.config.windowMs;
-    const retryAfter = Math.ceil(this.config.windowMs / 1000);
+  private createWeightDeniedResult(current: number, _max: number, now: number): RateLimitResult {
+    const config = this.getConfig();
+    const resetTime = now + config.windowMs;
+    const retryAfter = Math.ceil(config.windowMs / 1000);
 
     return {
       allowed: false,
@@ -360,7 +379,8 @@ export class AdaptiveRateLimiter extends EnhancedRateLimiter {
    * Get effective limit based on system load
    */
   protected getEffectiveLimit(identifier: string): number {
-    const baseLimit = this.config.maxRequests;
+    const config = this.getConfig();
+    const baseLimit = config.maxRequests;
     const loadMultiplier = 1 - this.systemLoad * 0.5; // Reduce up to 50% under high load
     const adaptedLimit = Math.floor(baseLimit * loadMultiplier);
 
@@ -372,7 +392,8 @@ export class AdaptiveRateLimiter extends EnhancedRateLimiter {
    * Get current adapted limit for user
    */
   getCurrentLimit(identifier: string): number {
-    return this.userLimits.get(identifier) || this.config.maxRequests;
+    const config = this.getConfig();
+    return this.userLimits.get(identifier) || config.maxRequests;
   }
 }
 

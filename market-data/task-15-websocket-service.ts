@@ -26,7 +26,7 @@ export interface WebSocketConfig {
 }
 
 // Subscription types
-export type SubscriptionType = 'ticker' | 'orderbook' | 'trades';
+export type SubscriptionType = 'ticker' | 'orderbook' | 'trades' | 'account';
 
 // WebSocket subscription interface
 export interface WebSocketSubscription {
@@ -40,7 +40,7 @@ export interface WebSocketSubscription {
 export interface WebSocketMessage {
   type: string;
   symbol: string;
-  data: LivePriceUpdate | OrderBookUpdate | TradeUpdate;
+  data: LivePriceUpdate | OrderBookUpdate | TradeUpdate | AccountUpdate;
 }
 
 export interface LivePriceUpdate {
@@ -62,6 +62,13 @@ export interface TradeUpdate {
   side: 'buy' | 'sell';
   price: string;
   quantity: string;
+  timestamp: number;
+}
+
+export interface AccountUpdate {
+  balance: string;
+  locked: string;
+  asset: string;
   timestamp: number;
 }
 
@@ -453,7 +460,7 @@ export class TaskFifteenWebSocketService {
   private parseMessageData(
     type: SubscriptionType,
     data: any
-  ): LivePriceUpdate | OrderBookUpdate | TradeUpdate {
+  ): LivePriceUpdate | OrderBookUpdate | TradeUpdate | AccountUpdate {
     switch (type) {
       case 'ticker':
         return {
@@ -486,6 +493,14 @@ export class TaskFifteenWebSocketService {
           timestamp: data.t || Date.now(),
         };
 
+      case 'account':
+        return {
+          balance: data.b || '0',
+          locked: data.l || '0',
+          asset: data.a || '',
+          timestamp: data.t || Date.now(),
+        };
+
       default:
         throw new Error(`Unknown subscription type: ${type}`);
     }
@@ -501,6 +516,8 @@ export class TaskFifteenWebSocketService {
       }
       case 'trades':
         return `spot@public.deals.v3.api.pb@${subscription.symbol}`;
+      case 'account':
+        return `spot@private.account.v3.api.pb@${subscription.symbol}`;
       default:
         throw new Error(`Unknown subscription type: ${subscription.type}`);
     }
@@ -511,7 +528,7 @@ export class TaskFifteenWebSocketService {
       return false;
     }
 
-    if (!['ticker', 'orderbook', 'trades'].includes(subscription.type)) {
+    if (!['ticker', 'orderbook', 'trades', 'account'].includes(subscription.type)) {
       return false;
     }
 
@@ -520,14 +537,6 @@ export class TaskFifteenWebSocketService {
     }
 
     return true;
-  }
-
-  private isValidSymbol(symbol: string): boolean {
-    // Basic validation for MEXC symbol format
-    if (!symbol || symbol.length === 0) return false;
-
-    // Standard format: ends with USDT and contains only uppercase letters
-    return /^[A-Z]+USDT$/.test(symbol) && symbol.length > 4;
   }
 
   private isKnownSymbol(symbol: string): boolean {

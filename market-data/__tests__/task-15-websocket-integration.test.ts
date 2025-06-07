@@ -10,12 +10,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  type LivePriceUpdate,
-  type OrderBookUpdate,
   TaskFifteenWebSocketService,
-  type TradeUpdate,
-  type WebSocketConnectionStatus,
-  type WebSocketMessage,
   type WebSocketSubscription,
 } from '../task-15-websocket-service';
 
@@ -54,7 +49,7 @@ class MockWebSocket {
 
   close(): void {
     this.readyState = MockWebSocket.CLOSED;
-    this.onclose?.(new CloseEvent('close'));
+    this.onclose?.(new CloseEvent('close', { code: 1000 }));
   }
 
   // Helper methods for testing
@@ -99,7 +94,7 @@ describe('Task #15: WebSocket Integration Implementation', () => {
     global.WebSocket = vi.fn().mockImplementation((url: string) => {
       mockWebSocket = new MockWebSocket(url);
       return mockWebSocket;
-    }) as any;
+    }) as unknown as typeof WebSocket;
 
     webSocketService = new TaskFifteenWebSocketService(mockLogger, mockConfig);
   });
@@ -122,7 +117,7 @@ describe('Task #15: WebSocket Integration Implementation', () => {
         const ws = new MockWebSocket('wss://test.com');
         setTimeout(() => ws.simulateError(), 5);
         return ws;
-      }) as any;
+      }) as unknown as typeof WebSocket;
 
       const result = await webSocketService.connect();
 
@@ -219,7 +214,9 @@ describe('Task #15: WebSocket Integration Implementation', () => {
       };
 
       const subscribeResult = await webSocketService.subscribe(subscription);
-      const unsubscribeResult = await webSocketService.unsubscribe(subscribeResult.subscriptionId!);
+      const unsubscribeResult = await webSocketService.unsubscribe(
+        subscribeResult.subscriptionId || ''
+      );
 
       expect(unsubscribeResult.success).toBe(true);
       expect(mockLogger.info).toHaveBeenCalledWith('Unsubscribed from channel', {
@@ -228,7 +225,7 @@ describe('Task #15: WebSocket Integration Implementation', () => {
     });
 
     it('should enforce maximum subscriptions per connection limit', async () => {
-      const subscriptions: Promise<any>[] = [];
+      const subscriptions: Promise<unknown>[] = [];
 
       // Try to create more than max allowed subscriptions
       for (let i = 0; i < mockConfig.maxSubscriptionsPerConnection + 5; i++) {
@@ -267,7 +264,7 @@ describe('Task #15: WebSocket Integration Implementation', () => {
   });
 
   describe('Message Parsing and Data Handling', () => {
-    let callback: any;
+    let callback: ReturnType<typeof vi.fn>;
 
     beforeEach(async () => {
       await webSocketService.connect();
@@ -521,7 +518,9 @@ describe('Task #15: WebSocket Integration Implementation', () => {
       );
 
       const startTime = Date.now();
-      messages.forEach((msg) => mockWebSocket.simulateMessage(msg));
+      for (const msg of messages) {
+        mockWebSocket.simulateMessage(msg);
+      }
       const endTime = Date.now();
 
       // Should process all messages within reasonable time
@@ -545,7 +544,7 @@ describe('Task #15: WebSocket Integration Implementation', () => {
       }
 
       // Send messages to all subscriptions
-      subscriptions.forEach((sub, i) => {
+      for (const [i, sub] of subscriptions.entries()) {
         const message = JSON.stringify({
           c: `spot@public.miniTicker.v3.api.pb@${sub.symbol}`,
           d: { c: (1000 + i).toString(), t: Date.now() },
@@ -553,12 +552,12 @@ describe('Task #15: WebSocket Integration Implementation', () => {
           t: Date.now(),
         });
         mockWebSocket.simulateMessage(message);
-      });
+      }
 
       // All callbacks should be called
-      callbacks.forEach((callback) => {
+      for (const callback of callbacks) {
         expect(callback).toHaveBeenCalledTimes(1);
-      });
+      }
     });
 
     it('should handle memory cleanup on disconnect', async () => {
@@ -617,7 +616,7 @@ describe('Task #15: WebSocket Integration Implementation', () => {
       await webSocketService.connect();
 
       const invalidSubscription = {
-        type: 'invalid' as any,
+        type: 'invalid' as 'ticker',
         symbol: '',
         callback: vi.fn(),
       };

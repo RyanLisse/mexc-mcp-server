@@ -93,6 +93,35 @@ interface MEXCOrderResponse extends MEXCApiResponse {
   updateTime: number;
 }
 
+// Add new interfaces for pattern sniper
+interface MEXCCalendarEntry {
+  vcoinId: string;
+  symbol: string;
+  projectName: string;
+  firstOpenTime: number;
+}
+
+interface MEXCCalendarResponse extends MEXCApiResponse {
+  data: MEXCCalendarEntry[];
+}
+
+interface MEXCSymbolV2Entry {
+  cd: string; // vcoinId
+  ca?: string; // contract address
+  ps?: number; // price scale
+  qs?: number; // quantity scale
+  sts: number; // symbol trading status
+  st: number; // state
+  tt: number; // trading type
+  ot?: number; // open time
+}
+
+interface MEXCSymbolsV2Response extends MEXCApiResponse {
+  data: {
+    symbols: MEXCSymbolV2Entry[];
+  };
+}
+
 /**
  * MEXC API Client for interacting with the MEXC exchange
  */
@@ -696,29 +725,64 @@ export class MEXCApiClient {
       count: number;
     }>
   > {
-    // Placeholder implementation - returns simulated 24hr ticker data
-    const sampleTicker = {
-      symbol: symbol || 'BTCUSDT',
-      priceChange: '1000.0',
-      priceChangePercent: '2.5',
-      weightedAvgPrice: '40500.0',
-      prevClosePrice: '40000.0',
-      lastPrice: '41000.0',
-      bidPrice: '40999.0',
-      askPrice: '41001.0',
-      openPrice: '40000.0',
-      highPrice: '42000.0',
-      lowPrice: '39500.0',
-      volume: '1000.0',
-      quoteVolume: '40500000.0',
-      openTime: Date.now() - 86400000, // 24 hours ago
-      closeTime: Date.now(),
-      firstId: 1,
-      lastId: 1000,
-      count: 1000,
-    };
+    const params: Record<string, string> = symbol ? { symbol } : {};
+    const response = await retryWithBackoff(() =>
+      this.makeRequest<
+        Array<{
+          symbol: string;
+          priceChange: string;
+          priceChangePercent: string;
+          weightedAvgPrice: string;
+          prevClosePrice: string;
+          lastPrice: string;
+          bidPrice: string;
+          askPrice: string;
+          openPrice: string;
+          highPrice: string;
+          lowPrice: string;
+          volume: string;
+          quoteVolume: string;
+          openTime: number;
+          closeTime: number;
+          firstId: number;
+          lastId: number;
+          count: number;
+        }>
+      >('/api/v3/ticker/24hr', params)
+    );
+    return response;
+  }
 
-    return [sampleTicker];
+  /**
+   * Get new coin calendar for pattern sniper functionality
+   */
+  async getNewCoinCalendar(): Promise<MEXCCalendarResponse> {
+    try {
+      const response = await retryWithBackoff(() =>
+        this.makeRequest<MEXCCalendarResponse>('/api/operation/new_coin_calendar')
+      );
+      return response;
+    } catch (error) {
+      throw new Error(
+        `Failed to get new coin calendar: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Get symbols V2 data for pattern recognition
+   */
+  async getSymbolsV2(): Promise<MEXCSymbolsV2Response> {
+    try {
+      const response = await retryWithBackoff(() =>
+        this.makeRequest<MEXCSymbolsV2Response>('/api/platform/spot/market-v2/web/symbolsV2')
+      );
+      return response;
+    } catch (error) {
+      throw new Error(
+        `Failed to get symbols V2: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 }
 

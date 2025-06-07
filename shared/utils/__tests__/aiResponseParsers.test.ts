@@ -4,7 +4,7 @@
  * Following TDD methodology - tests written first
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AIAnalysisError } from '../../errors';
 import type { OptimizationResult, RiskAssessment } from '../../types/ai-types';
 import {
@@ -163,7 +163,7 @@ describe('AI Response Parsers - Task #30', () => {
       };
 
       const result = parseOptimizationResponse(responseWithInvalidAllocations);
-      const allocation = result.data.allocations![0];
+      const allocation = result.data.allocations?.[0];
       expect(allocation.currentWeight).toBeGreaterThanOrEqual(0);
       expect(allocation.currentWeight).toBeLessThanOrEqual(1);
       expect(allocation.optimizedWeight).toBeGreaterThanOrEqual(0);
@@ -307,8 +307,8 @@ describe('AI Response Parsers - Task #30', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(AIAnalysisError);
         const analysisError = error as AIAnalysisError;
-        expect(analysisError.details).toBeDefined();
-        expect(analysisError.details?.originalInput).toBeDefined();
+        expect(analysisError.context).toBeDefined();
+        expect(analysisError.inputDataRef).toBeDefined();
       }
     });
   });
@@ -346,11 +346,11 @@ describe('AI Response Parsers - Task #30', () => {
       const recommendations = result.data.recommendations;
 
       // Should filter out null, undefined, and empty values
-      recommendations.forEach((rec) => {
+      for (const rec of recommendations) {
         expect(rec).toBeTruthy();
         expect(typeof rec).toBe('string');
         expect(rec.length).toBeGreaterThan(0);
-      });
+      }
     });
   });
 

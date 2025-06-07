@@ -8,17 +8,10 @@ import { describe, expect, test } from 'vitest';
 // Type definitions for testing
 type OrderSideType = 'buy' | 'sell';
 type OrderTypeType = 'market' | 'limit' | 'stop' | 'stop_limit';
-type OrderStatusType =
-  | 'pending'
-  | 'open'
-  | 'filled'
-  | 'partially_filled'
-  | 'cancelled'
-  | 'rejected'
-  | 'expired';
+// OrderStatusType type definition - used in type system
 type TimeInForceType = 'GTC' | 'IOC' | 'FOK';
 
-interface PlaceOrderArgs {
+interface PlaceOrderArgs extends Record<string, unknown> {
   symbol: string;
   side: OrderSideType;
   type: OrderTypeType;
@@ -30,46 +23,62 @@ interface PlaceOrderArgs {
   testMode?: boolean;
 }
 
-interface CancelOrderArgs {
+interface CancelOrderArgs extends Record<string, unknown> {
   orderId?: string;
   clientOrderId?: string;
   symbol: string;
 }
 
-interface BatchOrderArgs {
-  orders: PlaceOrderArgs[];
-  testMode?: boolean;
-}
+// BatchOrderArgs interface - available for future use
 
 // Simple validation helpers (replacing Zod schemas)
-function validatePlaceOrder(data: Record<string, unknown>): { success: boolean; errors: string[] } {
+function validatePlaceOrder(data: unknown): { success: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!data || !data.symbol || typeof data.symbol !== 'string') {
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    !(data as any).symbol ||
+    typeof (data as any).symbol !== 'string'
+  ) {
     errors.push('Symbol is required and must be a string');
   }
 
-  if (!data || !data.side || !['buy', 'sell'].includes(data.side)) {
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    !(data as any).side ||
+    !['buy', 'sell'].includes((data as any).side)
+  ) {
     errors.push('Side must be buy or sell');
   }
 
-  if (!data || !data.type || !['market', 'limit', 'stop', 'stop_limit'].includes(data.type)) {
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    !(data as any).type ||
+    !['market', 'limit', 'stop', 'stop_limit'].includes((data as any).type)
+  ) {
     errors.push('Type must be market, limit, stop, or stop_limit');
   }
 
   if (
     !data ||
-    typeof data.quantity !== 'number' ||
-    data.quantity <= 0 ||
-    !isFinite(data.quantity)
+    typeof data !== 'object' ||
+    typeof (data as any).quantity !== 'number' ||
+    (data as any).quantity <= 0 ||
+    !Number.isFinite((data as any).quantity)
   ) {
     errors.push('Quantity must be a positive finite number');
   }
 
   if (
     data &&
-    data.price !== undefined &&
-    (typeof data.price !== 'number' || data.price <= 0 || !isFinite(data.price))
+    typeof data === 'object' &&
+    (data as any).price !== undefined &&
+    (typeof (data as any).price !== 'number' ||
+      (data as any).price <= 0 ||
+      !Number.isFinite((data as any).price))
   ) {
     errors.push('Price must be a positive finite number when provided');
   }
@@ -77,17 +86,26 @@ function validatePlaceOrder(data: Record<string, unknown>): { success: boolean; 
   return { success: errors.length === 0, errors };
 }
 
-function validateCancelOrder(data: Record<string, unknown>): {
+function validateCancelOrder(data: unknown): {
   success: boolean;
   errors: string[];
 } {
   const errors: string[] = [];
 
-  if (!data.symbol || typeof data.symbol !== 'string') {
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    !(data as any).symbol ||
+    typeof (data as any).symbol !== 'string'
+  ) {
     errors.push('Symbol is required');
   }
 
-  if (!data.orderId && !data.clientOrderId) {
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    (!(data as any).orderId && !(data as any).clientOrderId)
+  ) {
     errors.push('Either orderId or clientOrderId is required');
   }
 

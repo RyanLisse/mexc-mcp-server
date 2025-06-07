@@ -4,7 +4,7 @@
  */
 
 import { api } from 'encore.dev/api';
-import type { MinLen } from 'encore.dev/validate';
+// Removed MinLen import for Encore compatibility
 import {
   type AnalysisResult,
   type BudgetStatus,
@@ -13,9 +13,9 @@ import {
   geminiAnalyzer,
 } from './gemini-analyzer';
 
-// Request types with Encore validation
+// Request types simplified for Encore compatibility
 export interface MarketDataRequest {
-  symbol: string & MinLen<1>;
+  symbol: string;
   price?: number;
   volume?: number;
   prices?: number[];
@@ -24,7 +24,7 @@ export interface MarketDataRequest {
 }
 
 export interface TechnicalAnalysisRequest {
-  symbol: string & MinLen<1>;
+  symbol: string;
   ohlcv: Array<{
     open: number;
     high: number;
@@ -35,7 +35,7 @@ export interface TechnicalAnalysisRequest {
 }
 
 export interface RiskAssessmentRequest {
-  symbol: string & MinLen<1>;
+  symbol: string;
   side: 'long' | 'short';
   size: number;
   entryPrice: number;
@@ -47,7 +47,7 @@ export interface RiskAssessmentRequest {
 }
 
 export interface TrendAnalysisRequest {
-  symbol: string & MinLen<1>;
+  symbol: string;
   timeframe: string;
   dataPoints: Array<{
     timestamp: number;

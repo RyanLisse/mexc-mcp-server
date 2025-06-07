@@ -8,7 +8,7 @@ import {
 
 // Simple validation function to replace Zod validation
 function validateToolArgs(
-  toolName: string,
+  _toolName: string,
   inputSchema: Record<string, unknown>,
   args: Record<string, unknown>
 ): void {
@@ -32,7 +32,7 @@ export class ToolExecutor {
   async execute(
     name: string,
     args: Record<string, unknown>,
-    context: ToolExecutionContext,
+    context?: ToolExecutionContext,
     timeoutMs?: number
   ): Promise<MCPToolResult> {
     const handler = this.registry.get(name);
@@ -49,7 +49,7 @@ export class ToolExecutor {
 
     // Execute with optional timeout
     if (timeoutMs && timeoutMs > 0) {
-      return this.executeWithTimeout(name, args, context, timeoutMs);
+      return this.executeWithTimeout(name, args, timeoutMs, context);
     }
 
     try {
@@ -66,8 +66,8 @@ export class ToolExecutor {
   private async executeWithTimeout(
     name: string,
     args: Record<string, unknown>,
-    context: ToolExecutionContext,
-    timeoutMs: number
+    timeoutMs: number,
+    context?: ToolExecutionContext
   ): Promise<MCPToolResult> {
     const handler = this.registry.get(name);
     if (!handler) {
@@ -81,11 +81,11 @@ export class ToolExecutor {
 
       handler
         .execute(args, context)
-        .then((result) => {
+        .then((result: MCPToolResult) => {
           clearTimeout(timeoutId);
           resolve(result);
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
           clearTimeout(timeoutId);
           reject(
             new ToolExecutionError(
@@ -100,7 +100,7 @@ export class ToolExecutor {
 
   async executeMultiple(
     calls: Array<{ name: string; args: Record<string, unknown> }>,
-    context: ToolExecutionContext,
+    context?: ToolExecutionContext,
     timeoutMs?: number
   ): Promise<MCPToolResult[]> {
     const promises = calls.map((call) =>
@@ -120,7 +120,7 @@ export class ToolExecutor {
 
   async executeBatch(
     calls: Array<{ name: string; args: Record<string, unknown> }>,
-    context: ToolExecutionContext,
+    context?: ToolExecutionContext,
     options?: {
       timeoutMs?: number;
       maxConcurrency?: number;
@@ -168,7 +168,7 @@ export class ToolExecutor {
   }
 
   getAvailableTools(): string[] {
-    return this.registry.list().map((tool) => tool.name);
+    return this.registry.list().map((tool: { name: string }) => tool.name);
   }
 
   hasTools(): boolean {

@@ -9,14 +9,12 @@
  * - Verify logging and error handling
  */
 
-import { type MockedFunction, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   type Logger,
   type MexcClient,
-  type OrderPlacementResponse,
   type TaskSevenOrderArgs,
   TaskSevenOrderPlacementService,
-  TaskSevenOrderSchema,
 } from '../task-7-order-service';
 
 // Mock logger for testing logging requirements

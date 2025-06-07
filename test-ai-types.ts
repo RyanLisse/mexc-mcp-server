@@ -143,7 +143,7 @@ const streamingUpdate: StreamingAnalysisUpdate = {
 };
 
 // Test analysis requests
-const sentimentRequest: SentimentAnalysisRequest = {
+const _sentimentRequest: SentimentAnalysisRequest = {
   analysisType: 'sentiment',
   data: {
     symbol: 'BTCUSDT',
@@ -164,7 +164,7 @@ const sentimentRequest: SentimentAnalysisRequest = {
   timeoutMs: 30000,
 };
 
-const technicalRequest: TechnicalAnalysisRequest = {
+const _technicalRequest: TechnicalAnalysisRequest = {
   analysisType: 'technical',
   data: {
     symbol: 'ETHUSDT',
@@ -194,7 +194,7 @@ const technicalRequest: TechnicalAnalysisRequest = {
   },
 };
 
-const riskRequest: RiskAssessmentRequest = {
+const _riskRequest: RiskAssessmentRequest = {
   analysisType: 'risk',
   data: {
     symbol: 'BTCUSDT',
@@ -305,7 +305,7 @@ export function runAITypesTest() {
       '- Budget remaining: $',
       (budgetStatus.budgetLimitUSD - budgetStatus.costUSD).toFixed(4)
     );
-    console.log('- Cache hit rate:', (cacheStats.hitRate * 100).toFixed(1) + '%');
+    console.log('- Cache hit rate:', `${(cacheStats.hitRate * 100).toFixed(1)}%`);
   } catch (error) {
     console.error('❌ AI types test failed:', error);
     throw error;

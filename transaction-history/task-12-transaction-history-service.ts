@@ -41,17 +41,20 @@ export interface MexcClient {
   }>;
 }
 
-// PostgreSQL Database interface
+// PostgreSQL Database interface with better typing
 export interface PostgresDB {
-  query: (sql: string, params?: any[]) => Promise<{ rows: any[]; rowCount?: number }>;
-  insert: (table: string, data: Record<string, any>) => Promise<{ insertId: number }>;
+  query: (
+    sql: string,
+    params?: unknown[]
+  ) => Promise<{ rows: Record<string, unknown>[]; rowCount?: number }>;
+  insert: (table: string, data: Record<string, unknown>) => Promise<{ insertId: number }>;
   update: (
     table: string,
-    data: Record<string, any>,
-    where: Record<string, any>
+    data: Record<string, unknown>,
+    where: Record<string, unknown>
   ) => Promise<{ rowsAffected: number }>;
-  delete: (table: string, where: Record<string, any>) => Promise<{ rowsAffected: number }>;
-  transaction: (fn: (db: PostgresDB) => Promise<any>) => Promise<any>;
+  delete: (table: string, where: Record<string, unknown>) => Promise<{ rowsAffected: number }>;
+  transaction: <T>(fn: (db: PostgresDB) => Promise<T>) => Promise<T>;
 }
 
 // Transaction data structure
@@ -164,7 +167,13 @@ export class TaskTwelveTransactionHistoryService {
   private mexcClient: MexcClient;
   private postgresDB: PostgresDB;
   private readonly CACHE_TTL = 300000; // 5 minutes
-  private historyCache: Map<string, { data: any; timestamp: number }> = new Map();
+  private historyCache: Map<
+    string,
+    {
+      data: { transactions: TransactionRecord[]; total: number; limit: number; offset: number };
+      timestamp: number;
+    }
+  > = new Map();
 
   constructor(logger: Logger, mexcClient: MexcClient, postgresDB: PostgresDB) {
     this.logger = logger;
@@ -202,7 +211,11 @@ export class TaskTwelveTransactionHistoryService {
       // Check cache first
       const cacheKey = this.generateCacheKey(filter);
       if (!filter.forceRefresh && this.historyCache.has(cacheKey)) {
-        const cached = this.historyCache.get(cacheKey)!;
+        const cached = this.historyCache.get(cacheKey);
+        if (!cached) {
+          // This should never happen since we just checked has(), but handle it gracefully
+          throw new Error('Cache entry disappeared unexpectedly');
+        }
         if (Date.now() - cached.timestamp < this.CACHE_TTL) {
           return {
             success: true,
@@ -217,7 +230,7 @@ export class TaskTwelveTransactionHistoryService {
 
       // Execute query
       const result = await this.postgresDB.query(sql, params);
-      const transactions = result.rows as TransactionRecord[];
+      const transactions = result.rows as unknown as TransactionRecord[];
 
       // For simplicity, use transactions.length as total (tests expect this)
       const total = transactions.length;
@@ -344,16 +357,16 @@ export class TaskTwelveTransactionHistoryService {
 
       // Calculate transaction type distribution (include standard types even if zero)
       const transactionsByType: Record<string, number> = {
-        trade: Number(stats.trade_count) || 0,
-        deposit: Number(stats.deposit_count) || 0,
-        withdrawal: Number(stats.withdrawal_count) || 0,
+        trade: Number((stats as any).trade_count) || 0,
+        deposit: Number((stats as any).deposit_count) || 0,
+        withdrawal: Number((stats as any).withdrawal_count) || 0,
       };
 
       const responseData = {
         totalTransactions: transactions.length,
-        totalVolume: stats.total_volume || '0.00',
-        totalFees: stats.total_fees || '0.00',
-        avgTransactionValue: stats.avg_value || '0.00',
+        totalVolume: String((stats as any).total_volume || '0.00'),
+        totalFees: String((stats as any).total_fees || '0.00'),
+        avgTransactionValue: String((stats as any).avg_value || '0.00'),
         transactionsByType,
         timeRange: {
           start: filter.startTime?.toISOString() || transactions[0]?.timestamp || '',
@@ -396,7 +409,7 @@ export class TaskTwelveTransactionHistoryService {
 
       return {
         success: true,
-        data: transaction,
+        data: transaction ? (transaction as unknown as TransactionRecord) : null,
         timestamp: startTime,
       };
     } catch (error) {
@@ -515,7 +528,7 @@ export class TaskTwelveTransactionHistoryService {
 
   private buildHistoryQuery(filter: TransactionHistoryFilter) {
     let sql = 'SELECT * FROM transactions WHERE user_id = $1';
-    const params: any[] = [filter.userId];
+    const params: unknown[] = [filter.userId];
     let paramIndex = 2;
 
     if (filter.type) {
@@ -559,44 +572,6 @@ export class TaskTwelveTransactionHistoryService {
     return { sql, params };
   }
 
-  private buildCountQuery(filter: TransactionHistoryFilter) {
-    let sql = 'SELECT COUNT(*) as count FROM transactions WHERE user_id = $1';
-    const params: any[] = [filter.userId];
-    let paramIndex = 2;
-
-    if (filter.type) {
-      sql += ` AND type = $${paramIndex}`;
-      params.push(filter.type);
-      paramIndex++;
-    }
-
-    if (filter.symbol) {
-      sql += ` AND symbol = $${paramIndex}`;
-      params.push(filter.symbol);
-      paramIndex++;
-    }
-
-    if (filter.side) {
-      sql += ` AND side = $${paramIndex}`;
-      params.push(filter.side);
-      paramIndex++;
-    }
-
-    if (filter.startTime) {
-      sql += ` AND timestamp >= $${paramIndex}`;
-      params.push(filter.startTime);
-      paramIndex++;
-    }
-
-    if (filter.endTime) {
-      sql += ` AND timestamp <= $${paramIndex}`;
-      params.push(filter.endTime);
-      paramIndex++;
-    }
-
-    return { sql, params };
-  }
-
   private buildStatsQuery(filter: TransactionStatsFilter) {
     let sql = `
       SELECT 
@@ -613,7 +588,7 @@ export class TaskTwelveTransactionHistoryService {
       WHERE user_id = $1
     `;
 
-    const params: any[] = [filter.userId];
+    const params: unknown[] = [filter.userId];
     let paramIndex = 2;
 
     if (filter.startTime) {
@@ -636,7 +611,7 @@ export class TaskTwelveTransactionHistoryService {
       'SELECT external_id FROM transactions WHERE user_id = $1 AND external_id IS NOT NULL';
     const result = await this.postgresDB.query(sql, [userId]);
 
-    return new Set(result.rows.map((row) => row.external_id));
+    return new Set(result.rows.map((row) => row.external_id as string));
   }
 
   private async insertTransaction(

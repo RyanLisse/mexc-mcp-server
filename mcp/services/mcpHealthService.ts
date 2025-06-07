@@ -134,7 +134,10 @@ export const mcpHealthService = {
   async checkGeminiApiHealth(timestamp: number) {
     try {
       // Use mock-compatible approach for testing
-      let budgetStatus, cacheStats, config, isHealthy;
+      let budgetStatus;
+      let cacheStats;
+      let config;
+      let isHealthy;
 
       // Check for test mocks first
       const testMocks = (globalThis as any).__HEALTH_CHECK_MOCKS__;
@@ -199,7 +202,7 @@ export const mcpHealthService = {
         },
         recoveryActions: recoveryActions.length > 0 ? recoveryActions : undefined,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'ERROR' as const,
         timestamp,
@@ -240,7 +243,7 @@ export const mcpHealthService = {
           const pingResult = await testMocks.mexcClient.ping();
           pingSuccess = pingResult.success;
           latency = pingResult.latency || 45;
-        } catch (error) {
+        } catch (_error) {
           pingSuccess = false;
           latency = 5000; // High latency for error
         }
@@ -283,7 +286,7 @@ export const mcpHealthService = {
         },
         recoveryActions: recoveryActions.length > 0 ? recoveryActions : undefined,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'ERROR' as const,
         timestamp,
@@ -361,7 +364,7 @@ export const mcpHealthService = {
         },
         recoveryActions: recoveryActions.length > 0 ? recoveryActions : undefined,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'ERROR' as const,
         timestamp,

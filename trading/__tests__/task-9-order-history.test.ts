@@ -13,12 +13,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   type Logger,
   type OrderHistoryQuery,
-  OrderHistoryQuerySchema,
-  type OrderHistoryResponse,
   type OrderRecord,
   type OrderRepository,
   TaskNineOrderHistoryService,
-  type TransactionHistoryResponse,
   type TransactionRecord,
 } from '../task-9-order-history-service';
 

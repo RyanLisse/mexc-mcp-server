@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { ToolExecutor } from './executor';
 import { ToolRegistry } from './registry';
 import { validateToolArgs } from './schemas';
@@ -22,7 +22,7 @@ const mockMarketDataTool: ToolHandler = {
     },
     required: ['symbol'],
   },
-  async execute(args: Record<string, any>, context: ToolExecutionContext): Promise<MCPToolResult> {
+  async execute(args: Record<string, any>, context?: ToolExecutionContext): Promise<MCPToolResult> {
     if (!args.symbol) {
       throw new Error('Symbol is required');
     }
@@ -33,7 +33,7 @@ const mockMarketDataTool: ToolHandler = {
           text: JSON.stringify({
             symbol: args.symbol,
             price: '100.50',
-            timestamp: context.timestamp.toISOString(),
+            timestamp: context?.timestamp.toISOString() || new Date().toISOString(),
           }),
         },
       ],
@@ -52,7 +52,7 @@ const mockAuthTool: ToolHandler = {
     },
     required: ['apiKey', 'secretKey'],
   },
-  async execute(args: Record<string, any>, context: ToolExecutionContext): Promise<MCPToolResult> {
+  async execute(args: Record<string, any>, context?: ToolExecutionContext): Promise<MCPToolResult> {
     if (!args.apiKey || !args.secretKey) {
       throw new Error('API Key and Secret Key are required');
     }
@@ -63,7 +63,7 @@ const mockAuthTool: ToolHandler = {
           text: JSON.stringify({
             success: true,
             token: 'mock-token-123',
-            userId: context.userId,
+            userId: context?.userId || 'anonymous',
           }),
         },
       ],

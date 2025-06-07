@@ -49,13 +49,14 @@ export class ToolRegistry implements IToolRegistry {
       name: handler.name,
       description: handler.description,
       inputSchema: handler.inputSchema,
+      execute: handler.execute,
     }));
   }
 
   async execute(
     name: string,
     args: Record<string, unknown>,
-    context: ToolExecutionContext
+    context?: ToolExecutionContext
   ): Promise<MCPToolResult> {
     const handler = this.tools.get(name);
     if (!handler) {

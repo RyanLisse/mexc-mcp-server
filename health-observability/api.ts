@@ -206,20 +206,20 @@ export const getSystemHealth = api(
   async (): Promise<SystemHealthResponse> => {
     try {
       return await healthService.getSystemHealth();
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'unhealthy',
         timestamp: Date.now(),
         uptime: process.uptime() * 1000,
         services: {
           mcp: { status: 'unhealthy', lastCheck: Date.now(), errors: ['Health check failed'] },
-          auth: { status: 'unknown', lastCheck: Date.now() },
-          marketData: { status: 'unknown', lastCheck: Date.now() },
-          portfolio: { status: 'unknown', lastCheck: Date.now() },
-          trading: { status: 'unknown', lastCheck: Date.now() },
-          tools: { status: 'unknown', lastCheck: Date.now() },
-          ai: { status: 'unknown', lastCheck: Date.now() },
-          streaming: { status: 'unknown', lastCheck: Date.now() },
+          auth: { status: 'unhealthy', lastCheck: Date.now() },
+          marketData: { status: 'unhealthy', lastCheck: Date.now() },
+          portfolio: { status: 'unhealthy', lastCheck: Date.now() },
+          trading: { status: 'unhealthy', lastCheck: Date.now() },
+          tools: { status: 'unhealthy', lastCheck: Date.now() },
+          ai: { status: 'unhealthy', lastCheck: Date.now() },
+          streaming: { status: 'unhealthy', lastCheck: Date.now() },
         },
         systemMetrics: {
           memory: { used: 0, free: 0, total: 0, usagePercentage: 0 },
@@ -268,7 +268,7 @@ export const getHealthStatus = api(
         timestamp: Date.now(),
         uptime: process.uptime() * 1000,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'error',
         timestamp: Date.now(),
@@ -292,7 +292,7 @@ export const getReadinessCheck = api(
     try {
       const readiness = await healthService.getReadinessStatus();
       return readiness;
-    } catch (error) {
+    } catch (_error) {
       return {
         ready: false,
         timestamp: Date.now(),
@@ -327,7 +327,7 @@ export const getLivenessCheck = api(
         timestamp: Date.now(),
         responseTime: Date.now() - startTime,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         alive: false,
         timestamp: Date.now(),
@@ -346,7 +346,7 @@ export const getMetrics = api(
   async (): Promise<MetricsResponse> => {
     try {
       return await healthService.getMetrics();
-    } catch (error) {
+    } catch (_error) {
       return {
         timestamp: Date.now(),
         application: {
@@ -377,7 +377,7 @@ export const getMetrics = api(
           },
           cpu: {
             usage: 0,
-            loadAverage: require('os').loadavg(),
+            loadAverage: require('node:os').loadavg(),
           },
           eventLoop: {
             delay: 0,
@@ -420,7 +420,7 @@ export const getServiceHealth = api(
   async ({ serviceName }: { serviceName: string }): Promise<ServiceHealth> => {
     try {
       return await healthService.getServiceHealth(serviceName);
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'unhealthy',
         lastCheck: Date.now(),
@@ -464,7 +464,7 @@ export const getDashboardData = api(
   }> => {
     try {
       return await healthService.getDashboardData();
-    } catch (error) {
+    } catch (_error) {
       return {
         overview: {
           status: 'unhealthy',

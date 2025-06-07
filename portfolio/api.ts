@@ -387,7 +387,7 @@ export const getAnalytics = api(
       confidence: number;
     };
   }> => {
-    const { timeframe = '30d', includeProjections = false } = request;
+    const { timeframe: _timeframe = '30d', includeProjections = false } = request;
 
     // Get current data
     const [positions, metrics] = await Promise.all([

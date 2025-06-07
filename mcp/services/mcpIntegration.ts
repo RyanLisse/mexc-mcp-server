@@ -23,10 +23,9 @@ import {
   type ServiceHealthResponse,
   mcpCoreService,
 } from './mcpCore';
+import { type ComprehensiveHealthResponse, mcpHealthService } from './mcpHealthService';
 import { type PortfolioRiskData, type RiskAssessmentResponse, mcpRiskService } from './mcpRisk';
 import { mcpTradingToolsService } from './mcpTradingTools';
-import { mcpHealthService, type ComprehensiveHealthResponse } from './mcpHealthService';
-
 
 // =============================================================================
 // Helper Functions
@@ -54,7 +53,11 @@ function createServiceResponse<T>(
 /**
  * Creates an error response with standardized format
  */
-function createErrorResponse(error: Error | string, operation: string, startTime?: number): ServiceResponse {
+function createErrorResponse(
+  error: Error | string,
+  operation: string,
+  startTime?: number
+): ServiceResponse {
   const errorMessage = error instanceof Error ? error.message : error;
   return createServiceResponse(false, undefined, `${operation} failed: ${errorMessage}`, startTime);
 }
@@ -78,16 +81,16 @@ function validatePortfolio(portfolio: any[], totalValue?: number): string | null
 function validateStrategyRequest(request: StrategyOptimizerRequest): string | null {
   const portfolioError = validatePortfolio(request.portfolio);
   if (portfolioError) return portfolioError;
-  
+
   if (!request.objectiveFunction) {
     return 'Objective function is required';
   }
-  
+
   const totalWeight = request.portfolio.reduce((sum, asset) => sum + asset.allocation, 0);
   if (Math.abs(totalWeight - 1) > 0.01) {
     return 'Portfolio allocations must sum to approximately 1.0';
   }
-  
+
   return null;
 }
 
@@ -104,12 +107,19 @@ export const mcpIntegrationService = {
    * AI Market Analysis Integration
    * Connects to the analysis service for comprehensive market insights
    */
-  async aiMarketAnalysis(request: AIMarketAnalysisRequest): Promise<ServiceResponse<EnhancedAnalysisResult>> {
+  async aiMarketAnalysis(
+    request: AIMarketAnalysisRequest
+  ): Promise<ServiceResponse<EnhancedAnalysisResult>> {
     try {
       const startTime = Date.now();
 
       if (!request.symbol || !request.analysisType) {
-        return createServiceResponse(false, undefined, 'Symbol and analysis type are required', startTime);
+        return createServiceResponse(
+          false,
+          undefined,
+          'Symbol and analysis type are required',
+          startTime
+        );
       }
 
       const marketData: MarketAnalysisData = {
@@ -137,10 +147,12 @@ export const mcpIntegrationService = {
    * Risk Assessment Integration
    * Connects to the risk service for portfolio risk evaluation
    */
-  async riskAssessment(request: RiskAssessmentRequest): Promise<ServiceResponse<RiskAssessmentResponse>> {
+  async riskAssessment(
+    request: RiskAssessmentRequest
+  ): Promise<ServiceResponse<RiskAssessmentResponse>> {
     try {
       const startTime = Date.now();
-      
+
       const validationError = validatePortfolio(request.portfolio, request.totalValue);
       if (validationError) {
         return createServiceResponse(false, undefined, validationError, startTime);
@@ -172,7 +184,7 @@ export const mcpIntegrationService = {
   async strategyOptimizer(request: StrategyOptimizerRequest): Promise<ServiceResponse<any>> {
     try {
       const startTime = Date.now();
-      
+
       const validationError = validateStrategyRequest(request);
       if (validationError) {
         return createServiceResponse(false, undefined, validationError, startTime);
@@ -196,9 +208,14 @@ export const mcpIntegrationService = {
       };
 
       const result = await mcpService.performStrategyOptimization(optimizationData, 'standard');
-      
+
       if (!result.success) {
-        return createServiceResponse(false, undefined, result.error || 'Strategy optimization failed', startTime);
+        return createServiceResponse(
+          false,
+          undefined,
+          result.error || 'Strategy optimization failed',
+          startTime
+        );
       }
 
       const optimizationResult = {
@@ -461,18 +478,31 @@ export const mcpIntegrationService = {
     return createServiceResponse(true, {
       version: 'mcp-integration-v1.0',
       availableEndpoints: [
-        'aiMarketAnalysis', 'riskAssessment', 'strategyOptimizer', 'tradingTools',
-        'performMultiAnalysis', 'getUnifiedHealth', 'resetEnvironment', 'getServiceInfo'
+        'aiMarketAnalysis',
+        'riskAssessment',
+        'strategyOptimizer',
+        'tradingTools',
+        'performMultiAnalysis',
+        'getUnifiedHealth',
+        'resetEnvironment',
+        'getServiceInfo',
       ],
       implementedFeatures: [
-        'AI Market Analysis (Task #24)', 'Risk Assessment (Task #26)',
-        'Strategy Optimizer (Task #27)', 'Trading Tools (Task #28)',
-        'Multi-Analysis Support', 'Service Health Monitoring', 'Environment Management'
+        'AI Market Analysis (Task #24)',
+        'Risk Assessment (Task #26)',
+        'Strategy Optimizer (Task #27)',
+        'Trading Tools (Task #28)',
+        'Multi-Analysis Support',
+        'Service Health Monitoring',
+        'Environment Management',
       ],
       pendingFeatures: [],
       dependencies: [
-        'mcpCoreService', 'mcpAnalysisService', 'mcpRiskService',
-        'geminiAnalyzer', 'geminiClient'
+        'mcpCoreService',
+        'mcpAnalysisService',
+        'mcpRiskService',
+        'geminiAnalyzer',
+        'geminiClient',
       ],
     });
   },

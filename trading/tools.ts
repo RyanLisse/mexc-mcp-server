@@ -161,7 +161,7 @@ export const placeOrderTool: MCPTool = {
 
   async execute(
     args: Record<string, unknown>,
-    _context: ToolExecutionContext
+    _context?: ToolExecutionContext
   ): Promise<MCPToolResult> {
     try {
       const validatedArgs = validatePlaceOrderArgs(args);
@@ -223,7 +223,7 @@ export const cancelOrderTool: MCPTool = {
 
   async execute(
     args: Record<string, unknown>,
-    _context: ToolExecutionContext
+    _context?: ToolExecutionContext
   ): Promise<MCPToolResult> {
     try {
       const validatedArgs = validateCancelOrderArgs(args);
@@ -271,7 +271,7 @@ export const getOrderStatusTool: MCPTool = {
 
   async execute(
     args: Record<string, unknown>,
-    _context: ToolExecutionContext
+    _context?: ToolExecutionContext
   ): Promise<MCPToolResult> {
     try {
       const validatedArgs = validateGetOrderStatusArgs(args);
@@ -335,7 +335,7 @@ export const getOrderHistoryTool: MCPTool = {
 
   async execute(
     args: Record<string, unknown>,
-    _context: ToolExecutionContext
+    _context?: ToolExecutionContext
   ): Promise<MCPToolResult> {
     try {
       const validatedArgs = validateGetOrderHistoryArgs(args);
@@ -392,7 +392,7 @@ export const validateOrderTool: MCPTool = {
 
   async execute(
     args: Record<string, unknown>,
-    _context: ToolExecutionContext
+    _context?: ToolExecutionContext
   ): Promise<MCPToolResult> {
     try {
       const validatedArgs = validatePlaceOrderArgs(args);
@@ -470,7 +470,7 @@ export const batchOrderTool: MCPTool = {
 
   async execute(
     args: Record<string, unknown>,
-    _context: ToolExecutionContext
+    _context?: ToolExecutionContext
   ): Promise<MCPToolResult> {
     try {
       const validatedArgs = validateBatchOrderArgs(args);
@@ -534,7 +534,7 @@ export const getTradingStatisticsTool: MCPTool = {
 
   async execute(
     args: Record<string, unknown>,
-    _context: ToolExecutionContext
+    _context?: ToolExecutionContext
   ): Promise<MCPToolResult> {
     try {
       const timeframe = (args.timeframe as string) || '24h';

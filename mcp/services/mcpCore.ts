@@ -115,7 +115,7 @@ export function getAnalysisDepthConfig(depth: string): AnalysisDepthConfig {
 export function validateConfidence(confidence: number, minThreshold = 0.7): boolean {
   return (
     typeof confidence === 'number' &&
-    !isNaN(confidence) &&
+    !Number.isNaN(confidence) &&
     confidence >= minThreshold &&
     confidence <= 1
   );
@@ -166,7 +166,7 @@ export function getServiceHealth(): ServiceHealthResponse {
     };
 
     return response;
-  } catch (error) {
+  } catch (_error) {
     // Return unhealthy status if health check itself fails
     return {
       status: 'unhealthy',
@@ -328,7 +328,7 @@ export function validateAnalysisInput(
   for (const field of numericFields) {
     if (field in data && data[field] !== undefined) {
       const value = data[field];
-      if (typeof value !== 'number' || isNaN(value) || value < 0) {
+      if (typeof value !== 'number' || Number.isNaN(value) || value < 0) {
         errors.push(`${field} must be a valid non-negative number`);
       }
     }

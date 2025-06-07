@@ -12,12 +12,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   type CancelOrderArgs,
-  CancelOrderSchema,
   type Logger,
   type MexcClient,
-  type OrderCancellationResponse,
   type OrderRepository,
-  type OrderStatus,
   TaskEightOrderCancellationService,
 } from '../task-8-order-cancellation-service';
 

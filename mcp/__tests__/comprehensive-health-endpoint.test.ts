@@ -3,7 +3,7 @@
  * TDD implementation verifying /mcp/health returns comprehensive AI health data
  */
 
-import { beforeEach, describe, expect, it, mock, vi } from 'bun:test';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mcpIntegrationService } from '../services/mcpIntegration';
 
 // Mock the comprehensive health response

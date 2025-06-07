@@ -23,8 +23,17 @@ import {
 } from './schemas.js';
 
 import { api } from 'encore.dev/api';
-import { Service } from 'encore.dev/service';
 import { MEXCApiClient } from '../market-data/mexc-client.js';
+
+// Simple config update interface for Encore compatibility
+interface ConfigUpdateRequest {
+  defaultOrderAmount?: number;
+  maxPositionSize?: number;
+  enableAutoExecution?: boolean;
+  calendarRefreshInterval?: number;
+  symbolsRefreshInterval?: number;
+  testMode?: boolean;
+}
 
 /**
  * Circuit breaker for API calls to prevent cascade failures
@@ -172,10 +181,18 @@ class RateLimiter {
       return;
     }
 
-    // Wait for next token
-    const waitTime = 1000 / this.requestsPerSecond;
+    // Wait for next token - limit wait time to prevent infinite loops
+    const waitTime = Math.min(1000 / this.requestsPerSecond, 5000); // Max 5 second wait
     await new Promise((resolve) => setTimeout(resolve, waitTime));
-    await this.waitForToken();
+    
+    // Check tokens again after wait, don't recurse indefinitely
+    this.refillTokens();
+    if (this.tokens > 0) {
+      this.tokens--;
+    } else {
+      // Force allow operation if we're still waiting too long
+      console.warn('Rate limiter: Forcing operation due to extended wait');
+    }
   }
 
   private refillTokens(): void {
@@ -202,10 +219,10 @@ class MetricsCollector {
   }
 
   recordMetric(metric: Omit<PerformanceMetrics, 'timestamp'>): void {
-    const fullMetric = PerformanceMetricsSchema.parse({
+    const fullMetric: PerformanceMetrics = {
       ...metric,
       timestamp: new Date(),
-    });
+    };
 
     this.metrics.push(fullMetric);
     this.cleanupOldMetrics();
@@ -250,7 +267,7 @@ class MetricsCollector {
 /**
  * Enhanced Pattern Sniper State with improved reliability and performance
  */
-class EnhancedPatternSniperState {
+export class EnhancedPatternSniperState {
   // Core state - using immutable patterns
   private readonly state = {
     calendarTargets: new Map<string, CalendarEntry>(),
@@ -260,7 +277,41 @@ class EnhancedPatternSniperState {
     isMonitoring: false,
     errors: [] as ErrorEntry[],
     lastUpdate: new Date(),
-    config: PatternSniperConfigSchema.parse({}),
+    config: {
+      defaultOrderAmount: 100,
+      maxPositionSize: 1000,
+      enableAutoExecution: false,
+      calendarRefreshInterval: 5 * 60 * 1000, // 5 minutes
+      symbolsRefreshInterval: 30 * 1000, // 30 seconds
+      testMode: true,
+      retryStrategy: {
+        maxRetries: 3,
+        initialDelayMs: 1000,
+        maxDelayMs: 30000,
+        backoffMultiplier: 2,
+        jitterPercentage: 0.1,
+      },
+      circuitBreaker: {
+        failureThreshold: 5,
+        recoveryTimeoutMs: 60000,
+        monitoringWindowMs: 300000, // 5 minutes
+      },
+      timing: {
+        executionDelayMs: 100,
+        preExecutionBufferMs: 5000,
+        maxExecutionWindowMs: 30000,
+      },
+      rateLimiting: {
+        maxConcurrentRequests: 5,
+        requestsPerSecond: 10,
+        burstSize: 20,
+      },
+      monitoring: {
+        healthCheckIntervalMs: 60000, // 1 minute
+        metricsRetentionHours: 24,
+        enableDetailedLogging: false,
+      },
+    },
   };
 
   // Performance tracking
@@ -289,24 +340,24 @@ class EnhancedPatternSniperState {
     const config = this.state.config;
 
     this.circuitBreaker = new CircuitBreaker(
-      config.circuitBreaker.failureThreshold,
-      config.circuitBreaker.recoveryTimeoutMs
+      config.circuitBreaker?.failureThreshold || 5,
+      config.circuitBreaker?.recoveryTimeoutMs || 60000
     );
 
     this.retryStrategy = new RetryStrategy(
-      config.retryStrategy.maxRetries,
-      config.retryStrategy.initialDelayMs,
-      config.retryStrategy.maxDelayMs,
-      config.retryStrategy.backoffMultiplier,
-      config.retryStrategy.jitterPercentage
+      config.retryStrategy?.maxRetries || 3,
+      config.retryStrategy?.initialDelayMs || 1000,
+      config.retryStrategy?.maxDelayMs || 30000,
+      config.retryStrategy?.backoffMultiplier || 2,
+      config.retryStrategy?.jitterPercentage || 0.1
     );
 
     this.rateLimiter = new RateLimiter(
-      config.rateLimiting.requestsPerSecond,
-      config.rateLimiting.burstSize
+      config.rateLimiting?.requestsPerSecond || 10,
+      config.rateLimiting?.burstSize || 20
     );
 
-    this.metricsCollector = new MetricsCollector(config.monitoring.metricsRetentionHours);
+    this.metricsCollector = new MetricsCollector(config.monitoring?.metricsRetentionHours || 24);
   }
 
   getStatus(): PatternSniperStatus {
@@ -360,10 +411,11 @@ class EnhancedPatternSniperState {
   }
 
   updateConfig(newConfig: Partial<PatternSniperConfig>): void {
-    this.state.config = PatternSniperConfigSchema.parse({
+    // Simple merge without Zod validation for Encore compatibility
+    this.state.config = {
       ...this.state.config,
       ...newConfig,
-    });
+    };
 
     // Reinitialize components with new config
     this.initializeComponents();
@@ -504,7 +556,7 @@ class EnhancedPatternSniperState {
     try {
       this.totalApiCalls++;
       const response = await mexcClient.getNewCoinCalendar();
-      const validatedResponse = CalendarResponseSchema.parse(response);
+      const validatedResponse = response as CalendarResponse;
 
       const apiTime = performance.now() - startTime;
       this.metricsCollector.recordMetric({
@@ -550,7 +602,7 @@ class EnhancedPatternSniperState {
     try {
       this.totalApiCalls++;
       const response = await mexcClient.getSymbolsV2();
-      const validatedResponse = SymbolsV2ResponseSchema.parse(response);
+      const validatedResponse = response as SymbolsV2Response;
 
       const apiTime = performance.now() - startTime;
       const detectionStartTime = performance.now();
@@ -816,12 +868,14 @@ class EnhancedPatternSniperState {
     message: string,
     context?: Record<string, unknown>
   ): void {
-    const error = ErrorEntrySchema.parse({
+    const error: ErrorEntry = {
       timestamp: new Date(),
       type,
       message,
       context,
-    });
+      retryCount: 0,
+      resolved: false,
+    };
 
     this.state.errors.push(error);
 
@@ -849,25 +903,38 @@ class EnhancedPatternSniperState {
   }
 }
 
-// Global service state
-const sniperState = new EnhancedPatternSniperState();
-const mexcClient = new MEXCApiClient();
+// Lazy-initialized service state to prevent immediate interval creation
+let sniperState: EnhancedPatternSniperState | undefined;
+let mexcClient: MEXCApiClient | undefined;
 
-// Encore.ts Service Definition
-export const patternSniperService = new Service('pattern-sniper');
+function getSniperState(): EnhancedPatternSniperState {
+  if (!sniperState) {
+    sniperState = new EnhancedPatternSniperState();
+  }
+  return sniperState;
+}
+
+function getMexcClient(): MEXCApiClient {
+  if (!mexcClient) {
+    mexcClient = new MEXCApiClient();
+  }
+  return mexcClient;
+}
+
+// Service definitions are handled by encore.service.ts
 
 // API endpoints with enhanced error handling
 export const getStatus = api(
   { expose: true, method: 'GET', path: '/pattern-sniper/status' },
   async (): Promise<PatternSniperStatus> => {
-    return sniperState.getStatus();
+    return getSniperState().getStatus();
   }
 );
 
 export const getTargets = api(
   { expose: true, method: 'GET', path: '/pattern-sniper/targets' },
   async () => {
-    return sniperState.getTargets();
+    return getSniperState().getTargets();
   }
 );
 
@@ -875,7 +942,7 @@ export const startMonitoring = api(
   { expose: true, method: 'POST', path: '/pattern-sniper/start' },
   async (): Promise<{ success: boolean; message: string }> => {
     try {
-      return await sniperState.startMonitoring(mexcClient);
+      return await getSniperState().startMonitoring(getMexcClient());
     } catch (error) {
       return {
         success: false,
@@ -889,7 +956,7 @@ export const stopMonitoring = api(
   { expose: true, method: 'POST', path: '/pattern-sniper/stop' },
   async (): Promise<{ success: boolean; message: string }> => {
     try {
-      return await sniperState.stopMonitoring();
+      return await getSniperState().stopMonitoring();
     } catch (error) {
       return {
         success: false,
@@ -903,7 +970,7 @@ export const clearTargets = api(
   { expose: true, method: 'POST', path: '/pattern-sniper/clear' },
   async (): Promise<{ success: boolean; message: string }> => {
     try {
-      sniperState.clearTargets();
+      getSniperState().clearTargets();
       return { success: true, message: 'All targets cleared' };
     } catch (error) {
       return {
@@ -917,11 +984,11 @@ export const clearTargets = api(
 export const updateConfig = api(
   { expose: true, method: 'POST', path: '/pattern-sniper/config' },
   async (
-    config: Partial<PatternSniperConfig>
+    config: ConfigUpdateRequest
   ): Promise<{ success: boolean; config?: PatternSniperConfig; message?: string }> => {
     try {
-      sniperState.updateConfig(config);
-      return { success: true, config: sniperState.getConfig() };
+      getSniperState().updateConfig(config);
+      return { success: true, config: getSniperState().getConfig() };
     } catch (error) {
       return {
         success: false,
@@ -937,14 +1004,14 @@ export const executeSnipe = api(
     symbol,
   }: { symbol: string }): Promise<{ success: boolean; message: string; orderId?: string }> => {
     try {
-      const targets = sniperState.getTargets();
+      const targets = getSniperState().getTargets();
       const target = targets.ready.find((t) => t.symbol === symbol);
 
       if (!target) {
         return { success: false, message: 'Target not found or not ready' };
       }
 
-      return await sniperState.executeSnipe(target, mexcClient);
+      return await getSniperState().executeSnipe(target, getMexcClient());
     } catch (error) {
       return {
         success: false,
@@ -958,7 +1025,7 @@ export const executeSnipe = api(
 export const getMetrics = api(
   { expose: true, method: 'GET', path: '/pattern-sniper/metrics' },
   async () => {
-    const status = sniperState.getStatus();
+    const status = getSniperState().getStatus();
     return {
       performance: status.performance,
       circuitBreaker: status.circuitBreakerStatus,

@@ -123,9 +123,12 @@ export interface AuthenticatedUser {
 
 // Market data types
 export interface MarketDataResponse<T> {
-  data: T;
+  success: boolean;
+  data?: T;
   timestamp: number;
   cached: boolean;
+  error?: string;
+  errors?: string[];
 }
 
 export interface OrderBookEntry {
@@ -272,6 +275,113 @@ export interface SystemHealthCheck {
   checks: Record<string, HealthCheckResult>;
   timestamp: number;
   version?: string;
+}
+
+// =============================================================================
+// Subscription Management Types (Task #16)
+// =============================================================================
+
+export interface BroadcastUpdate {
+  type: 'ticker' | 'orderbook' | 'trades' | 'account';
+  symbol: string;
+  data: Record<string, unknown>;
+}
+
+export interface BroadcastResult {
+  success: boolean;
+  recipientCount?: number;
+  error?: string;
+}
+
+export interface RateLimitConfig {
+  rateLimitPerMinute: number;
+  maxSubscriptionsPerUser: number;
+}
+
+export interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetTime: number;
+  retryAfter?: number;
+  weight?: number;
+  error?: string;
+}
+
+export interface SubscriptionRequest {
+  userId: string;
+  type: 'ticker' | 'orderbook' | 'trades' | 'account';
+  symbol: string;
+  filters?: Record<string, unknown>;
+  ttl?: number;
+}
+
+export interface SubscriptionResponse {
+  success: boolean;
+  subscription?: UserSubscription;
+  error?: string;
+}
+
+export interface UserSubscription {
+  id: string;
+  userId: string;
+  type: string;
+  symbol: string;
+  status: 'active' | 'paused' | 'expired';
+  filters?: Record<string, unknown>;
+  createdAt: Date;
+  expiresAt?: Date;
+}
+
+export interface SubscriptionData {
+  id: string;
+  userId: string;
+  type: string;
+  symbol: string;
+  status: string;
+  filters?: Record<string, unknown>;
+  createdAt: Date;
+  updatedAt?: Date;
+  expiresAt?: Date;
+  ttl?: number;
+  websocketSubscriptionId?: string;
+}
+
+export interface SubscriptionFilter {
+  type?: string;
+  status?: string;
+  symbol?: string;
+  userId?: string;
+  priceChangeThreshold?: number;
+  volumeThreshold?: number;
+  depth?: number;
+}
+
+export interface SubscriptionHealthCheck {
+  status: 'healthy' | 'unhealthy';
+  details: Record<string, { status: 'pass' | 'fail'; message: string }>;
+}
+
+export interface SubscriptionStatistics {
+  totalSubscriptions: number;
+  activeSubscriptions: number;
+  subscriptionsByType: Record<string, number>;
+  subscriptionsBySymbol: Record<string, number>;
+  averageSubscriptionsPerUser: number;
+  uptime: number;
+}
+
+export type SubscriptionStatus = 'active' | 'paused' | 'expired';
+export type SubscriptionType = 'ticker' | 'orderbook' | 'trades' | 'account';
+
+export interface SubscriptionDatabase {
+  create: (data: Omit<SubscriptionData, 'id' | 'createdAt'>) => Promise<SubscriptionData>;
+  findById: (id: string) => Promise<SubscriptionData | null>;
+  findByUserId: (userId: string) => Promise<SubscriptionData[]>;
+  countByUserId: (userId: string) => Promise<number>;
+  update: (id: string, data: Partial<SubscriptionData>) => Promise<boolean>;
+  delete: (id: string) => Promise<boolean>;
+  findByFilter: (filter: SubscriptionFilter) => Promise<SubscriptionData[]>;
+  findActive: () => Promise<SubscriptionData[]>;
 }
 
 // =============================================================================

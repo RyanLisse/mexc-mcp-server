@@ -3,44 +3,55 @@
  * Task #18: Comprehensive test suite for health monitoring features
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MetricsResponse, ServiceHealth, SystemHealthResponse } from './api';
 
 // Mock global fetch
-const mockFetch = mock(() =>
+const mockFetch = vi.fn(() =>
   Promise.resolve({
     ok: true,
     status: 200,
     statusText: 'OK',
     json: () => Promise.resolve({ status: 'healthy', success: true }),
+    headers: new Headers(),
+    redirected: false,
+    type: 'basic' as const,
+    url: '',
+    clone: vi.fn(),
+    body: null,
+    bodyUsed: false,
+    arrayBuffer: vi.fn(),
+    blob: vi.fn(),
+    formData: vi.fn(),
+    text: vi.fn(),
   })
 );
-global.fetch = mockFetch as any;
+global.fetch = mockFetch as unknown as typeof fetch;
 
 // Mock process methods
 const mockProcess = {
-  memoryUsage: mock(() => ({
+  memoryUsage: vi.fn(() => ({
     heapUsed: 1024 * 1024 * 50, // 50MB
     heapTotal: 1024 * 1024 * 100, // 100MB
     external: 1024 * 1024 * 5, // 5MB
     rss: 1024 * 1024 * 60, // 60MB
   })),
-  uptime: mock(() => 3600), // 1 hour
+  uptime: vi.fn(() => 3600), // 1 hour
 };
 
 // Mock OS module
 const mockOS = {
-  loadavg: mock(() => [0.5, 0.3, 0.2]),
+  loadavg: vi.fn(() => [0.5, 0.3, 0.2]),
 };
 
 // Mock require
 const originalRequire = global.require;
-global.require = mock((module: string) => {
+global.require = vi.fn((module: string) => {
   if (module === 'os') {
     return mockOS;
   }
   return originalRequire(module);
-});
+}) as unknown as typeof require;
 
 describe('Health Check and Observability - Task #18', () => {
   beforeEach(() => {
@@ -53,22 +64,7 @@ describe('Health Check and Observability - Task #18', () => {
 
   describe('System Health Check', () => {
     it('should return healthy status when all services are healthy', async () => {
-      const expectedHealth: Partial<SystemHealthResponse> = {
-        status: 'healthy',
-        services: expect.objectContaining({
-          mcp: expect.objectContaining({ status: 'healthy' }),
-          auth: expect.objectContaining({ status: 'healthy' }),
-          marketData: expect.objectContaining({ status: 'healthy' }),
-        }),
-        systemMetrics: expect.objectContaining({
-          memory: expect.objectContaining({
-            usagePercentage: expect.any(Number),
-          }),
-          requests: expect.objectContaining({
-            total: expect.any(Number),
-          }),
-        }),
-      };
+      // Expected health structure defined inline in assertions
 
       // Mock the health service to return healthy status
       const mockSystemHealth = createMockSystemHealth('healthy');
@@ -156,7 +152,7 @@ describe('Health Check and Observability - Task #18', () => {
 
       expect(failedHealth.status).toBe('unhealthy');
       expect(failedHealth.errors).toBeInstanceOf(Array);
-      expect(failedHealth.errors!.length).toBeGreaterThan(0);
+      expect(failedHealth.errors?.length).toBeGreaterThan(0);
     });
 
     it('should track response times for services', async () => {
@@ -420,7 +416,18 @@ describe('Health Check and Observability - Task #18', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
-        json: () => Promise.resolve({}),
+        json: () => Promise.resolve({ status: 'error', success: false }),
+        headers: new Headers(),
+        redirected: false,
+        type: 'basic' as const,
+        url: '',
+        clone: vi.fn(),
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: vi.fn(),
+        blob: vi.fn(),
+        formData: vi.fn(),
+        text: vi.fn(),
       } as any);
 
       const failedHealth = createMockServiceHealth('unhealthy');

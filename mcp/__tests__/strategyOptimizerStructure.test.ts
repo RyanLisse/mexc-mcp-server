@@ -189,7 +189,7 @@ describe('Strategy Optimizer Structure - Task #27', () => {
         { weights: [0.5, 0.5], shouldPass: true }, // Sum to 1.0 - this should pass
       ];
 
-      testCases.forEach(({ weights, shouldPass }, index) => {
+      testCases.forEach(({ weights, shouldPass }, _index) => {
         const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
         const isValid = Math.abs(totalWeight - 1) <= 0.015; // Slightly more lenient to handle floating point precision
 

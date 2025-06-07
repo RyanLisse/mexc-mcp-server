@@ -6,11 +6,7 @@
 
 import { Service } from 'encore.dev/service';
 import { z } from 'zod';
-import type {
-  AIAnalysisResult,
-  AnalysisParameters,
-  AnalysisType,
-} from '../shared/types/ai-types';
+import type { AIAnalysisResult, AnalysisParameters, AnalysisType } from '../shared/types/ai-types';
 
 // AI and Gemini imports
 import { geminiAnalyzer } from '../ai/gemini-analyzer';
@@ -20,10 +16,13 @@ import { geminiClient } from '../ai/gemini-client';
 import { handleAIError, retryWithBackoff } from '../shared/errors';
 
 // Import dedicated service modules
-import { mcpAnalysisService, type MarketAnalysisData } from './services/mcpAnalysis';
-import { mcpCoreService, getAnalysisDepthConfig } from './services/mcpCore';
-import { mcpRiskService, type PortfolioRiskData } from './services/mcpRisk';
-import { mcpTradingToolsService, type TradingToolsAnalysisRequest } from './services/mcpTradingTools';
+import { type MarketAnalysisData, mcpAnalysisService } from './services/mcpAnalysis';
+import { getAnalysisDepthConfig, mcpCoreService } from './services/mcpCore';
+import { type PortfolioRiskData, mcpRiskService } from './services/mcpRisk';
+import {
+  type TradingToolsAnalysisRequest,
+  mcpTradingToolsService,
+} from './services/mcpTradingTools';
 
 export default new Service('mcp');
 
@@ -91,7 +90,6 @@ export const mcpService = {
   ) {
     return await mcpRiskService.performRiskAssessment(data, analysisDepth);
   },
-
 
   /**
    * Perform strategy optimization using AI (Task #27)
@@ -173,7 +171,7 @@ export const mcpService = {
     };
   }> {
     try {
-      const startTime = Date.now();
+      const _startTime = Date.now();
       const depthConfig = getAnalysisDepthConfig(analysisDepth);
 
       // Configure analyzer for optimization depth
@@ -184,8 +182,8 @@ export const mcpService = {
       });
 
       // Calculate current portfolio metrics
-      const totalWeight = data.portfolio.reduce((sum, asset) => sum + asset.currentWeight, 0);
-      const portfolioSize = data.portfolio.length;
+      const _totalWeight = data.portfolio.reduce((sum, asset) => sum + asset.currentWeight, 0);
+      const _portfolioSize = data.portfolio.length;
 
       // Build comprehensive prompt for strategy optimization
       const prompt = `Perform comprehensive portfolio optimization for the following parameters:

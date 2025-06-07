@@ -240,6 +240,7 @@ export function parseAIResponse<T>(
     const analysisError = createAIAnalysisError(errorMessage, analysisType as AnalysisType, {
       severity: 'error',
       recoverable: fallback !== undefined,
+      inputDataRef: JSON.stringify(response),
     });
 
     // Add details manually since createAIAnalysisError might not handle it

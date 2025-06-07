@@ -3,10 +3,6 @@
  * AI-enhanced Model Context Protocol endpoints for trading analysis
  */
 
-import { api } from 'encore.dev/api';
-import type { Max, Min, MinLen } from 'encore.dev/validate';
-import { createErrorResponse, logAndNotify } from '../shared/errors';
-import { isAIOperationAllowed } from '../shared/config';
 import type {
   AIAnalysisResult,
   AnalysisType,
@@ -14,8 +10,13 @@ import type {
   SentimentAnalysisResult,
   TechnicalAnalysisResult,
 } from '../shared/types/ai-types';
-import { mcpService } from './encore.service';
+import type { Max, Min, MinLen } from 'encore.dev/validate';
+import { createErrorResponse, logAndNotify } from '../shared/errors';
+
+import { api } from 'encore.dev/api';
+import { isAIOperationAllowed } from '../shared/config';
 import { mcpIntegrationService } from './services/mcpIntegration';
+import { mcpService } from './encore.service';
 
 // =============================================================================
 // Request/Response Interfaces
@@ -1436,6 +1437,319 @@ export const tradingTools = api(
           processingTimeMs: Date.now() - startTime,
           timestamp: startTime,
         },
+      };
+    }
+  }
+);
+
+// Pattern Sniper Tools
+// ==================
+
+/**
+ * Pattern Sniper Status Request/Response Types
+ */
+export type PatternSniperStatusRequest = Record<string, never>;
+
+export interface PatternSniperStatusResponse {
+  success: boolean;
+  data?: {
+    isMonitoring: boolean;
+    totalListings: number;
+    pendingDetection: number;
+    readyToSnipe: number;
+    executed: number;
+    lastUpdate: string;
+    errors: string[];
+  };
+  error?: string;
+}
+
+/**
+ * Pattern Sniper Config Request/Response Types
+ */
+export interface PatternSniperConfigRequest {
+  testMode?: boolean;
+  defaultOrderAmount?: number;
+  calendarRefreshInterval?: number;
+  symbolsRefreshInterval?: number;
+}
+
+export interface PatternSniperConfigResponse {
+  success: boolean;
+  data?: {
+    testMode: boolean;
+    defaultOrderAmount: number;
+    calendarRefreshInterval: number;
+    symbolsRefreshInterval: number;
+  };
+  error?: string;
+}
+
+/**
+ * Pattern Sniper Targets Response Types
+ */
+export interface PatternSniperTargetsResponse {
+  success: boolean;
+  data?: {
+    calendar: Array<{
+      vcoinId: string;
+      symbol: string;
+      projectName: string;
+      firstOpenTime: number;
+    }>;
+    pending: string[];
+    ready: Array<{
+      vcoinId: string;
+      symbol: string;
+      projectName: string;
+      priceDecimalPlaces: number;
+      quantityDecimalPlaces: number;
+      launchTime: string;
+      discoveredAt: string;
+      hoursAdvanceNotice: number;
+      orderParameters: Record<string, unknown>;
+    }>;
+    executed: string[];
+  };
+  error?: string;
+}
+
+/**
+ * Pattern Sniper Execute Request/Response Types
+ */
+export interface PatternSniperExecuteRequest {
+  symbol: string;
+}
+
+export interface PatternSniperExecuteResponse {
+  success: boolean;
+  data?: {
+    orderId?: string;
+    message: string;
+  };
+  error?: string;
+}
+
+/**
+ * Get Pattern Sniper Status
+ * Returns current monitoring status and statistics
+ */
+export const patternSniperStatus = api(
+  { method: 'GET', path: '/mcp/pattern-sniper/status', expose: true },
+  async (_request: PatternSniperStatusRequest): Promise<PatternSniperStatusResponse> => {
+    try {
+      const response = await fetch('http://localhost:4000/pattern-sniper/status');
+      if (!response.ok) {
+        throw new Error(`Pattern sniper service error: ${response.status}`);
+      }
+
+      const status = await response.json();
+
+      return {
+        success: true,
+        data: {
+          isMonitoring: status.isMonitoring,
+          totalListings: status.totalListings,
+          pendingDetection: status.pendingDetection,
+          readyToSnipe: status.readyToSnipe,
+          executed: status.executed,
+          lastUpdate: status.lastUpdate,
+          errors: status.errors,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+);
+
+/**
+ * Start Pattern Sniper Monitoring
+ * Begins monitoring for new coin patterns
+ */
+export const patternSniperStart = api(
+  { method: 'POST', path: '/mcp/pattern-sniper/start', expose: true },
+  async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await fetch('http://localhost:4000/pattern-sniper/start', {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        throw new Error(`Pattern sniper service error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+);
+
+/**
+ * Stop Pattern Sniper Monitoring
+ * Stops monitoring for new coin patterns
+ */
+export const patternSniperStop = api(
+  { method: 'POST', path: '/mcp/pattern-sniper/stop', expose: true },
+  async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await fetch('http://localhost:4000/pattern-sniper/stop', {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        throw new Error(`Pattern sniper service error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+);
+
+/**
+ * Get Pattern Sniper Targets
+ * Returns current targets (calendar, pending, ready, executed)
+ */
+export const patternSniperTargets = api(
+  { method: 'GET', path: '/mcp/pattern-sniper/targets', expose: true },
+  async (): Promise<PatternSniperTargetsResponse> => {
+    try {
+      const response = await fetch('http://localhost:4000/pattern-sniper/targets');
+      if (!response.ok) {
+        throw new Error(`Pattern sniper service error: ${response.status}`);
+      }
+
+      const targets = await response.json();
+
+      return {
+        success: true,
+        data: {
+          calendar: targets.calendar,
+          pending: targets.pending,
+          ready: targets.ready,
+          executed: targets.executed,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+);
+
+/**
+ * Update Pattern Sniper Configuration
+ * Allows updating pattern sniper settings
+ */
+export const patternSniperConfig = api(
+  { method: 'POST', path: '/mcp/pattern-sniper/config', expose: true },
+  async (config: PatternSniperConfigRequest): Promise<PatternSniperConfigResponse> => {
+    try {
+      const response = await fetch('http://localhost:4000/pattern-sniper/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Pattern sniper service error: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      return {
+        success: result.success,
+        data: result.config,
+        error: result.success ? undefined : 'Configuration update failed',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+);
+
+/**
+ * Execute Pattern Sniper for Specific Symbol
+ * Manually executes a snipe for a ready target
+ */
+export const patternSniperExecute = api(
+  { method: 'POST', path: '/mcp/pattern-sniper/execute', expose: true },
+  async ({ symbol }: PatternSniperExecuteRequest): Promise<PatternSniperExecuteResponse> => {
+    try {
+      if (!symbol) {
+        return {
+          success: false,
+          error: 'Symbol is required',
+        };
+      }
+
+      const response = await fetch(`http://localhost:4000/pattern-sniper/execute/${symbol}`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Pattern sniper service error: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      return {
+        success: result.success,
+        data: {
+          message: result.message,
+          orderId: result.orderId,
+        },
+        error: result.success ? undefined : result.message,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+);
+
+/**
+ * Clear Pattern Sniper Targets
+ * Clears all current targets and resets state
+ */
+export const patternSniperClear = api(
+  { method: 'POST', path: '/mcp/pattern-sniper/clear', expose: true },
+  async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await fetch('http://localhost:4000/pattern-sniper/clear', {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        throw new Error(`Pattern sniper service error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
