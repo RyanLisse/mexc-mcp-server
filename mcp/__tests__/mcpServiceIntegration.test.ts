@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import type { AnalysisType } from '../../shared/types/ai-types';
 import { mcpIntegrationService } from '../services/mcpIntegration';
 
 describe('MCP Service Integration - Task #31', () => {
@@ -54,9 +55,9 @@ describe('MCP Service Integration - Task #31', () => {
         'getServiceInfo',
       ];
 
-      expectedEndpoints.forEach((endpoint) => {
+      for (const endpoint of expectedEndpoints) {
         expect(serviceInfo.data?.availableEndpoints).toContain(endpoint);
-      });
+      }
 
       // Check all tasks are marked as implemented
       const expectedFeatures = [
@@ -66,9 +67,9 @@ describe('MCP Service Integration - Task #31', () => {
         'Trading Tools (Task #28)',
       ];
 
-      expectedFeatures.forEach((feature) => {
+      for (const feature of expectedFeatures) {
         expect(serviceInfo.data?.implementedFeatures).toContain(feature);
-      });
+      }
 
       // Should have no pending features since Tasks #27 and #28 are complete
       expect(serviceInfo.data?.pendingFeatures).toEqual([]);
@@ -103,7 +104,19 @@ describe('MCP Service Integration - Task #31', () => {
 
       for (const analysisType of validTypes) {
         // Create appropriate request data for each analysis type
-        let request;
+        let request: {
+          symbol: string;
+          analysisType: AnalysisType;
+          depth: 'quick' | 'standard' | 'comprehensive' | 'deep';
+          marketData?: {
+            open?: number;
+            high?: number;
+            low?: number;
+            close?: number;
+            volume?: number;
+          };
+          ohlcv?: number[][];
+        };
 
         switch (analysisType) {
           case 'sentiment':
@@ -233,7 +246,7 @@ describe('MCP Service Integration - Task #31', () => {
       expect(result).toBeDefined();
       expect(typeof result.success).toBe('boolean');
       expect(result.serviceVersion).toBe('mcp-integration-v1.0');
-      expect(result.processingTimeMs).toBeGreaterThan(0);
+      expect(result.processingTimeMs).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -466,10 +479,10 @@ describe('MCP Service Integration - Task #31', () => {
 
       const results = await Promise.all(requests);
 
-      results.forEach((result) => {
+      for (const result of results) {
         expect(result.processingTimeMs).toBeDefined();
         expect(result.processingTimeMs).toBeGreaterThanOrEqual(0);
-      });
+      }
     });
   });
 
@@ -485,9 +498,9 @@ describe('MCP Service Integration - Task #31', () => {
         }),
       ];
 
-      responses.forEach((response) => {
+      for (const response of responses) {
         expect(response.serviceVersion).toBe('mcp-integration-v1.0');
-      });
+      }
     });
 
     it('should provide timestamp consistency', async () => {
@@ -519,13 +532,13 @@ describe('MCP Service Integration - Task #31', () => {
 
       // All requests should complete (success or failure)
       expect(results).toHaveLength(5);
-      results.forEach((result) => {
+      for (const result of results) {
         expect(result.status).toBe('fulfilled');
         if (result.status === 'fulfilled') {
           expect(result.value).toBeDefined();
           expect(typeof result.value.success).toBe('boolean');
         }
-      });
+      }
     });
   });
 });

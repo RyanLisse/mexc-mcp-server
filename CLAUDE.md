@@ -5,13 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Core Commands
-- `bun test` - Run full test suite (49 tests)
+- `make test` - Run full test suite with Bun test runner (734/735 tests passing)
+- `bun test` - Run tests directly with Vitest
 - `bun run test:mexc` - Test real MEXC API integration
 - `bun run test:coverage` - Run tests with coverage report
 - `bun run dev` - Start Encore development server
 - `bun run build` - Build the application
 - `bun run check` - Run linting and type checking
-- `encore test ./... -v` - Run all tests with verbose output
 
 ### Code Quality
 - `bun run lint` - Check code with Biome.js linter

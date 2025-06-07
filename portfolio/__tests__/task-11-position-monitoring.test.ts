@@ -13,7 +13,6 @@ import {
   type Logger,
   type MexcClient,
   type PositionData,
-  type PositionResponse,
   type PostgresDB,
   TaskElevenPositionMonitoringService,
 } from '../task-11-position-monitoring-service';

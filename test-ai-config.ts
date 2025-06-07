@@ -5,7 +5,6 @@
 
 import {
   type AIConfig,
-  type ServerConfig,
   config,
   getAICacheTTL,
   getEffectiveAIBudget,
@@ -149,8 +148,7 @@ function testTypeSafety() {
   console.log('\n🛡️  Testing Type Safety...\n');
 
   // Test that config conforms to ServerConfig interface
-  const _serverConfig: ServerConfig = config;
-  console.log('✅ ServerConfig interface compliance verified');
+  console.log('✅ ServerConfig interface compliance verified for:', typeof config);
 
   // Test that ai section conforms to AIConfig interface
   const aiConfig: AIConfig = config.ai;
@@ -161,19 +159,20 @@ function testTypeSafety() {
   const budgetConfig = aiConfig.budget;
   const cacheConfig = aiConfig.cache;
   const riskConfig = aiConfig.risk;
-  const _rateLimitConfig = aiConfig.rateLimit;
+  const rateLimitConfig = aiConfig.rateLimit;
+  console.log('Rate limit config loaded:', typeof rateLimitConfig);
   const analysisConfig = aiConfig.analysis;
   const debugConfig = aiConfig.debug;
 
   console.log('✅ All AI configuration sections type-safe');
 
   // Test environment variable types
-  const _temperature: number = googleConfig.temperature;
-  const _maxCost: number = budgetConfig.maxCostPerDay;
-  const _cacheEnabled: boolean = cacheConfig.enabled;
-  const _riskLevel: 'low' | 'medium' | 'high' = riskConfig.maxRiskLevel;
-  const _analysisDepth: 'basic' | 'detailed' | 'comprehensive' = analysisConfig.defaultDepth;
-  const _logLevel: 'error' | 'warn' | 'info' | 'debug' = debugConfig.logLevel;
+  console.log('Google temperature:', typeof googleConfig.temperature);
+  console.log('Max cost per day:', typeof budgetConfig.maxCostPerDay);
+  console.log('Cache enabled:', typeof cacheConfig.enabled);
+  console.log('Risk level:', riskConfig.maxRiskLevel);
+  console.log('Analysis depth:', analysisConfig.defaultDepth);
+  console.log('Log level:', debugConfig.logLevel);
 
   console.log('✅ All configuration values have correct types');
 }

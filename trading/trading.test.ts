@@ -8,7 +8,6 @@ import { describe, expect, test } from 'vitest';
 // Type definitions for testing
 type OrderSideType = 'buy' | 'sell';
 type OrderTypeType = 'market' | 'limit' | 'stop' | 'stop_limit';
-// OrderStatusType type definition - used in type system
 type TimeInForceType = 'GTC' | 'IOC' | 'FOK';
 
 interface PlaceOrderArgs extends Record<string, unknown> {
@@ -29,56 +28,76 @@ interface CancelOrderArgs extends Record<string, unknown> {
   symbol: string;
 }
 
-// BatchOrderArgs interface - available for future use
-
 // Simple validation helpers (replacing Zod schemas)
+// Type guard for order data validation
+interface PlaceOrderData {
+  symbol?: unknown;
+  side?: unknown;
+  quantity?: unknown;
+  price?: unknown;
+  type?: unknown;
+}
+
+interface CancelOrderData {
+  symbol?: unknown;
+  orderId?: unknown;
+  clientOrderId?: unknown;
+}
+
+interface BatchOrderData {
+  orders?: unknown;
+}
+
+function isObjectWithProperties(data: unknown): data is PlaceOrderData {
+  return data !== null && typeof data === 'object';
+}
+
+function isCancelOrderData(data: unknown): data is CancelOrderData {
+  return data !== null && typeof data === 'object';
+}
+
+function isBatchOrderData(data: unknown): data is BatchOrderData {
+  return data !== null && typeof data === 'object';
+}
+
 function validatePlaceOrder(data: unknown): { success: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (
-    !data ||
-    typeof data !== 'object' ||
-    !(data as any).symbol ||
-    typeof (data as any).symbol !== 'string'
-  ) {
+  if (!isObjectWithProperties(data) || !data.symbol || typeof data.symbol !== 'string') {
     errors.push('Symbol is required and must be a string');
   }
 
   if (
-    !data ||
-    typeof data !== 'object' ||
-    !(data as any).side ||
-    !['buy', 'sell'].includes((data as any).side)
+    !isObjectWithProperties(data) ||
+    !data.side ||
+    !['buy', 'sell'].includes(data.side as string)
   ) {
     errors.push('Side must be buy or sell');
   }
 
   if (
-    !data ||
-    typeof data !== 'object' ||
-    !(data as any).type ||
-    !['market', 'limit', 'stop', 'stop_limit'].includes((data as any).type)
+    !isObjectWithProperties(data) ||
+    !data.type ||
+    !['market', 'limit', 'stop', 'stop_limit'].includes(data.type as string)
   ) {
     errors.push('Type must be market, limit, stop, or stop_limit');
   }
 
   if (
-    !data ||
-    typeof data !== 'object' ||
-    typeof (data as any).quantity !== 'number' ||
-    (data as any).quantity <= 0 ||
-    !Number.isFinite((data as any).quantity)
+    !isObjectWithProperties(data) ||
+    typeof data.quantity !== 'number' ||
+    (data.quantity as number) <= 0 ||
+    !Number.isFinite(data.quantity as number)
   ) {
     errors.push('Quantity must be a positive finite number');
   }
 
   if (
-    data &&
-    typeof data === 'object' &&
-    (data as any).price !== undefined &&
-    (typeof (data as any).price !== 'number' ||
-      (data as any).price <= 0 ||
-      !Number.isFinite((data as any).price))
+    isObjectWithProperties(data) &&
+    data.price !== undefined &&
+    (typeof data.price !== 'number' ||
+      (data.price as number) <= 0 ||
+      !Number.isFinite(data.price as number))
   ) {
     errors.push('Price must be a positive finite number when provided');
   }
@@ -92,30 +111,21 @@ function validateCancelOrder(data: unknown): {
 } {
   const errors: string[] = [];
 
-  if (
-    !data ||
-    typeof data !== 'object' ||
-    !(data as any).symbol ||
-    typeof (data as any).symbol !== 'string'
-  ) {
+  if (!isCancelOrderData(data) || !data.symbol || typeof data.symbol !== 'string') {
     errors.push('Symbol is required');
   }
 
-  if (
-    !data ||
-    typeof data !== 'object' ||
-    (!(data as any).orderId && !(data as any).clientOrderId)
-  ) {
+  if (!isCancelOrderData(data) || (!data.orderId && !data.clientOrderId)) {
     errors.push('Either orderId or clientOrderId is required');
   }
 
   return { success: errors.length === 0, errors };
 }
 
-function validateBatchOrder(data: any): { success: boolean; errors: string[] } {
+function validateBatchOrder(data: unknown): { success: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!Array.isArray(data.orders)) {
+  if (!isBatchOrderData(data) || !Array.isArray(data.orders)) {
     errors.push('Orders must be an array');
   } else {
     if (data.orders.length === 0) {
@@ -127,7 +137,7 @@ function validateBatchOrder(data: any): { success: boolean; errors: string[] } {
     }
 
     // Validate each order
-    data.orders.forEach((order: any, index: number) => {
+    data.orders.forEach((order: unknown, index: number) => {
       const orderValidation = validatePlaceOrder(order);
       if (!orderValidation.success) {
         errors.push(`Order ${index + 1}: ${orderValidation.errors.join(', ')}`);

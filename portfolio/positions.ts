@@ -1,7 +1,6 @@
 import { mexcClient } from '../market-data/mexc-client';
 import type {
   CacheConfig,
-  MarketData,
   PortfolioDataRefreshOptions,
   PortfolioPosition,
   PositionCacheEntry,

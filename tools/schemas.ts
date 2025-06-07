@@ -1,10 +1,10 @@
 // JSON Schema interface for tool input schemas
 export interface JSONSchemaType {
   type: 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null';
-  properties?: Record<string, any>;
+  properties?: Record<string, JSONSchemaType>;
   required?: string[];
-  items?: any;
-  enum?: any[];
+  items?: JSONSchemaType;
+  enum?: unknown[];
   minimum?: number;
   maximum?: number;
   minLength?: number;
@@ -19,26 +19,26 @@ export interface MCPMessage {
   jsonrpc: '2.0';
   id?: string | number;
   method?: string;
-  params?: Record<string, any>;
-  result?: any;
+  params?: Record<string, unknown>;
+  result?: unknown;
   error?: {
     code: number;
     message: string;
-    data?: any;
+    data?: unknown;
   };
 }
 
 export interface MCPRequest extends MCPMessage {
   method: string;
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
 }
 
 export interface MCPResponse extends MCPMessage {
-  result?: any;
+  result?: unknown;
   error?: {
     code: number;
     message: string;
-    data?: any;
+    data?: unknown;
   };
 }
 
@@ -46,14 +46,14 @@ export interface MCPResponse extends MCPMessage {
 export interface ToolInputValidation {
   toolName: string;
   inputSchema: JSONSchemaType;
-  args: Record<string, any>;
+  args: Record<string, unknown>;
 }
 
 export interface ToolOutput {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Market Data Tool Interfaces
@@ -93,14 +93,14 @@ export interface AuthValidateArgs {
 export interface ValidationError {
   field: string;
   message: string;
-  value?: any;
+  value?: unknown;
 }
 
 // Utility function to validate tool arguments using JSON Schema
 export function validateToolArgs(
   toolName: string,
-  inputSchema: any,
-  args: Record<string, any>
+  inputSchema: JSONSchemaType,
+  args: Record<string, unknown>
 ): void {
   const errors = validateJSONSchema(inputSchema, args);
   if (errors.length > 0) {
@@ -111,7 +111,7 @@ export function validateToolArgs(
 }
 
 // Native TypeScript JSON Schema validation
-function validateJSONSchema(schema: any, data: any, path = ''): ValidationError[] {
+function validateJSONSchema(schema: JSONSchemaType, data: unknown, path = ''): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (schema.type === 'object') {
@@ -120,10 +120,12 @@ function validateJSONSchema(schema: any, data: any, path = ''): ValidationError[
       return errors;
     }
 
+    const dataObj = data as Record<string, unknown>;
+
     // Check required fields
     if (schema.required) {
       for (const field of schema.required) {
-        if (!(field in data) || data[field] === undefined || data[field] === null) {
+        if (!(field in dataObj) || dataObj[field] === undefined || dataObj[field] === null) {
           errors.push({ field: `${path}${field}`, message: `${field} is required` });
         }
       }
@@ -132,9 +134,9 @@ function validateJSONSchema(schema: any, data: any, path = ''): ValidationError[
     // Validate properties
     if (schema.properties) {
       for (const [key, prop] of Object.entries(schema.properties)) {
-        if (key in data) {
+        if (key in dataObj) {
           const fieldPath = path ? `${path}.${key}` : key;
-          errors.push(...validateJSONSchema(prop, data[key], fieldPath));
+          errors.push(...validateJSONSchema(prop, dataObj[key], fieldPath));
         }
       }
     }

@@ -84,6 +84,51 @@ describe('Streaming AI Market Analysis - Task #25', () => {
       expect(validAnalysisTypes).toContain('sentiment');
       expect(validAnalysisTypes).toContain('technical');
     });
+
+    it('should handle missing optional parameters gracefully', () => {
+      const minimalRequest: StreamingAnalysisRequest = {
+        symbol: 'ADAUSDT',
+        analysisType: 'risk',
+        depth: 'standard',
+      };
+
+      // Required fields should be present
+      expect(minimalRequest.symbol).toBeTruthy();
+      expect(minimalRequest.analysisType).toBeTruthy();
+      expect(minimalRequest.depth).toBeTruthy();
+
+      // Optional fields should be undefined
+      expect(minimalRequest.timeoutMs).toBeUndefined();
+      expect(minimalRequest.enableHeartbeat).toBeUndefined();
+      expect(minimalRequest.heartbeatIntervalMs).toBeUndefined();
+    });
+
+    it('should validate streaming parameters bounds', () => {
+      const streamRequest: StreamingAnalysisRequest = {
+        symbol: 'SOLUSDT',
+        analysisType: 'trend',
+        depth: 'deep',
+        timeoutMs: 300000, // 5 minutes max for deep analysis
+        enableHeartbeat: true,
+        heartbeatIntervalMs: 5000, // Minimum 5 seconds
+      };
+
+      // Validate timeout bounds
+      expect(streamRequest.timeoutMs).toBeGreaterThan(0);
+      expect(streamRequest.timeoutMs).toBeLessThanOrEqual(600000); // 10 minutes max
+
+      // Validate heartbeat interval bounds
+      expect(streamRequest.heartbeatIntervalMs).toBeGreaterThanOrEqual(5000); // Minimum 5 seconds
+    });
+
+    it('should create unique connection identifiers', () => {
+      const connectionId1 = `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const connectionId2 = `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      expect(connectionId1).toMatch(/^stream_\d+_[a-z0-9]+$/);
+      expect(connectionId2).toMatch(/^stream_\d+_[a-z0-9]+$/);
+      expect(connectionId1).not.toBe(connectionId2);
+    });
   });
 
   describe('Progress Tracking', () => {
@@ -123,6 +168,41 @@ describe('Streaming AI Market Analysis - Task #25', () => {
 
       const testPhase = 'ai_analysis';
       expect(validPhases).toContain(testPhase);
+    });
+
+    it('should handle progress validation edge cases', () => {
+      // Test percentage bounds validation
+      const progressAtZero: StreamProgress = {
+        phase: 'initialization',
+        percentage: 0,
+        currentStep: 'Starting analysis',
+      };
+
+      const progressAtHundred: StreamProgress = {
+        phase: 'complete',
+        percentage: 100,
+        currentStep: 'Analysis completed',
+      };
+
+      expect(progressAtZero.percentage).toBe(0);
+      expect(progressAtHundred.percentage).toBe(100);
+
+      // Test required fields
+      expect(progressAtZero.phase).toBeTruthy();
+      expect(progressAtZero.currentStep).toBeTruthy();
+      expect(progressAtHundred.phase).toBeTruthy();
+      expect(progressAtHundred.currentStep).toBeTruthy();
+    });
+
+    it('should track time estimation accuracy', () => {
+      const mockEstimatedTime = 30000; // 30 seconds
+      const mockStartTime = Date.now();
+      const mockCurrentTime = mockStartTime + 10000; // 10 seconds elapsed
+
+      const remainingTime = Math.max(0, mockEstimatedTime - (mockCurrentTime - mockStartTime));
+
+      expect(remainingTime).toBe(20000); // 20 seconds remaining
+      expect(remainingTime).toBeGreaterThanOrEqual(0);
     });
   });
 

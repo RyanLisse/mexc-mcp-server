@@ -116,8 +116,23 @@ export function getMarketDataCacheSize(): number {
   return marketDataCache.size();
 }
 
+// Raw MEXC API response interface for transformation
+interface MEXCTickerRawData {
+  symbol: string;
+  price: string;
+  priceChange: string;
+  priceChangePercent: string;
+  volume: string;
+  quoteVolume: string;
+  open: string;
+  high: string;
+  low: string;
+  count: number | null;
+  timestamp: number;
+}
+
 // Data transformation helpers
-function transformTickerData(rawData: any): TickerData {
+function transformTickerData(rawData: MEXCTickerRawData): TickerData {
   return {
     symbol: rawData.symbol,
     price: rawData.price,
@@ -133,7 +148,20 @@ function transformTickerData(rawData: any): TickerData {
   };
 }
 
-function transformStats24hData(rawData: any): Stats24hData {
+// Raw MEXC API response interface for 24h stats
+interface MEXCStats24hRawData {
+  symbol: string;
+  volume: string;
+  volumeQuote: string;
+  priceChange: string;
+  priceChangePercent: string;
+  high: string;
+  low: string;
+  trades: number | null;
+  timestamp: number;
+}
+
+function transformStats24hData(rawData: MEXCStats24hRawData): Stats24hData {
   return {
     symbol: rawData.symbol,
     volume: rawData.volume,
@@ -145,6 +173,74 @@ function transformStats24hData(rawData: any): Stats24hData {
     trades: rawData.trades ?? 0, // Transform null to 0
     timestamp: rawData.timestamp,
   };
+}
+
+// Historical data interface
+interface HistoricalDataResponse {
+  symbol: string;
+  interval: string;
+  data: Array<{
+    openTime: number;
+    open: string;
+    high: string;
+    low: string;
+    close: string;
+    volume: string;
+    closeTime: number;
+    quoteAssetVolume: string;
+    count: number;
+  }>;
+}
+
+// Market depth response interface
+interface MarketDepthResponse {
+  symbol: string;
+  bids: Array<{ price: string; quantity: string }>;
+  asks: Array<{ price: string; quantity: string }>;
+  lastUpdateId: number;
+  analysis: {
+    bidTotal: string;
+    askTotal: string;
+    spread: string;
+    spreadPercent: string;
+    imbalance: number;
+  };
+}
+
+// Price aggregation data interface
+interface PriceAggregationData {
+  price?: number;
+  volume24h?: number;
+  volatility?: number;
+  correlations?: Record<string, number>;
+}
+
+// Price aggregation response interface
+interface PriceAggregationResponse {
+  symbols: string[];
+  timeframes: string[];
+  aggregatedData: Record<string, PriceAggregationData>;
+  generatedAt: number;
+}
+
+// Health check component interface
+interface HealthCheckComponent {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  responseTime?: number;
+  error?: string;
+  hitRate?: number;
+  size?: number;
+  connectionTime?: number;
+  remaining?: number;
+  resetTime?: number;
+}
+
+// Health check components interface
+interface HealthCheckComponents {
+  mexcApi: HealthCheckComponent;
+  cache: HealthCheckComponent;
+  database: HealthCheckComponent;
+  rateLimit: HealthCheckComponent;
 }
 
 // MCP Tool definitions
@@ -536,9 +632,15 @@ export async function executeTestAuthentication(
 ): Promise<MarketDataResponse<{ success: boolean; message: string }>> {
   try {
     // Test authentication by making a request that requires auth
-    const _accountInfo = await mexcClient.getAccountInfo();
+    const accountInfo = await mexcClient.getAccountInfo();
 
-    return createSuccessResponse({ success: true, message: 'Authentication successful' }, false);
+    return createSuccessResponse(
+      {
+        success: true,
+        message: `Authentication successful. Account ID: ${accountInfo?.accountType || 'SPOT'}`,
+      },
+      false
+    );
   } catch (error) {
     console.error('Authentication test error:', error);
     throw error;
@@ -660,7 +762,7 @@ export async function executeGetHistoricalData(args: {
 > {
   try {
     const cacheKey = `historical:${args.symbol}:${args.interval}:${args.limit || 500}`;
-    const cached = marketDataCache.get<any>(cacheKey);
+    const cached = marketDataCache.get<HistoricalDataResponse>(cacheKey);
 
     if (cached) {
       return createSuccessResponse(cached, true);
@@ -713,7 +815,7 @@ export async function executeGetMarketDepth(args: {
   try {
     const limit = args.limit || 100;
     const cacheKey = `market-depth:${args.symbol}:${limit}`;
-    const cached = marketDataCache.get<any>(cacheKey);
+    const cached = marketDataCache.get<MarketDepthResponse>(cacheKey);
 
     if (cached) {
       return createSuccessResponse(cached, true);
@@ -788,17 +890,17 @@ export async function executeGetPriceAggregation(args: {
 > {
   try {
     const cacheKey = `price-aggregation:${args.symbols.join(',')}:${args.metrics.join(',')}`;
-    const cached = marketDataCache.get<any>(cacheKey);
+    const cached = marketDataCache.get<PriceAggregationResponse>(cacheKey);
 
     if (cached) {
       return createSuccessResponse(cached, true);
     }
 
-    const aggregatedData: Record<string, any> = {};
+    const aggregatedData: Record<string, PriceAggregationData> = {};
 
     // Gather data for each symbol
     for (const symbol of args.symbols) {
-      const data: any = {};
+      const data: PriceAggregationData = {};
 
       if (args.metrics.includes('price')) {
         const ticker = await mexcClient.getTicker(symbol);
@@ -835,7 +937,7 @@ export async function executeGetPriceAggregation(args: {
       aggregatedData[symbol] = data;
     }
 
-    const result = {
+    const result: PriceAggregationResponse = {
       symbols: args.symbols,
       timeframes: args.timeframes,
       aggregatedData,
@@ -879,7 +981,6 @@ export async function executeManageSubscription(args: {
       mockSubscriptions.push({
         symbol: args.symbol,
         type: args.type,
-        interval: args.interval,
         subscribed: true,
       });
     }
@@ -969,7 +1070,12 @@ export async function executeEnhancedHealthCheck(): Promise<
 > {
   try {
     const start = Date.now();
-    const components: any = {};
+    const components: HealthCheckComponents = {
+      mexcApi: { status: 'healthy' },
+      cache: { status: 'healthy' },
+      database: { status: 'healthy' },
+      rateLimit: { status: 'healthy' },
+    };
 
     // Test MEXC API
     try {
@@ -1015,7 +1121,7 @@ export async function executeEnhancedHealthCheck(): Promise<
     };
 
     const unhealthyComponents = Object.values(components).filter(
-      (comp: any) => comp.status === 'unhealthy'
+      (comp: HealthCheckComponent) => comp.status === 'unhealthy'
     ).length;
 
     const overallStatus =

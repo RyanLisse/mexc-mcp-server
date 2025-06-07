@@ -4,6 +4,7 @@
  */
 
 import { Service } from 'encore.dev/service';
+import type { z } from 'zod';
 import {
   type ChatMessage,
   type GeminiObjectResponse,
@@ -36,7 +37,7 @@ export const aiService = {
    */
   generateObject: async <T>(
     prompt: string,
-    schema: Record<string, unknown>,
+    schema: z.ZodType<T>,
     description?: string
   ): Promise<GeminiObjectResponse<T>> => {
     return geminiClient.generateObject<T>(prompt, schema, description);

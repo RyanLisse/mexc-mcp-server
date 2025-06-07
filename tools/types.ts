@@ -3,7 +3,6 @@ export interface MCPTool {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  execute?: any; // Simplified for Encore compatibility
 }
 
 export interface MCPToolCall {
@@ -56,16 +55,11 @@ export interface ToolHandler {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  execute: any; // Simplified for Encore compatibility
 }
 
 // Tool Registry Interface
 export interface ToolRegistry {
-  register: any; // Simplified for Encore compatibility
-  unregister: any; // Simplified for Encore compatibility
-  get: any; // Simplified for Encore compatibility
-  list: any; // Simplified for Encore compatibility
-  execute: any; // Simplified for Encore compatibility
+  tools: ToolHandler[];
 }
 
 // Tool Execution Error
@@ -93,7 +87,7 @@ export class ToolValidationError extends Error {
   constructor(
     public toolName: string,
     message: string,
-    public validationErrors?: any[]
+    public validationErrors?: unknown[]
   ) {
     super(`Tool '${toolName}' validation failed: ${message}`);
     this.name = 'ToolValidationError';

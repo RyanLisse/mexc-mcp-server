@@ -4,32 +4,20 @@
  * Tests written first to define expected behavior
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { z } from 'zod';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 // Types for JSON-RPC 2.0 Protocol
 interface JsonRpcRequest {
   jsonrpc: '2.0';
   method: string;
-  params?: any;
+  params?: unknown;
   id?: string | number | null;
-}
-
-interface JsonRpcResponse {
-  jsonrpc: '2.0';
-  result?: any;
-  error?: {
-    code: number;
-    message: string;
-    data?: any;
-  };
-  id: string | number | null;
 }
 
 interface JsonRpcNotification {
   jsonrpc: '2.0';
   method: string;
-  params?: any;
+  params?: unknown;
 }
 
 // Import the handler implementation
@@ -109,20 +97,8 @@ describe('JsonRpcHandler', () => {
     });
 
     it('should handle tools/call method', async () => {
-      const _request: JsonRpcRequest = {
-        jsonrpc: '2.0',
-        method: 'tools/call',
-        params: {
-          name: 'mexc_get_ticker',
-          arguments: { symbol: 'BTCUSDT' },
-        },
-        id: 2,
-      };
-
-      // const response = await handler.handleRequest(request);
-      // expect(response.jsonrpc).toBe('2.0');
-      // expect(response.id).toBe(2);
-      // expect(response.result).toBeDefined();
+      // Test is placeholder for future implementation
+      expect(true).toBe(true);
     });
 
     it('should handle initialize method', async () => {

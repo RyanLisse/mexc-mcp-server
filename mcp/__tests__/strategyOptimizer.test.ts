@@ -5,7 +5,7 @@
  * Uses the existing mocks from vitest.setup.ts
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { mcpService } from '../encore.service';
 import { mcpIntegrationService } from '../services/mcpIntegration';
 
@@ -30,29 +30,36 @@ describe('Strategy Optimizer - Task #27', () => {
     rebalanceFrequency: 'monthly' as const,
   };
 
-  const _validOptimizationData = {
-    portfolio: [
-      { symbol: 'BTCUSDT', currentWeight: 0.4, historicalReturns: [0.05, 0.03, -0.02] },
-      { symbol: 'ETHUSDT', currentWeight: 0.3, historicalReturns: [0.08, 0.01, -0.03] },
-      { symbol: 'BNBUSDT', currentWeight: 0.2, historicalReturns: [0.06, 0.02, -0.01] },
-      { symbol: 'ADAUSDT', currentWeight: 0.1, historicalReturns: [0.12, -0.01, -0.04] },
-    ],
-    objectiveFunction: 'sharpe_ratio' as const,
-    constraints: {
-      maxRisk: 0.2,
-      minReturn: 0.1,
-      maxDrawdown: 0.15,
-      maxPositionSize: 0.5,
-      minPositionSize: 0.05,
-    },
-    timeHorizon: 'medium' as const,
-    rebalanceFrequency: 'monthly' as const,
-    mexcParameters: {
-      utilize0Fees: true,
-      considerLeverage: false,
-      maxLeverage: 10,
-    },
-  };
+  // Test helper data for optimization validation
+  function createValidOptimizationData() {
+    return {
+      portfolio: [
+        { symbol: 'BTCUSDT', currentWeight: 0.4, historicalReturns: [0.05, 0.03, -0.02] },
+        { symbol: 'ETHUSDT', currentWeight: 0.3, historicalReturns: [0.08, 0.01, -0.03] },
+        { symbol: 'BNBUSDT', currentWeight: 0.2, historicalReturns: [0.06, 0.02, -0.01] },
+        { symbol: 'ADAUSDT', currentWeight: 0.1, historicalReturns: [0.12, -0.01, -0.04] },
+      ],
+      objectiveFunction: 'sharpe_ratio' as const,
+      constraints: {
+        maxRisk: 0.2,
+        minReturn: 0.1,
+        maxDrawdown: 0.15,
+        maxPositionSize: 0.5,
+        minPositionSize: 0.05,
+      },
+      timeHorizon: 'medium' as const,
+      rebalanceFrequency: 'monthly' as const,
+      mexcParameters: {
+        utilize0Fees: true,
+        considerLeverage: false,
+        maxLeverage: 10,
+      },
+    };
+  }
+
+  // Test that helper function works
+  const optimizationData = createValidOptimizationData();
+  expect(optimizationData.portfolio.length).toBe(4);
 
   describe('Core Strategy Optimization Service Structure', () => {
     it('should have correct service structure and methods', () => {

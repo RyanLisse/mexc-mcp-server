@@ -8,7 +8,7 @@ export default defineConfig({
       '~encore': path.resolve(__dirname, './encore.gen'),
       'encore.dev/internal/runtime/napi/napi.cjs': path.resolve(
         __dirname,
-        '__mocks__/encore-runtime.js'
+        '__mocks__/encore-runtime.cjs'
       ),
     },
   },
@@ -45,9 +45,7 @@ export default defineConfig({
         '**/.{eslint,mocha,prettier}rc.{?(c|m)js,yml}',
       ],
     },
-    // Use a reasonable timeout for network requests
     testTimeout: 30000,
-    // Pool configuration for better performance
     pool: 'threads',
     poolOptions: {
       threads: {

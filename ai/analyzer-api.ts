@@ -10,10 +10,12 @@ import {
   type BudgetStatus,
   type CacheStats,
   type MarketAnalysis,
+  type MarketData,
+  type TrendData,
   geminiAnalyzer,
 } from './gemini-analyzer';
 
-// Request types simplified for Encore compatibility
+// Request types for Encore compatibility without index signatures
 export interface MarketDataRequest {
   symbol: string;
   price?: number;
@@ -32,6 +34,9 @@ export interface TechnicalAnalysisRequest {
     close: number;
     volume: number;
   }>;
+  price?: number;
+  volume?: number;
+  prices?: number[];
 }
 
 export interface RiskAssessmentRequest {
@@ -44,6 +49,9 @@ export interface RiskAssessmentRequest {
     volatility: number;
     volume24h: number;
   };
+  // Include fields that gemini analyzer expects
+  price?: number;
+  volume?: number;
 }
 
 export interface TrendAnalysisRequest {
@@ -63,7 +71,14 @@ export const analyzeSentiment = api(
   { method: 'POST', path: '/ai/analyze-sentiment', expose: true },
   async (data: MarketDataRequest): Promise<AnalysisResult> => {
     try {
-      return await geminiAnalyzer.analyzeSentiment(data);
+      // Create compatible MarketData from request
+      const marketData: MarketData = {
+        symbol: data.symbol,
+        price: data.price,
+        volume: data.volume,
+        prices: data.prices,
+      };
+      return await geminiAnalyzer.analyzeSentiment(marketData);
     } catch (error) {
       return {
         success: false,
@@ -82,7 +97,15 @@ export const performTechnicalAnalysis = api(
     data: TechnicalAnalysisRequest
   ): Promise<{ success: boolean; data?: MarketAnalysis; error?: string }> => {
     try {
-      const result = await geminiAnalyzer.performTechnicalAnalysis(data);
+      // Create compatible MarketData from technical analysis request
+      const marketData: MarketData = {
+        symbol: data.symbol,
+        price: data.price,
+        volume: data.volume,
+        prices: data.prices,
+        ohlcv: data.ohlcv,
+      };
+      const result = await geminiAnalyzer.performTechnicalAnalysis(marketData);
       return { success: true, data: result };
     } catch (error) {
       return {
@@ -100,7 +123,18 @@ export const assessRisk = api(
   { method: 'POST', path: '/ai/assess-risk', expose: true },
   async (data: RiskAssessmentRequest): Promise<AnalysisResult> => {
     try {
-      return await geminiAnalyzer.assessRisk(data);
+      // Create compatible MarketData from risk assessment request
+      const marketData: MarketData = {
+        symbol: data.symbol,
+        price: data.currentPrice,
+        volume: data.marketData.volume24h,
+        side: data.side,
+        size: data.size,
+        entryPrice: data.entryPrice,
+        currentPrice: data.currentPrice,
+        marketData: data.marketData,
+      };
+      return await geminiAnalyzer.assessRisk(marketData);
     } catch (error) {
       return {
         success: false,
@@ -119,7 +153,13 @@ export const analyzeTrend = api(
     data: TrendAnalysisRequest
   ): Promise<{ success: boolean; data?: MarketAnalysis; error?: string }> => {
     try {
-      const result = await geminiAnalyzer.analyzeTrend(data);
+      // Create compatible TrendData from trend analysis request
+      const trendData: TrendData = {
+        symbol: data.symbol,
+        timeframe: data.timeframe,
+        dataPoints: data.dataPoints,
+      };
+      const result = await geminiAnalyzer.analyzeTrend(trendData);
       return { success: true, data: result };
     } catch (error) {
       return {

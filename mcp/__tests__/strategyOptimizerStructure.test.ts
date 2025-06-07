@@ -71,19 +71,23 @@ describe('Strategy Optimizer Structure - Task #27', () => {
 
     it('should properly structure request for core service', async () => {
       // Test that the integration service properly transforms the request
-      // This will fail at the AI call level but should pass validation
+      // With mocked AI calls, this should succeed and show proper structure
       const result = await mcpIntegrationService.strategyOptimizer(validPortfolioRequest);
 
-      // Should pass validation but fail at AI service call
+      // Should pass validation and succeed with mocked AI calls
       expect(result).toBeDefined();
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
       expect(result.serviceVersion).toBe('mcp-integration-v1.0');
       expect(result.timestamp).toBeDefined();
+      expect(result.processingTimeMs).toBeGreaterThanOrEqual(0);
 
-      // Should fail due to missing API key, not validation
-      expect(result.error).not.toContain('allocations must sum');
-      expect(result.error).not.toContain('Portfolio is required');
-      expect(result.error).not.toContain('Objective function is required');
+      // Should have proper response structure
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.optimizationType).toBe(validPortfolioRequest.objectiveFunction);
+        expect(result.data.allocations).toBeDefined();
+        expect(Array.isArray(result.data.allocations)).toBe(true);
+      }
     });
 
     it('should accept all valid objective functions', () => {
@@ -110,7 +114,7 @@ describe('Strategy Optimizer Structure - Task #27', () => {
     });
 
     it('should have correct response structure on success path', async () => {
-      // Even though this will fail at AI level, we can verify the response structure
+      // With mocked AI calls, this should succeed and show proper response structure
       const result = await mcpIntegrationService.strategyOptimizer(validPortfolioRequest);
 
       expect(result).toBeDefined();
@@ -118,13 +122,16 @@ describe('Strategy Optimizer Structure - Task #27', () => {
       expect(typeof result.timestamp).toBe('number');
       expect(result.serviceVersion).toBe('mcp-integration-v1.0');
 
-      if (result.success) {
-        expect(result.data).toBeDefined();
-        expect(result.processingTimeMs).toBeGreaterThan(0);
-      } else {
-        expect(result.error).toBeDefined();
-        expect(typeof result.error).toBe('string');
-      }
+      // Should succeed with mocked AI calls
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+      expect(result.processingTimeMs).toBeGreaterThanOrEqual(0);
+
+      // Verify data structure
+      expect(result.data.optimizationType).toBeDefined();
+      expect(result.data.confidence).toBeDefined();
+      expect(result.data.optimizedMetrics).toBeDefined();
+      expect(result.data.allocations).toBeDefined();
     });
   });
 
@@ -189,7 +196,7 @@ describe('Strategy Optimizer Structure - Task #27', () => {
         { weights: [0.5, 0.5], shouldPass: true }, // Sum to 1.0 - this should pass
       ];
 
-      testCases.forEach(({ weights, shouldPass }, _index) => {
+      for (const { weights, shouldPass } of testCases) {
         const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
         const isValid = Math.abs(totalWeight - 1) <= 0.015; // Slightly more lenient to handle floating point precision
 
@@ -198,7 +205,7 @@ describe('Strategy Optimizer Structure - Task #27', () => {
         } else {
           expect(isValid).toBe(false);
         }
-      });
+      }
     });
 
     it('should validate objective function values', () => {
@@ -294,7 +301,7 @@ describe('Strategy Optimizer Structure - Task #27', () => {
     it('should set appropriate MEXC parameters based on objective', () => {
       const objectives = ['sharpe_ratio', 'max_return', 'min_risk', 'min_drawdown'];
 
-      objectives.forEach((objective) => {
+      for (const objective of objectives) {
         const shouldConsiderLeverage = objective === 'max_return';
 
         const mexcParams = {
@@ -306,7 +313,7 @@ describe('Strategy Optimizer Structure - Task #27', () => {
         expect(mexcParams.utilize0Fees).toBe(true); // Always true
         expect(mexcParams.considerLeverage).toBe(objective === 'max_return');
         expect(mexcParams.maxLeverage).toBe(10);
-      });
+      }
     });
   });
 

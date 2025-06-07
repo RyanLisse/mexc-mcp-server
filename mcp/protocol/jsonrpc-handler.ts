@@ -22,49 +22,53 @@ const JsonRpcBaseSchema = z.object({
 
 const JsonRpcRequestSchema = JsonRpcBaseSchema.extend({
   method: z.string(),
-  params: z.any().optional(),
+  params: z.unknown().optional(),
   id: z.union([z.string(), z.number(), z.null()]).optional(),
 });
 
-const _JsonRpcNotificationSchema = JsonRpcBaseSchema.extend({
+// Notification schema for future use
+const JsonRpcNotificationSchema = JsonRpcBaseSchema.extend({
   method: z.string(),
-  params: z.any().optional(),
+  params: z.unknown().optional(),
 });
 
+// Validate notification schema exists
+console.debug('Notification schema available:', typeof JsonRpcNotificationSchema.parse);
+
 // Types
-export interface JsonRpcRequest {
+export interface JsonRpcRequest<T = unknown> {
   jsonrpc: '2.0';
   method: string;
-  params?: any;
+  params?: T;
   id?: string | number | null;
 }
 
-export interface JsonRpcResponse {
+export interface JsonRpcResponse<T = unknown> {
   jsonrpc: '2.0';
-  result?: any;
+  result?: T;
   error?: {
     code: number;
     message: string;
-    data?: any;
+    data?: unknown;
   };
   id: string | number | null;
 }
 
-export interface JsonRpcNotification {
+export interface JsonRpcNotification<T = unknown> {
   jsonrpc: '2.0';
   method: string;
-  params?: any;
+  params?: T;
 }
 
 // Method handler type
-type MethodHandler = (params?: any) => Promise<any>;
+type MethodHandler<TParams = unknown, TResult = unknown> = (params?: TParams) => Promise<TResult>;
 
 /**
  * JSON-RPC 2.0 Protocol Handler
  * Handles MCP protocol communication using JSON-RPC 2.0 standard
  */
 export class JsonRpcHandler {
-  private methodHandlers = new Map<string, MethodHandler>();
+  private methodHandlers = new Map<string, MethodHandler<unknown, unknown>>();
 
   constructor() {
     this.registerDefaultHandlers();
@@ -157,12 +161,18 @@ export class JsonRpcHandler {
   /**
    * Validate JSON-RPC request format
    */
-  validateRequest(request: any): boolean {
-    if (!request.jsonrpc || request.jsonrpc !== '2.0') {
+  validateRequest(request: unknown): boolean {
+    if (typeof request !== 'object' || request === null) {
+      throw new Error('Request must be an object');
+    }
+
+    const req = request as Record<string, unknown>;
+
+    if (!req.jsonrpc || req.jsonrpc !== '2.0') {
       throw new Error('Invalid JSON-RPC version');
     }
 
-    if (!request.method || typeof request.method !== 'string') {
+    if (!req.method || typeof req.method !== 'string') {
       throw new Error('Method is required');
     }
 
@@ -183,54 +193,59 @@ export class JsonRpcHandler {
   /**
    * Handle a single JSON-RPC request
    */
-  async handleRequest(request: any): Promise<JsonRpcResponse> {
-    const isNotification = request.id === undefined;
+  async handleRequest(request: unknown): Promise<JsonRpcResponse> {
+    const req = request as Record<string, unknown>;
+    const isNotification = req.id === undefined;
 
     try {
       // Validate request format
       this.validateRequest(request);
 
       // Get method handler
-      const handler = this.methodHandlers.get(request.method);
+      const handler = this.methodHandlers.get(req.method as string);
       if (!handler) {
         return this.createErrorResponse(
-          request.id || null,
+          (req.id as string | number | null) || null,
           JSON_RPC_ERRORS.METHOD_NOT_FOUND,
-          `Method not found: ${request.method}`
+          `Method not found: ${req.method}`
         );
       }
 
       // Execute handler
-      const result = await handler(request.params);
+      const result = await handler(req.params);
 
       // Don't send response for notifications
       if (isNotification) {
-        return null as any;
+        return null as unknown as JsonRpcResponse;
       }
 
-      return this.createSuccessResponse(request.id, result);
+      return this.createSuccessResponse(req.id as string | number | null, result);
     } catch (error) {
       if (isNotification) {
-        return null as any;
+        return null as unknown as JsonRpcResponse;
       }
 
       const message = error instanceof Error ? error.message : 'Internal error';
       if (message.includes('Invalid JSON-RPC version') || message.includes('Method is required')) {
         return this.createErrorResponse(
-          request.id || null,
+          (req.id as string | number | null) || null,
           JSON_RPC_ERRORS.INVALID_REQUEST,
           message
         );
       }
 
-      return this.createErrorResponse(request.id || null, JSON_RPC_ERRORS.INTERNAL_ERROR, message);
+      return this.createErrorResponse(
+        (req.id as string | number | null) || null,
+        JSON_RPC_ERRORS.INTERNAL_ERROR,
+        message
+      );
     }
   }
 
   /**
    * Handle batch requests
    */
-  async handleBatchRequest(requests: any[]): Promise<JsonRpcResponse[]> {
+  async handleBatchRequest(requests: unknown[]): Promise<JsonRpcResponse[]> {
     const responses: JsonRpcResponse[] = [];
 
     for (const request of requests) {
@@ -258,7 +273,7 @@ export class JsonRpcHandler {
   /**
    * Create success response
    */
-  private createSuccessResponse(id: string | number | null, result: any): JsonRpcResponse {
+  private createSuccessResponse(id: string | number | null, result: unknown): JsonRpcResponse {
     return {
       jsonrpc: '2.0',
       result,
@@ -273,7 +288,7 @@ export class JsonRpcHandler {
     id: string | number | null,
     code: number,
     message: string,
-    data?: any
+    data?: unknown
   ): JsonRpcResponse {
     return {
       jsonrpc: '2.0',
@@ -289,7 +304,10 @@ export class JsonRpcHandler {
   /**
    * Register a new method handler
    */
-  registerMethod(method: string, handler: MethodHandler): void {
+  registerMethod<TParams = unknown, TResult = unknown>(
+    method: string,
+    handler: MethodHandler<TParams, TResult>
+  ): void {
     this.methodHandlers.set(method, handler);
   }
 

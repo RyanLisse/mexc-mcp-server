@@ -51,9 +51,9 @@ dev: ## Start Encore development server with hot reload
 	@echo "$(BLUE)Starting Encore development server...$(NC)"
 	bun run dev
 
-test: ## Run complete test suite with Encore runtime
-	@echo "$(BLUE)Running test suite with Encore...$(NC)"
-	encore test
+test: ## Run complete test suite with Bun test runner
+	@echo "$(BLUE)Running test suite with Bun...$(NC)"
+	bun test
 
 test-watch: ## Run tests in watch mode for continuous development
 	@echo "$(BLUE)Running tests in watch mode...$(NC)"

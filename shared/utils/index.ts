@@ -53,6 +53,7 @@ export function createErrorResponse(
  */
 export function createSuccessResponse<T>(data: T, cached = false) {
   return {
+    success: true,
     data,
     timestamp: Date.now(),
     cached,

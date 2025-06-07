@@ -5,7 +5,7 @@
  */
 
 import { handleAIError } from '../shared/errors';
-import type { AIAnalysisResult, AnalysisParameters } from '../shared/types/ai-types';
+import type { AIAnalysisResult } from '../shared/types/ai-types';
 import { mcpService } from './encore.service';
 
 // =============================================================================
@@ -53,9 +53,9 @@ export interface EnhancedMCPService {
     depth?: 'quick' | 'standard' | 'comprehensive' | 'deep';
   }): Promise<{
     success: boolean;
-    optimizedStrategy: any;
+    optimizedStrategy: Record<string, unknown>;
     confidence: number;
-    mexcAdvantages?: any;
+    mexcAdvantages?: Record<string, unknown>;
   }>;
 
   // Trading Tools (Task #28)
@@ -65,7 +65,7 @@ export interface EnhancedMCPService {
     depth?: 'quick' | 'standard' | 'comprehensive' | 'deep';
   }): Promise<{
     success: boolean;
-    result: any;
+    result: Record<string, unknown>;
     confidence: number;
     recommendations?: string[];
   }>;
@@ -114,14 +114,14 @@ export interface EnhancedMCPService {
   batchAnalysis(
     requests: Array<{
       type: 'market' | 'risk' | 'strategy' | 'tools';
-      params: any;
+      params: Record<string, unknown>;
       id: string;
     }>
   ): Promise<
     Array<{
       id: string;
       success: boolean;
-      result?: any;
+      result?: Record<string, unknown>;
       error?: string;
     }>
   >;
@@ -133,7 +133,7 @@ export interface EnhancedMCPService {
     updateInterval?: number;
   }): AsyncGenerator<{
     progress: number;
-    partialResult?: any;
+    partialResult?: Record<string, unknown>;
     completed: boolean;
     error?: string;
   }>;
@@ -146,7 +146,7 @@ export interface EnhancedMCPService {
 class InMemoryStore {
   private users = new Map<string, { userId: string; permissions: string[]; tier: string }>();
   private rateLimits = new Map<string, { count: number; resetTime: number }>();
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private cache = new Map<string, { data: unknown; timestamp: number; ttl: number }>();
   private cacheStats = { hits: 0, misses: 0 };
 
   constructor() {
@@ -177,7 +177,7 @@ class InMemoryStore {
     return { allowed: true, remaining: limit - current.count, resetTime: current.resetTime };
   }
 
-  setCache(key: string, data: any, ttlMs: number) {
+  setCache(key: string, data: unknown, ttlMs: number) {
     this.cache.set(key, { data, timestamp: Date.now(), ttl: ttlMs });
   }
 
@@ -319,10 +319,8 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
         diversificationScore: Math.min(params.portfolio.length / 10, 1),
       };
 
-      const _result = await mcpService.performRiskAssessment(
-        portfolioData,
-        params.depth || 'standard'
-      );
+      // Perform risk assessment for portfolio data
+      await mcpService.performRiskAssessment(portfolioData, params.depth || 'standard');
 
       // Calculate risk score based on portfolio characteristics
       const concentrationRisk = Math.max(...params.portfolio.map((p) => p.allocation));
@@ -463,7 +461,8 @@ class EnhancedMCPServiceImpl implements EnhancedMCPService {
     uptime: number;
   }> {
     try {
-      const _coreHealth = mcpService.getServiceHealth();
+      // Get core health status
+      mcpService.getServiceHealth();
       const cacheStats = this.store.getCacheStats();
 
       // Determine overall status based on various factors

@@ -4,13 +4,7 @@
  * fallback mechanisms, and utility functions for AI and MEXC operations.
  */
 
-import type {
-  AIAnalysisResult,
-  AIError as AIErrorInterface,
-  AnalysisType,
-  RetryStrategy,
-  TokenUsage,
-} from './types/ai-types';
+import type { AIAnalysisResult, AnalysisType, RetryStrategy, TokenUsage } from './types/ai-types';
 
 // =============================================================================
 // Base Error Classes

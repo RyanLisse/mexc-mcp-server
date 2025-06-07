@@ -4,7 +4,7 @@
  * Provides the main integration layer for MCP service functionality
  */
 
-import type { AnalysisParameters, AnalysisType } from '../../shared/types/ai-types';
+import type { AnalysisType } from '../../shared/types/ai-types';
 import type {
   AIMarketAnalysisRequest,
   RiskAssessmentRequest,
@@ -256,6 +256,25 @@ export const mcpIntegrationService = {
         return {
           success: false,
           error: 'Symbol and action are required',
+          timestamp: startTime,
+          serviceVersion: 'mcp-integration-v1.0',
+        };
+      }
+
+      // Validate action is a valid trading action
+      const validActions = [
+        'position_sizing',
+        'stop_loss',
+        'take_profit',
+        'risk_reward',
+        'technical_analysis',
+        'market_conditions',
+      ];
+
+      if (!validActions.includes(request.action)) {
+        return {
+          success: false,
+          error: `Invalid action. Must be one of: ${validActions.join(', ')}`,
           timestamp: startTime,
           serviceVersion: 'mcp-integration-v1.0',
         };

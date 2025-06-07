@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi as mock } from 'vitest';
 
 // Set up Encore environment for testing
-process.env.ENCORE_RUNTIME_LIB = path.resolve(__dirname, '../../__mocks__/encore-runtime.js');
+process.env.ENCORE_RUNTIME_LIB = path.resolve(__dirname, '../../__mocks__/encore-runtime.cjs');
 process.env.NODE_ENV = 'test';
 
 // Mock Encore runtime before importing anything else

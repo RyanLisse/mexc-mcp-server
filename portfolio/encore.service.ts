@@ -4,7 +4,6 @@ import { BalanceManager } from './balance';
 import { PositionManager } from './positions';
 import type {
   BalanceHistory,
-  GetBalanceHistoryArgs,
   GetBalancesArgs,
   GetPortfolioSummaryArgs,
   GetPositionsArgs,
@@ -17,7 +16,6 @@ import type {
   PortfolioSummary,
   PositionMetrics,
   RiskMetrics,
-  TransactionHistoryQuery,
   TransactionHistoryResponse,
   TransactionRecord,
 } from './types';

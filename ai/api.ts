@@ -104,26 +104,28 @@ export const chat = api(
 
 /**
  * Generate structured object using schema
+ * NOTE: Temporarily disabled due to Encore.ts schema validation incompatibility
+ * The schema parameter cannot be passed through Encore's validation system
  */
-export const generateObject = api(
-  { method: 'POST', path: '/ai/generate-object', expose: true },
-  async ({ prompt, schema, description }: ObjectGenerationRequest): Promise<ObjectResponse> => {
-    try {
-      const result = await aiService.generateObject(prompt, schema, description);
-      return {
-        success: result.success,
-        data: result.data as Record<string, unknown>,
-        error: result.error,
-        usage: result.usage,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
-  }
-);
+// export const generateObject = api(
+//   { method: 'POST', path: '/ai/generate-object', expose: true },
+//   async ({ prompt, schema, description }: ObjectGenerationRequest): Promise<ObjectResponse> => {
+//     try {
+//       const result = await aiService.generateObject(prompt, schema, description);
+//       return {
+//         success: result.success,
+//         data: result.data as Record<string, unknown>,
+//         error: result.error,
+//         usage: result.usage,
+//       };
+//     } catch (error) {
+//       return {
+//         success: false,
+//         error: error instanceof Error ? error.message : 'Unknown error',
+//       };
+//     }
+//   }
+// );
 
 /**
  * Test AI service connection

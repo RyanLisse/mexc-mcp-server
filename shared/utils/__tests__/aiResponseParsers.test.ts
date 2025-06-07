@@ -4,9 +4,9 @@
  * Following TDD methodology - tests written first
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { AIAnalysisError } from '../../errors';
-import type { OptimizationResult, RiskAssessment } from '../../types/ai-types';
+import type { RiskAssessment } from '../../types/ai-types';
 import {
   isValidOptimizationResult,
   isValidRiskAssessment,

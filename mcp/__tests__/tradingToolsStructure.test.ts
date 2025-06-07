@@ -61,11 +61,11 @@ describe('Trading Tools Structure - Task #28', () => {
       expect(mcpTradingToolsService.performTradingToolsAnalysis).toBeDefined();
 
       // Test that schemas exist for all actions
-      validActions.forEach((action) => {
+      for (const action of validActions) {
         const schema = mcpTradingToolsService.getTradingToolsSchema(action);
         expect(schema).toBeDefined();
         expect(typeof schema).toBe('object');
-      });
+      }
     });
 
     it('should properly structure request for trading tools service', async () => {
@@ -148,7 +148,7 @@ describe('Trading Tools Structure - Task #28', () => {
         currentPrice: 50000,
       };
 
-      actions.forEach((action) => {
+      for (const action of actions) {
         const prompt = mcpTradingToolsService.buildTradingToolsPrompt(
           { ...sampleData, action: action as any },
           'standard'
@@ -159,7 +159,7 @@ describe('Trading Tools Structure - Task #28', () => {
         expect(prompt.length).toBeGreaterThan(100); // Should be comprehensive
         expect(prompt).toContain(action);
         expect(prompt).toContain('BTCUSDT');
-      });
+      }
     });
   });
 
@@ -258,7 +258,7 @@ describe('Trading Tools Structure - Task #28', () => {
     it('should have proper schema structure for risk management actions', () => {
       const riskActions = ['stop_loss', 'take_profit', 'risk_reward'];
 
-      riskActions.forEach((action) => {
+      for (const action of riskActions) {
         const schema = mcpTradingToolsService.getTradingToolsSchema(action);
         expect(schema).toBeDefined();
 
@@ -281,7 +281,7 @@ describe('Trading Tools Structure - Task #28', () => {
         };
 
         expect(() => schema.parse(sampleValidData)).not.toThrow();
-      });
+      }
     });
   });
 
@@ -376,7 +376,7 @@ describe('Trading Tools Structure - Task #28', () => {
     it('should support all analysis depths', () => {
       const depths = ['quick', 'standard', 'comprehensive', 'deep'];
 
-      depths.forEach((depth) => {
+      for (const depth of depths) {
         const prompt = mcpTradingToolsService.buildTradingToolsPrompt(
           {
             action: 'position_sizing',
@@ -387,7 +387,7 @@ describe('Trading Tools Structure - Task #28', () => {
         );
 
         expect(prompt).toContain(`Analysis Depth: ${depth}`);
-      });
+      }
     });
 
     it('should have proper depth configuration structure', () => {

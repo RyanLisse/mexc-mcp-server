@@ -7,13 +7,14 @@ import path from 'node:path';
 import { vi } from 'vitest';
 
 // Set environment variables before any imports
-process.env.ENCORE_RUNTIME_LIB = path.resolve(__dirname, '__mocks__/encore-runtime.js');
+process.env.ENCORE_RUNTIME_LIB = path.resolve(__dirname, '__mocks__/encore-runtime.cjs');
 process.env.NODE_ENV = 'test';
 
 // Disable AI operations in tests to prevent API calls
 process.env.AI_TEST_MODE = 'true';
-process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-api-key';
+process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-api-key-disabled-for-testing';
 process.env.AI_RISK_MAX_LEVEL = 'low'; // Restrict AI operations in tests
+process.env.DISABLE_AI_API_CALLS = 'true'; // Completely disable AI API calls
 
 // Mock Encore runtime and services
 vi.mock('encore.dev/internal/runtime/napi/napi.cjs', () => ({
@@ -36,189 +37,170 @@ vi.mock('encore.dev', () => ({
   },
 }));
 
-// Mock Gemini client to prevent actual AI API calls in tests
-vi.mock('./ai/gemini-client', () => ({
-  GeminiClient: class MockGeminiClient {
-    async generateObject() {
-      return {
-        success: true,
-        data: {
-          // Strategy optimizer mock response
-          optimizationType: 'sharpe_ratio',
-          confidence: 0.85,
-          optimizedMetrics: {
-            expectedReturn: 0.12,
-            volatility: 0.15,
-            sharpeRatio: 0.8,
-            maxDrawdown: 0.08,
-            informationRatio: 0.6,
-          },
-          allocations: [
-            {
-              symbol: 'BTCUSDT',
-              currentWeight: 0.4,
-              optimizedWeight: 0.35,
-              adjustment: -0.05,
-              reasoning: 'Slight reduction for risk balance',
-            },
-            {
-              symbol: 'ETHUSDT',
-              currentWeight: 0.3,
-              optimizedWeight: 0.35,
-              adjustment: 0.05,
-              reasoning: 'Increase allocation for better returns',
-            },
-            {
-              symbol: 'BNBUSDT',
-              currentWeight: 0.2,
-              optimizedWeight: 0.2,
-              adjustment: 0,
-              reasoning: 'Maintain current allocation',
-            },
-            {
-              symbol: 'ADAUSDT',
-              currentWeight: 0.1,
-              optimizedWeight: 0.1,
-              adjustment: 0,
-              reasoning: 'Maintain current allocation',
-            },
-          ],
-          mexcAdvantages: {
-            feeSavingsUSD: 100,
-            leverageOpportunities: [
-              {
-                symbol: 'ETHUSDT',
-                recommendedLeverage: 2,
-                expectedBoost: 0.02,
-              },
-            ],
-          },
-          backtestResults: {
-            periodMonths: 12,
-            totalReturn: 0.15,
-            annualizedReturn: 0.12,
-            maxDrawdown: 0.08,
-            winRate: 0.65,
-            vsBaseline: {
-              baselineReturn: 0.08,
-              outperformance: 0.04,
-            },
-          },
-          // Fallback for other analysis types
-          analysis: 'Mock AI analysis result',
-          recommendations: ['Mock recommendation'],
-        },
-        usage: {
-          promptTokens: 1500,
-          completionTokens: 800,
-          totalTokens: 2300,
-        },
-        processingTimeMs: 50,
-        modelVersion: 'mock-model-v1.0',
-      };
-    }
-
-    async generateStructuredAnalysis() {
-      return {
-        success: true,
-        data: {
-          sentiment: { score: 0.7, label: 'positive' },
-          technicalIndicators: { trend: 'bullish', strength: 0.8 },
-          riskAssessment: { level: 'medium', score: 0.6 },
-        },
-        processingTimeMs: 100,
-        modelVersion: 'mock-model-v1.0',
-      };
-    }
-  },
-  geminiClient: new (class MockGeminiClient {
-    async generateObject() {
-      return {
-        success: true,
-        data: {
-          // Strategy optimizer mock response
-          optimizationType: 'sharpe_ratio',
-          confidence: 0.85,
-          optimizedMetrics: {
-            expectedReturn: 0.12,
-            volatility: 0.15,
-            sharpeRatio: 0.8,
-            maxDrawdown: 0.08,
-            informationRatio: 0.6,
-          },
-          allocations: [
-            {
-              symbol: 'BTCUSDT',
-              currentWeight: 0.4,
-              optimizedWeight: 0.35,
-              adjustment: -0.05,
-              reasoning: 'Slight reduction for risk balance',
-            },
-            {
-              symbol: 'ETHUSDT',
-              currentWeight: 0.3,
-              optimizedWeight: 0.35,
-              adjustment: 0.05,
-              reasoning: 'Increase allocation for better returns',
-            },
-            {
-              symbol: 'BNBUSDT',
-              currentWeight: 0.2,
-              optimizedWeight: 0.2,
-              adjustment: 0,
-              reasoning: 'Maintain current allocation',
-            },
-            {
-              symbol: 'ADAUSDT',
-              currentWeight: 0.1,
-              optimizedWeight: 0.1,
-              adjustment: 0,
-              reasoning: 'Maintain current allocation',
-            },
-          ],
-          mexcAdvantages: {
-            feeSavingsUSD: 100,
-            leverageOpportunities: [
-              {
-                symbol: 'ETHUSDT',
-                recommendedLeverage: 2,
-                expectedBoost: 0.02,
-              },
-            ],
-          },
-          backtestResults: {
-            periodMonths: 12,
-            totalReturn: 0.15,
-            annualizedReturn: 0.12,
-            maxDrawdown: 0.08,
-            winRate: 0.65,
-            vsBaseline: {
-              baselineReturn: 0.08,
-              outperformance: 0.04,
-            },
-          },
-          // Fallback for other analysis types
-          analysis: 'Mock AI analysis result',
-          recommendations: ['Mock recommendation'],
-        },
-        usage: {
-          promptTokens: 1500,
-          completionTokens: 800,
-          totalTokens: 2300,
-        },
-        processingTimeMs: 50,
-        modelVersion: 'mock-model-v1.0',
-      };
-    }
-  })(),
+// Mock the AI SDK to prevent actual API calls
+vi.mock('@ai-sdk/google', () => ({
+  google: vi.fn(() => ({
+    name: 'mock-gemini-model',
+    provider: 'google',
+  })),
 }));
 
-// Mock console to reduce test noise (optional)
-global.console = {
-  ...console,
-  // Comment out the line below if you want to see console.log during tests
-  log: () => {},
-};
+vi.mock('ai', () => ({
+  generateText: vi.fn().mockResolvedValue({
+    text: 'Mock AI response text',
+    usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+  }),
+  generateObject: vi.fn().mockResolvedValue({
+    object: { analysis: 'Mock analysis', confidence: 0.8 },
+    usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+  }),
+}));
+
+// Mock the Gemini client specifically to prevent actual API calls
+vi.mock('../../ai/gemini-client.ts', () => ({
+  GeminiClient: vi.fn().mockImplementation(() => ({
+    generateObject: vi.fn().mockResolvedValue({
+      success: true,
+      data: {
+        overallRiskLevel: 'medium',
+        riskScore: 50,
+        confidence: 0.8,
+        diversificationScore: 0.7,
+        volatility: {
+          daily: 2.5,
+          weekly: 5.0,
+          monthly: 15.0,
+        },
+        riskFactors: [
+          {
+            factor: 'Portfolio Concentration',
+            impact: 'medium',
+            description: 'Portfolio may be concentrated in specific assets',
+          },
+        ],
+        assetAllocation: [
+          {
+            symbol: 'BTCUSDT',
+            percentage: 100,
+            riskLevel: 'medium',
+            riskContribution: 60,
+          },
+        ],
+        recommendations: [
+          {
+            type: 'diversify',
+            description: 'Consider diversifying portfolio across asset classes',
+            priority: 'medium',
+          },
+        ],
+        stressTests: [
+          {
+            scenario: 'Market Crash',
+            potentialLoss: 30,
+            probability: 0.2,
+          },
+        ],
+      },
+      usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+    }),
+    generateText: vi.fn().mockResolvedValue({
+      success: true,
+      data: 'Mock AI response text',
+      usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+    }),
+    chat: vi.fn().mockResolvedValue({
+      success: true,
+      data: 'Mock AI chat response',
+      usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+    }),
+    testConnection: vi.fn().mockResolvedValue({
+      success: true,
+      model: 'gemini-1.5-flash',
+    }),
+    getConfig: vi.fn().mockReturnValue({
+      model: 'gemini-1.5-flash',
+      maxTokens: 8192,
+      temperature: 0.7,
+    }),
+    getRateLimitStatus: vi.fn().mockReturnValue({
+      requestsUsed: 0,
+      requestsRemaining: 100,
+      windowStartTime: Date.now(),
+      windowDurationMs: 60000,
+    }),
+  })),
+  geminiClient: {
+    generateObject: vi.fn().mockResolvedValue({
+      success: true,
+      data: {
+        overallRiskLevel: 'medium',
+        riskScore: 50,
+        confidence: 0.8,
+        diversificationScore: 0.7,
+        volatility: {
+          daily: 2.5,
+          weekly: 5.0,
+          monthly: 15.0,
+        },
+        riskFactors: [
+          {
+            factor: 'Portfolio Concentration',
+            impact: 'medium',
+            description: 'Portfolio may be concentrated in specific assets',
+          },
+        ],
+        assetAllocation: [
+          {
+            symbol: 'BTCUSDT',
+            percentage: 100,
+            riskLevel: 'medium',
+            riskContribution: 60,
+          },
+        ],
+        recommendations: [
+          {
+            type: 'diversify',
+            description: 'Consider diversifying portfolio across asset classes',
+            priority: 'medium',
+          },
+        ],
+        stressTests: [
+          {
+            scenario: 'Market Crash',
+            potentialLoss: 30,
+            probability: 0.2,
+          },
+        ],
+      },
+      usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+    }),
+    generateText: vi.fn().mockResolvedValue({
+      success: true,
+      data: 'Mock AI response text',
+      usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+    }),
+    chat: vi.fn().mockResolvedValue({
+      success: true,
+      data: 'Mock AI chat response',
+      usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+    }),
+    testConnection: vi.fn().mockResolvedValue({
+      success: true,
+      model: 'gemini-1.5-flash',
+    }),
+    getConfig: vi.fn().mockReturnValue({
+      model: 'gemini-1.5-flash',
+      maxTokens: 8192,
+      temperature: 0.7,
+    }),
+    getRateLimitStatus: vi.fn().mockReturnValue({
+      requestsUsed: 0,
+      requestsRemaining: 100,
+      windowStartTime: Date.now(),
+      windowDurationMs: 60000,
+    }),
+  },
+}));
 
 // Mock DOM APIs that might not be available in Node.js environment
 global.CloseEvent = class CloseEvent extends Event {
@@ -235,4 +217,11 @@ global.CloseEvent = class CloseEvent extends Event {
     this.reason = eventInitDict?.reason ?? '';
     this.wasClean = eventInitDict?.wasClean ?? true;
   }
+};
+
+// Mock console to reduce test noise (optional)
+global.console = {
+  ...console,
+  // Comment out the line below if you want to see console.log during tests
+  log: () => {},
 };

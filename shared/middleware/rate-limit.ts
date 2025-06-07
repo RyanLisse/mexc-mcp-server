@@ -15,7 +15,7 @@ interface Request {
 
 interface Response {
   status(code: number): Response;
-  send(data: any): void;
+  send(data: unknown): void;
   setHeader(key: string, value: string): void;
 }
 

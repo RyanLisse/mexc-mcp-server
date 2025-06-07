@@ -143,79 +143,91 @@ const streamingUpdate: StreamingAnalysisUpdate = {
 };
 
 // Test analysis requests
-const _sentimentRequest: SentimentAnalysisRequest = {
-  analysisType: 'sentiment',
-  data: {
-    symbol: 'BTCUSDT',
-    price: 45000,
-    volume: 1000000,
-    prices: [44800, 44950, 45100, 45000],
-    volumes: [950000, 1200000, 1100000, 1000000],
-    timestamp: Date.now(),
-  },
-  parameters: {
-    temperature: 0.7,
-    maxTokens: 1000,
-    depth: 'detailed',
-    includeConfidenceIntervals: true,
-    contextWindowHours: 24,
-  },
-  enableStreaming: false,
-  timeoutMs: 30000,
-};
+function testSentimentRequest(): SentimentAnalysisRequest {
+  return {
+    analysisType: 'sentiment',
+    data: {
+      symbol: 'BTCUSDT',
+      price: 45000,
+      volume: 1000000,
+      prices: [44800, 44950, 45100, 45000],
+      volumes: [950000, 1200000, 1100000, 1000000],
+      timestamp: Date.now(),
+    },
+    parameters: {
+      temperature: 0.7,
+      maxTokens: 1000,
+      depth: 'detailed',
+      includeConfidenceIntervals: true,
+      contextWindowHours: 24,
+    },
+    enableStreaming: false,
+    timeoutMs: 30000,
+  };
+}
 
-const _technicalRequest: TechnicalAnalysisRequest = {
-  analysisType: 'technical',
-  data: {
-    symbol: 'ETHUSDT',
-    ohlcv: [
-      {
-        open: 3000,
-        high: 3100,
-        low: 2950,
-        close: 3050,
-        volume: 500000,
-        timestamp: Date.now() - 3600000,
-      },
-      {
-        open: 3050,
-        high: 3200,
-        low: 3000,
-        close: 3150,
-        volume: 750000,
-        timestamp: Date.now() - 1800000,
-      },
-      { open: 3150, high: 3250, low: 3100, close: 3200, volume: 600000, timestamp: Date.now() },
-    ],
-  },
-  parameters: {
-    depth: 'comprehensive',
-    contextWindowHours: 48,
-  },
-};
+console.log('Sentiment request test passed:', typeof testSentimentRequest());
 
-const _riskRequest: RiskAssessmentRequest = {
-  analysisType: 'risk',
-  data: {
-    symbol: 'BTCUSDT',
-    side: 'long',
-    size: 0.1,
-    entryPrice: 44000,
-    currentPrice: 45000,
-    marketData: {
-      volatility: 0.04,
-      volume24h: 1000000000,
-      liquidity: {
-        bidAskSpread: 0.01,
-        marketDepth: 5000000,
+function testTechnicalRequest(): TechnicalAnalysisRequest {
+  return {
+    analysisType: 'technical',
+    data: {
+      symbol: 'ETHUSDT',
+      ohlcv: [
+        {
+          open: 3000,
+          high: 3100,
+          low: 2950,
+          close: 3050,
+          volume: 500000,
+          timestamp: Date.now() - 3600000,
+        },
+        {
+          open: 3050,
+          high: 3200,
+          low: 3000,
+          close: 3150,
+          volume: 750000,
+          timestamp: Date.now() - 1800000,
+        },
+        { open: 3150, high: 3250, low: 3100, close: 3200, volume: 600000, timestamp: Date.now() },
+      ],
+    },
+    parameters: {
+      depth: 'comprehensive',
+      contextWindowHours: 48,
+    },
+  };
+}
+
+console.log('Technical request test passed:', typeof testTechnicalRequest());
+
+function testRiskRequest(): RiskAssessmentRequest {
+  return {
+    analysisType: 'risk',
+    data: {
+      symbol: 'BTCUSDT',
+      side: 'long',
+      size: 0.1,
+      entryPrice: 44000,
+      currentPrice: 45000,
+      marketData: {
+        volatility: 0.04,
+        volume24h: 1000000000,
+        liquidity: {
+          bidAskSpread: 0.01,
+          marketDepth: 5000000,
+        },
       },
     },
-  },
-  parameters: {
-    depth: 'detailed',
-    includeConfidenceIntervals: true,
-  },
-};
+    parameters: {
+      depth: 'detailed',
+      includeConfidenceIntervals: true,
+    },
+  };
+}
+
+console.log('Risk request test passed:', typeof testRiskRequest());
 
 // Test budget and cache stats
 const budgetStatus: AIBudgetStatus = {

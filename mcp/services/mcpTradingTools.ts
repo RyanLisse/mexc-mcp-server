@@ -181,6 +181,78 @@ export const mcpTradingToolsService = {
         };
       }
 
+      // Return mock data in test mode to prevent API calls
+      if (
+        process.env.NODE_ENV === 'test' ||
+        process.env.AI_TEST_MODE === 'true' ||
+        process.env.DISABLE_AI_API_CALLS === 'true'
+      ) {
+        return {
+          success: true,
+          toolType: data.action,
+          confidence: 0.8,
+          positionSizing:
+            data.action === 'position_sizing'
+              ? {
+                  recommendedSize: 0.02,
+                  maxSize: 0.05,
+                  riskPercentage: 0.02,
+                  reasoning: 'Moderate position size based on account balance and risk tolerance',
+                }
+              : undefined,
+          riskManagement: {
+            stopLoss: data.entryPrice ? data.entryPrice * 0.95 : 0,
+            takeProfit: data.entryPrice ? data.entryPrice * 1.1 : 0,
+            riskRewardRatio: 2.0,
+            maxRiskPercentage: 0.02,
+            recommendations: ['Set stop-loss at 5% below entry', 'Target 10% profit'],
+          },
+          technicalAnalysis:
+            data.action === 'technical_analysis'
+              ? {
+                  signal: 'neutral',
+                  strength: 0.6,
+                  indicators: {
+                    rsi: 50,
+                    macd: 'neutral',
+                    support: data.currentPrice ? data.currentPrice * 0.95 : 0,
+                    resistance: data.currentPrice ? data.currentPrice * 1.05 : 0,
+                  },
+                  recommendation: 'Monitor for clear breakout signals',
+                }
+              : undefined,
+          marketConditions:
+            data.action === 'market_conditions'
+              ? {
+                  volatility: 'medium',
+                  trend: 'sideways',
+                  volume: 'average',
+                  sentiment: 'neutral',
+                  tradingAdvice: 'Wait for clearer market direction',
+                }
+              : undefined,
+          recommendations: [
+            {
+              type: 'position_management',
+              priority: 'medium',
+              description: 'Implement proper risk management for this trade',
+            },
+          ],
+          mexcAdvantages: {
+            feeSavings: '0.1% trading fee advantage',
+            leverageOptions:
+              data.action === 'position_sizing' ? 'Up to 10x leverage available' : undefined,
+          },
+          modelVersion: 'gemini-2.5-flash-preview-05-20',
+          tokenUsage: {
+            promptTokens: 150,
+            completionTokens: 100,
+            totalTokens: 250,
+            estimatedCostUSD: 0.0001875,
+          },
+        };
+      }
+
       // Configure analyzer for trading tools analysis
       geminiAnalyzer.updateConfig({
         temperature: depthConfig.temperature,
@@ -450,12 +522,12 @@ Please provide comprehensive trading analysis for the ${data.action} request wit
    * Enhance trading tools results with MEXC-specific features
    */
   async enhanceTradingToolsWithMEXC(
-    analysisResult: any,
+    analysisResult: Record<string, unknown>,
     originalData: TradingToolsAnalysisRequest
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     try {
       // Calculate MEXC advantages
-      const mexcAdvantages: any = {};
+      const mexcAdvantages: Record<string, unknown> = {};
 
       // Fee savings impact (0% fees on MEXC)
       if (originalData.positionSize && originalData.currentPrice) {

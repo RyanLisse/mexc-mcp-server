@@ -13,14 +13,7 @@ import type {
   SnipeTarget,
   SymbolV2Entry,
 } from './schemas.js';
-import {
-  CalendarResponseSchema,
-  ErrorEntrySchema,
-  PatternSniperConfigSchema,
-  PerformanceMetricsSchema,
-  READY_STATE_PATTERN,
-  SymbolsV2ResponseSchema,
-} from './schemas.js';
+import { READY_STATE_PATTERN } from './schemas.js';
 
 import { api } from 'encore.dev/api';
 import { MEXCApiClient } from '../market-data/mexc-client.js';

@@ -3,8 +3,9 @@
  * Provides integration with Google's Gemini 2.5 Flash model using Vercel AI SDK
  */
 
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { google } from '@ai-sdk/google';
 import { generateObject, generateText } from 'ai';
+import type { z } from 'zod';
 import { config } from '../shared/config';
 
 export interface GeminiConfig {
@@ -45,8 +46,6 @@ export class GeminiClient {
   private config: GeminiConfig;
   private requestCount = 0;
   private windowStart: number = Date.now();
-  private google: ReturnType<typeof createGoogleGenerativeAI>;
-
   constructor(customConfig?: Partial<GeminiConfig>) {
     this.config = {
       apiKey: config.ai.google.apiKey,
@@ -57,11 +56,6 @@ export class GeminiClient {
     };
 
     this.validateConfig();
-
-    // Initialize the Google provider with API key
-    this.google = createGoogleGenerativeAI({
-      apiKey: this.config.apiKey,
-    });
   }
 
   private validateConfig(): void {
@@ -107,7 +101,7 @@ export class GeminiClient {
       this.checkRateLimit();
 
       const result = await generateText({
-        model: this.google(this.config.model),
+        model: google(this.config.model),
         prompt,
         maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
@@ -145,7 +139,7 @@ export class GeminiClient {
       }));
 
       const result = await generateText({
-        model: this.google(this.config.model),
+        model: google(this.config.model),
         messages: formattedMessages,
         maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
@@ -174,16 +168,16 @@ export class GeminiClient {
    */
   async generateObject<T>(
     prompt: string,
-    schema: unknown,
+    schema: z.ZodType<T>,
     _description?: string
   ): Promise<GeminiObjectResponse<T>> {
     try {
       this.checkRateLimit();
 
       const result = await generateObject({
-        model: this.google(this.config.model),
+        model: google(this.config.model),
         prompt,
-        schema: schema as Record<string, unknown>,
+        schema,
         maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
       });

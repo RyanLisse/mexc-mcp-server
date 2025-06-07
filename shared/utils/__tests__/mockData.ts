@@ -191,12 +191,12 @@ export const responseWithNestedNulls = {
 };
 
 export const responseWithCircularReference = (() => {
-  const obj: any = {
+  const obj: Record<string, unknown> = {
     success: true,
     confidence: 0.8,
     data: {},
   };
-  obj.data.circular = obj; // Creates circular reference
+  (obj.data as Record<string, unknown>).circular = obj; // Creates circular reference
   return obj;
 })();
 

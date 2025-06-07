@@ -348,17 +348,17 @@ function createFallbackRiskAssessment(response: unknown): RiskAssessment {
       if (Array.isArray(data.lossScenarios)) {
         const validScenarios = data.lossScenarios
           .filter(
-            (scenario: any) =>
-              scenario &&
+            (scenario: unknown): scenario is Record<string, unknown> =>
+              scenario !== null &&
               typeof scenario === 'object' &&
-              typeof scenario.scenario === 'string' &&
-              typeof scenario.probability === 'number' &&
-              typeof scenario.potentialLoss === 'number'
+              typeof (scenario as Record<string, unknown>).scenario === 'string' &&
+              typeof (scenario as Record<string, unknown>).probability === 'number' &&
+              typeof (scenario as Record<string, unknown>).potentialLoss === 'number'
           )
-          .map((scenario: any) => ({
-            scenario: scenario.scenario,
-            probability: ensureValidConfidence(scenario.probability),
-            potentialLoss: scenario.potentialLoss,
+          .map((scenario) => ({
+            scenario: scenario.scenario as string,
+            probability: ensureValidConfidence(scenario.probability as number),
+            potentialLoss: scenario.potentialLoss as number,
           }));
 
         if (validScenarios.length > 0) {
@@ -475,17 +475,17 @@ function createFallbackOptimizationResult(response: unknown): OptimizationResult
       if (Array.isArray(data.allocations)) {
         const validAllocations = data.allocations
           .filter(
-            (allocation: any) =>
-              allocation &&
+            (allocation: unknown): allocation is Record<string, unknown> =>
+              allocation !== null &&
               typeof allocation === 'object' &&
-              typeof allocation.symbol === 'string' &&
-              typeof allocation.currentWeight === 'number' &&
-              typeof allocation.optimizedWeight === 'number'
+              typeof (allocation as Record<string, unknown>).symbol === 'string' &&
+              typeof (allocation as Record<string, unknown>).currentWeight === 'number' &&
+              typeof (allocation as Record<string, unknown>).optimizedWeight === 'number'
           )
-          .map((allocation: any) => ({
-            symbol: allocation.symbol,
-            currentWeight: clamp(allocation.currentWeight, 0, 1),
-            optimizedWeight: clamp(allocation.optimizedWeight, 0, 1),
+          .map((allocation) => ({
+            symbol: allocation.symbol as string,
+            currentWeight: clamp(allocation.currentWeight as number, 0, 1),
+            optimizedWeight: clamp(allocation.optimizedWeight as number, 0, 1),
             adjustment: typeof allocation.adjustment === 'number' ? allocation.adjustment : 0,
           }));
 
