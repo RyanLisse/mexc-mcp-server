@@ -78,6 +78,18 @@ export interface AIConfig {
     burstLimit: number;
     /** Enable adaptive rate limiting */
     adaptive: boolean;
+    /** Cleanup interval for rate limiters */
+    cleanupIntervalMs: number;
+    /** Authenticated user limits */
+    authenticated: {
+      maxRequests: number;
+      windowMs: number;
+    };
+    /** Unauthenticated user limits */
+    unauthenticated: {
+      maxRequests: number;
+      windowMs: number;
+    };
   };
   /** Analysis configuration */
   analysis: {
@@ -115,6 +127,14 @@ export interface ServerConfig {
     secretKey: string;
     baseUrl: string;
     websocketUrl: string;
+    /** MEXC client configuration */
+    client: {
+      batchSize: number;
+      timeDiffToleranceMs: number;
+      retryWindowMs: number;
+      timeoutMs: number;
+      maxRetries: number;
+    };
   };
   ai: AIConfig;
   server: {
@@ -138,6 +158,21 @@ export interface ServerConfig {
     ttlTicker: number;
     ttlOrderbook: number;
     ttlStats: number;
+  };
+  /** Sniping bot configuration */
+  sniping: {
+    polling: {
+      distantIntervalMs: number;
+      approachingIntervalMs: number;
+      imminentIntervalMs: number;
+      distantThresholdMs: number;
+      approachingThresholdMs: number;
+    };
+    execution: {
+      maxRetries: number;
+      timeoutMs: number;
+      slippageTolerancePercent: number;
+    };
   };
 }
 
@@ -202,6 +237,13 @@ export function loadConfig(): ServerConfig {
       secretKey: mexcCredentials.secretKey,
       baseUrl: getEnvVar('MEXC_BASE_URL', 'https://api.mexc.com'),
       websocketUrl: getEnvVar('MEXC_WEBSOCKET_URL', 'wss://wbs.mexc.com/ws'),
+      client: {
+        batchSize: getEnvNumber('MEXC_BATCH_SIZE', 100),
+        timeDiffToleranceMs: getEnvNumber('MEXC_TIME_DIFF_TOLERANCE_MS', 5000),
+        retryWindowMs: getEnvNumber('MEXC_RETRY_WINDOW_MS', 1000),
+        timeoutMs: getEnvNumber('MEXC_TIMEOUT_MS', 30000),
+        maxRetries: getEnvNumber('MEXC_MAX_RETRIES', 3),
+      },
     },
     ai: {
       google: {
@@ -241,6 +283,15 @@ export function loadConfig(): ServerConfig {
         windowMs: getEnvNumber('AI_RATE_LIMIT_WINDOW_MS', 60000),
         burstLimit: getEnvNumber('AI_RATE_LIMIT_BURST_LIMIT', 10),
         adaptive: getEnvBoolean('AI_RATE_LIMIT_ADAPTIVE', true),
+        cleanupIntervalMs: getEnvNumber('AI_RATE_LIMIT_CLEANUP_INTERVAL_MS', 300000), // 5 minutes
+        authenticated: {
+          maxRequests: getEnvNumber('AUTH_RATE_LIMIT_MAX_REQUESTS', 1000),
+          windowMs: getEnvNumber('AUTH_RATE_LIMIT_WINDOW_MS', 60000),
+        },
+        unauthenticated: {
+          maxRequests: getEnvNumber('UNAUTH_RATE_LIMIT_MAX_REQUESTS', 100),
+          windowMs: getEnvNumber('UNAUTH_RATE_LIMIT_WINDOW_MS', 60000),
+        },
       },
       analysis: {
         defaultDepth: getEnvVar('AI_ANALYSIS_DEFAULT_DEPTH', 'detailed') as
@@ -294,6 +345,20 @@ export function loadConfig(): ServerConfig {
       ttlTicker: getEnvNumber('CACHE_TTL_TICKER', 5000),
       ttlOrderbook: getEnvNumber('CACHE_TTL_ORDERBOOK', 2000),
       ttlStats: getEnvNumber('CACHE_TTL_STATS', 10000),
+    },
+    sniping: {
+      polling: {
+        distantIntervalMs: getEnvNumber('SNIPING_DISTANT_INTERVAL_MS', 300000), // 5 minutes
+        approachingIntervalMs: getEnvNumber('SNIPING_APPROACHING_INTERVAL_MS', 30000), // 30 seconds
+        imminentIntervalMs: getEnvNumber('SNIPING_IMMINENT_INTERVAL_MS', 2000), // 2 seconds
+        distantThresholdMs: getEnvNumber('SNIPING_DISTANT_THRESHOLD_MS', 3600000), // 1 hour
+        approachingThresholdMs: getEnvNumber('SNIPING_APPROACHING_THRESHOLD_MS', 600000), // 10 minutes
+      },
+      execution: {
+        maxRetries: getEnvNumber('SNIPING_MAX_RETRIES', 3),
+        timeoutMs: getEnvNumber('SNIPING_TIMEOUT_MS', 5000),
+        slippageTolerancePercent: getEnvNumber('SNIPING_SLIPPAGE_TOLERANCE_PERCENT', 1),
+      },
     },
   };
 }

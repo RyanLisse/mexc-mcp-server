@@ -35,6 +35,7 @@
     "@ai-sdk/google": "1.2.19",
     "ai": "4.3.16",
     "encore.dev": "1.48.3",
+    "glob": "11.0.2",
     "zod": "3.25.51"
   },
   "devDependencies": {
