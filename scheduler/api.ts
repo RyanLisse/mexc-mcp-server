@@ -5,14 +5,8 @@ import { detector } from '~encore/clients';
 import { tracker } from '~encore/clients';
 
 // =============================================================================
-// Calendar Monitoring Cron Job - Every 1 hour
+// API Endpoints
 // =============================================================================
-
-const _ = new CronJob('calendar-monitor', {
-  title: 'Monitor MEXC Calendar for New Listings',
-  every: '1h',
-  endpoint: monitorCalendar,
-});
 
 export const monitorCalendar = api({}, async (): Promise<void> => {
   try {
@@ -34,16 +28,6 @@ export const monitorCalendar = api({}, async (): Promise<void> => {
   }
 });
 
-// =============================================================================
-// Adaptive Detection Cron Job - Every 30 seconds
-// =============================================================================
-
-const _detector = new CronJob('adaptive-detection', {
-  title: 'Adaptive Token Detection',
-  every: '30s',
-  endpoint: runAdaptiveDetection,
-});
-
 export const runAdaptiveDetection = api({}, async (): Promise<void> => {
   try {
     console.log('🔍 Running adaptive detection...');
@@ -56,16 +40,6 @@ export const runAdaptiveDetection = api({}, async (): Promise<void> => {
   } catch (error) {
     console.error('❌ Adaptive detection failed:', error);
   }
-});
-
-// =============================================================================
-// P&L Updates Cron Job - Every 1 minute
-// =============================================================================
-
-const _pnlUpdater = new CronJob('pnl-updates', {
-  title: 'Update P&L for Active Positions',
-  every: '1m',
-  endpoint: updatePnL,
 });
 
 export const updatePnL = api({}, async (): Promise<void> => {
@@ -81,16 +55,6 @@ export const updatePnL = api({}, async (): Promise<void> => {
   }
 });
 
-// =============================================================================
-// Data Cleanup Cron Job - Daily at 02:00 UTC
-// =============================================================================
-
-const _cleanup = new CronJob('daily-cleanup', {
-  title: 'Daily Data Cleanup',
-  schedule: '0 2 * * *', // 02:00 UTC daily
-  endpoint: dailyCleanup,
-});
-
 export const dailyCleanup = api({}, async (): Promise<void> => {
   try {
     console.log('🧹 Starting daily data cleanup...');
@@ -103,16 +67,6 @@ export const dailyCleanup = api({}, async (): Promise<void> => {
   } catch (error) {
     console.error('❌ Daily cleanup failed:', error);
   }
-});
-
-// =============================================================================
-// Health Check Cron Job - Every 5 minutes
-// =============================================================================
-
-const _healthCheck = new CronJob('health-check', {
-  title: 'System Health Check',
-  every: '5m',
-  endpoint: systemHealthCheck,
 });
 
 export const systemHealthCheck = api({}, async (): Promise<void> => {
@@ -149,16 +103,6 @@ export const systemHealthCheck = api({}, async (): Promise<void> => {
   }
 });
 
-// =============================================================================
-// Detection Restart Cron Job - Every hour
-// =============================================================================
-
-const _detectionRestart = new CronJob('detection-restart', {
-  title: 'Restart Adaptive Detection',
-  every: '1h',
-  endpoint: restartAdaptiveDetection,
-});
-
 export const restartAdaptiveDetection = api({}, async (): Promise<void> => {
   try {
     console.log('🔄 Restarting adaptive detection...');
@@ -178,16 +122,6 @@ export const restartAdaptiveDetection = api({}, async (): Promise<void> => {
   }
 });
 
-// =============================================================================
-// Market Data Sync Cron Job - Every 10 minutes
-// =============================================================================
-
-const _marketSync = new CronJob('market-data-sync', {
-  title: 'Sync Market Data and Symbol Information',
-  every: '10m',
-  endpoint: syncMarketData,
-});
-
 export const syncMarketData = api({}, async (): Promise<void> => {
   try {
     console.log('📊 Syncing market data...');
@@ -202,16 +136,6 @@ export const syncMarketData = api({}, async (): Promise<void> => {
   } catch (error) {
     console.error('❌ Market data sync failed:', error);
   }
-});
-
-// =============================================================================
-// Performance Analytics Cron Job - Every 15 minutes
-// =============================================================================
-
-const _analytics = new CronJob('performance-analytics', {
-  title: 'Update Performance Analytics',
-  every: '15m',
-  endpoint: updatePerformanceAnalytics,
 });
 
 export const updatePerformanceAnalytics = api({}, async (): Promise<void> => {
@@ -350,3 +274,55 @@ export const getSchedulerStatus = api(
     }
   }
 );
+
+// =============================================================================
+// CronJob Declarations (declared after API endpoints to avoid hoisting issues)
+// =============================================================================
+
+const _ = new CronJob('calendar-monitor', {
+  title: 'Monitor MEXC Calendar for New Listings',
+  every: '1h',
+  endpoint: monitorCalendar,
+});
+
+const _detector = new CronJob('adaptive-detection', {
+  title: 'Adaptive Token Detection',
+  every: '1m',
+  endpoint: runAdaptiveDetection,
+});
+
+const _pnlUpdater = new CronJob('pnl-updates', {
+  title: 'Update P&L for Active Positions',
+  every: '1m',
+  endpoint: updatePnL,
+});
+
+const _cleanup = new CronJob('daily-cleanup', {
+  title: 'Daily Data Cleanup',
+  schedule: '0 2 * * *', // 02:00 UTC daily
+  endpoint: dailyCleanup,
+});
+
+const _healthCheck = new CronJob('health-check', {
+  title: 'System Health Check',
+  every: '5m',
+  endpoint: systemHealthCheck,
+});
+
+const _detectionRestart = new CronJob('detection-restart', {
+  title: 'Restart Adaptive Detection',
+  every: '1h',
+  endpoint: restartAdaptiveDetection,
+});
+
+const _marketSync = new CronJob('market-data-sync', {
+  title: 'Sync Market Data and Symbol Information',
+  every: '10m',
+  endpoint: syncMarketData,
+});
+
+const _analytics = new CronJob('performance-analytics', {
+  title: 'Update Performance Analytics',
+  every: '15m',
+  endpoint: updatePerformanceAnalytics,
+});

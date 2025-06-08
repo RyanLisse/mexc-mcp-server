@@ -1,16 +1,11 @@
 import { api } from 'encore.dev/api';
-import { SQLDatabase } from 'encore.dev/storage/sqldb';
+import { db } from '../shared/database.js';
 import {
   type ExecuteSnipeRequest,
   type ExecuteSnipeResponse,
   ExecutorError,
   type TradeExecutionResult,
 } from '../shared/types/sniping-types.js';
-
-// Database connection for sniping tables
-const db = new SQLDatabase('sniping', {
-  migrations: './shared/audit/migrations',
-});
 
 /**
  * High-precision execution service for sniping trades

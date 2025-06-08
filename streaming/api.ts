@@ -37,10 +37,15 @@ export interface TradingNotification {
   severity: 'info' | 'warning' | 'error' | 'success';
 }
 
+export interface OrderBookEntry {
+  price: number;
+  quantity: number;
+}
+
 export interface OrderBookUpdate {
   symbol: string;
-  bids: Array<[number, number]>; // [price, quantity]
-  asks: Array<[number, number]>; // [price, quantity]
+  bids: OrderBookEntry[]; // [price, quantity]
+  asks: OrderBookEntry[]; // [price, quantity]
   timestamp: number;
 }
 
@@ -58,7 +63,7 @@ export interface SystemStatusUpdate {
 /**
  * Stream real-time price updates for specified symbols
  */
-export const priceStream = api.streamOut<PriceUpdate>(
+export const priceStream = api.streamOut<{ symbols: string }, PriceUpdate>(
   { path: '/streaming/prices/:symbols', expose: true },
   async (stream, req: { symbols: string }) => {
     try {
@@ -112,7 +117,7 @@ export const priceStream = api.streamOut<PriceUpdate>(
 /**
  * Stream real-time order book updates
  */
-export const orderBookStream = api.streamOut<OrderBookUpdate>(
+export const orderBookStream = api.streamOut<{ symbol: string }, OrderBookUpdate>(
   { path: '/streaming/orderbook/:symbol', expose: true },
   async (stream, req: { symbol: string }) => {
     try {
@@ -125,14 +130,14 @@ export const orderBookStream = api.streamOut<OrderBookUpdate>(
         try {
           const mockOrderBook: OrderBookUpdate = {
             symbol,
-            bids: Array.from({ length: 10 }, (_, i) => [
-              100 - i * 0.1, // Price
-              Math.random() * 1000, // Quantity
-            ]) as Array<[number, number]>,
-            asks: Array.from({ length: 10 }, (_, i) => [
-              100 + i * 0.1, // Price
-              Math.random() * 1000, // Quantity
-            ]) as Array<[number, number]>,
+            bids: Array.from({ length: 10 }, (_, i) => ({
+              price: 100 - i * 0.1,
+              quantity: Math.random() * 1000,
+            })),
+            asks: Array.from({ length: 10 }, (_, i) => ({
+              price: 100 + i * 0.1,
+              quantity: Math.random() * 1000,
+            })),
             timestamp: Date.now(),
           };
 

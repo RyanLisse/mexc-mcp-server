@@ -3,7 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { Gateway, type Header, api } from 'encore.dev/api';
 import { APIError } from 'encore.dev/api';
 import { authHandler } from 'encore.dev/auth';
-import { SQLDatabase } from 'encore.dev/storage/sqldb';
+import { db } from '../shared/database.js';
 import {
   type AuthData,
   type AuthResponse,
@@ -27,11 +27,6 @@ import {
   type UserSnipingTargetRow,
   type UserTradeRow,
 } from '../shared/types/user-types.js';
-
-// Database connection for user management
-const db = new SQLDatabase('users', {
-  migrations: './shared/audit/migrations',
-});
 
 // =============================================================================
 // Authentication Handler

@@ -1,70 +1,57 @@
 // Sniping Bot Types - Based on the new strategy document
-import { z } from 'zod';
 
 // =============================================================================
-// Zod Schemas for Runtime Validation
+// TypeScript Types for Sniping Bot
 // =============================================================================
 
-export const ListingStatusSchema = z.enum(['PENDING', 'READY', 'SNIPED', 'MISSED']);
-export const SnipeStatusSchema = z.enum(['EXECUTED', 'FAILED', 'TIMED_OUT']);
-export const SideSchema = z.enum(['BUY', 'SELL']);
+export type ListingStatus = 'PENDING' | 'READY' | 'SNIPED' | 'MISSED';
+export type SnipeStatus = 'EXECUTED' | 'FAILED' | 'TIMED_OUT';
+export type Side = 'BUY' | 'SELL';
 
-export const ListingSchema = z.object({
-  vcoinId: z.string(),
-  symbol: z.string(),
-  projectName: z.string().optional(),
-  scheduledLaunchTime: z.date(),
-  discoveredAt: z.date(),
-  status: ListingStatusSchema,
-});
+export interface Listing {
+  vcoinId: string;
+  symbol: string;
+  projectName?: string;
+  scheduledLaunchTime: Date;
+  discoveredAt: Date;
+  status: ListingStatus;
+}
 
-export const TargetSchema = z.object({
-  symbol: z.string(),
-  vcoinId: z.string(),
-  projectName: z.string().optional(),
-  launchTime: z.date(),
-  priceScale: z.number().int(),
-  quantityScale: z.number().int(),
-  hoursAdvanceNotice: z.number(),
-  pattern: z.string(),
-  discoveredAt: z.date(),
-});
+export interface Target {
+  symbol: string;
+  vcoinId: string;
+  projectName?: string;
+  launchTime: Date;
+  priceScale: number;
+  quantityScale: number;
+  hoursAdvanceNotice: number;
+  pattern: string;
+  discoveredAt: Date;
+}
 
-export const SnipeSchema = z.object({
-  id: z.number(),
-  targetSymbol: z.string(),
-  exchangeOrderId: z.string().optional(),
-  status: SnipeStatusSchema,
-  side: SideSchema,
-  executedAt: z.date(),
-  requestedQty: z.number().optional(),
-  executedQty: z.number().optional(),
-  avgPrice: z.number().optional(),
-  pnl1m: z.number().optional(),
-  pnl5m: z.number().optional(),
-  pnl15m: z.number().optional(),
-  pnl1h: z.number().optional(),
-  notes: z.string().optional(),
-});
+export interface Snipe {
+  id: number;
+  targetSymbol: string;
+  exchangeOrderId?: string;
+  status: SnipeStatus;
+  side: Side;
+  executedAt: Date;
+  requestedQty?: number;
+  executedQty?: number;
+  avgPrice?: number;
+  pnl1m?: number;
+  pnl5m?: number;
+  pnl15m?: number;
+  pnl1h?: number;
+  notes?: string;
+}
 
-export const PollingTierSchema = z.object({
-  name: z.string(),
-  minTimeUntilLaunch: z.number(), // milliseconds
-  maxTimeUntilLaunch: z.number(), // milliseconds
-  intervalMs: z.number(),
-});
-
-// =============================================================================
-// TypeScript Types (inferred from schemas)
-// =============================================================================
-
-export type ListingStatus = z.infer<typeof ListingStatusSchema>;
-export type SnipeStatus = z.infer<typeof SnipeStatusSchema>;
-export type Side = z.infer<typeof SideSchema>;
-export type Listing = z.infer<typeof ListingSchema>;
-export type Target = z.infer<typeof TargetSchema>;
-export type Snipe = z.infer<typeof SnipeSchema>;
-export type PollingTier = z.infer<typeof PollingTierSchema>;
+export interface PollingTier {
+  name: string;
+  minTimeUntilLaunch: number; // milliseconds
+  maxTimeUntilLaunch: number; // milliseconds
+  intervalMs: number;
+}
 
 // =============================================================================
 // API Request/Response Types

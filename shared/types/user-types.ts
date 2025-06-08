@@ -1,89 +1,75 @@
 // User Management Types for MEXC MCP Server
-import { z } from 'zod';
 
 // =============================================================================
-// Zod Schemas for User Management
+// TypeScript Types for User Management
 // =============================================================================
 
-export const SubscriptionTierSchema = z.enum(['free', 'pro', 'enterprise']);
-export const TradeSideSchema = z.enum(['BUY', 'SELL']);
-export const TradeStatusSchema = z.enum(['PENDING', 'FILLED', 'CANCELLED', 'FAILED']);
+export type SubscriptionTier = 'free' | 'pro' | 'enterprise';
+export type TradeSide = 'BUY' | 'SELL';
+export type TradeStatus = 'PENDING' | 'FILLED' | 'CANCELLED' | 'FAILED';
 
-export const UserSchema = z.object({
-  id: z.number(),
-  email: z.string().email(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  isActive: z.boolean(),
-  subscriptionTier: SubscriptionTierSchema,
-});
+export interface User {
+  id: number;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+  subscriptionTier: SubscriptionTier;
+}
 
-export const UserCredentialsSchema = z.object({
-  id: z.number(),
-  userId: z.number(),
-  mexcApiKeyEncrypted: z.string(),
-  mexcSecretKeyEncrypted: z.string(),
-  encryptionKeyId: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  isActive: z.boolean(),
-  lastUsedAt: z.date().optional(),
-});
+export interface UserCredentials {
+  id: number;
+  userId: number;
+  mexcApiKeyEncrypted: string;
+  mexcSecretKeyEncrypted: string;
+  encryptionKeyId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+  lastUsedAt?: Date;
+}
 
-export const UserSessionSchema = z.object({
-  id: z.number(),
-  userId: z.number(),
-  sessionToken: z.string(),
-  expiresAt: z.date(),
-  createdAt: z.date(),
-  lastActivityAt: z.date(),
-  ipAddress: z.string().optional(),
-  userAgent: z.string().optional(),
-});
+export interface UserSession {
+  id: number;
+  userId: number;
+  sessionToken: string;
+  expiresAt: Date;
+  createdAt: Date;
+  lastActivityAt: Date;
+  ipAddress?: string;
+  userAgent?: string;
+}
 
-export const UserSnipingTargetSchema = z.object({
-  id: z.number(),
-  userId: z.number(),
-  targetSymbol: z.string(),
-  quantity: z.number(),
-  maxPrice: z.number().optional(),
-  isActive: z.boolean(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
+export interface UserSnipingTarget {
+  id: number;
+  userId: number;
+  targetSymbol: string;
+  quantity: number;
+  maxPrice?: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-export const UserTradeSchema = z.object({
-  id: z.number(),
-  userId: z.number(),
-  exchangeOrderId: z.string().optional(),
-  symbol: z.string(),
-  side: TradeSideSchema,
-  quantity: z.number(),
-  price: z.number(),
-  totalValue: z.number(),
-  fees: z.number(),
-  status: TradeStatusSchema,
-  executedAt: z.date(),
-  createdAt: z.date(),
-  pnl1m: z.number().optional(),
-  pnl5m: z.number().optional(),
-  pnl15m: z.number().optional(),
-  pnl1h: z.number().optional(),
-  isSnipe: z.boolean(),
-});
-
-// =============================================================================
-// TypeScript Types (inferred from schemas)
-// =============================================================================
-
-export type SubscriptionTier = z.infer<typeof SubscriptionTierSchema>;
-export type TradeSide = z.infer<typeof TradeSideSchema>;
-export type TradeStatus = z.infer<typeof TradeStatusSchema>;
-export type User = z.infer<typeof UserSchema>;
-export type UserCredentials = z.infer<typeof UserCredentialsSchema>;
-export type UserSession = z.infer<typeof UserSessionSchema>;
-export type UserSnipingTarget = z.infer<typeof UserSnipingTargetSchema>;
-export type UserTrade = z.infer<typeof UserTradeSchema>;
+export interface UserTrade {
+  id: number;
+  userId: number;
+  exchangeOrderId?: string;
+  symbol: string;
+  side: TradeSide;
+  quantity: number;
+  price: number;
+  totalValue: number;
+  fees: number;
+  status: TradeStatus;
+  executedAt: Date;
+  createdAt: Date;
+  pnl1m?: number;
+  pnl5m?: number;
+  pnl15m?: number;
+  pnl1h?: number;
+  isSnipe: boolean;
+}
 
 // =============================================================================
 // API Request/Response Types

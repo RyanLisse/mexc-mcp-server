@@ -1,5 +1,5 @@
 import { api } from 'encore.dev/api';
-import { SQLDatabase } from 'encore.dev/storage/sqldb';
+import { db } from '../shared/database.js';
 import {
   CalendarError,
   type CalendarListing,
@@ -8,11 +8,6 @@ import {
   type MonitorCalendarRequest,
   type MonitorCalendarResponse,
 } from '../shared/types/sniping-types.js';
-
-// Database connection for sniping tables
-const db = new SQLDatabase('sniping', {
-  migrations: './shared/audit/migrations',
-});
 
 /**
  * Monitors the MEXC calendar for new listings and persists them to database

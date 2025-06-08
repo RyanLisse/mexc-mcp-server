@@ -1,5 +1,5 @@
 import { api } from 'encore.dev/api';
-import { SQLDatabase } from 'encore.dev/storage/sqldb';
+import { db } from '../shared/database.js';
 import {
   type PerformanceAnalyticsResponse,
   type StartPositionTrackingRequest,
@@ -9,11 +9,6 @@ import {
   type UpdatePnLRequest,
   type UpdatePnLResponse,
 } from '../shared/types/sniping-types.js';
-
-// Database connection for sniping tables
-const db = new SQLDatabase('sniping', {
-  migrations: './shared/audit/migrations',
-});
 
 // Store active price monitoring sessions
 const activePriceMonitors = new Map<number, NodeJS.Timeout[]>();

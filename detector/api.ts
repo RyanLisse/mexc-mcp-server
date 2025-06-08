@@ -1,5 +1,5 @@
 import { api } from 'encore.dev/api';
-import { SQLDatabase } from 'encore.dev/storage/sqldb';
+import { db } from '../shared/database.js';
 import {
   DEFAULT_POLLING_TIERS,
   type DetectReadyStatesResponse,
@@ -8,11 +8,6 @@ import {
   type PollingTier,
   type StartAdaptiveDetectionResponse,
 } from '../shared/types/sniping-types.js';
-
-// Database connection for sniping tables
-const db = new SQLDatabase('sniping', {
-  migrations: './shared/audit/migrations',
-});
 
 // Define polling tiers for adaptive monitoring
 const POLLING_TIERS: PollingTier[] = DEFAULT_POLLING_TIERS;

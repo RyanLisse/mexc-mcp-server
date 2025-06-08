@@ -18,14 +18,60 @@ import {
 // Event Publishing APIs
 // =============================================================================
 
+// Define input types explicitly to avoid Omit issues with Encore
+export interface NewListingInput {
+  vcoinId: string;
+  symbol: string;
+  projectName?: string;
+  scheduledLaunchTime: string;
+  userId?: number; // For user-specific notifications
+}
+
+export interface SnipeExecutionInput {
+  snipeId: number;
+  userId: number;
+  symbol: string;
+  orderId?: string;
+  status: 'EXECUTED' | 'FAILED' | 'TIMED_OUT';
+  requestedQty?: number;
+  executedQty?: number;
+  avgPrice?: number;
+  executionTimeMs: number;
+  userEmail: string; // For routing notifications
+}
+
+export interface PnLUpdateInput {
+  snipeId: number;
+  userId: number;
+  symbol: string;
+  timeframe: '1m' | '5m' | '15m' | '1h';
+  pnl: number;
+  currentPrice: number;
+  userEmail: string;
+}
+
+export interface SystemHealthInput {
+  service: string;
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  message?: string;
+  details?: Record<string, unknown>;
+}
+
+export interface AlertInput {
+  type: 'price_spike' | 'snipe_opportunity' | 'system_error' | 'maintenance';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  message: string;
+  userId?: number;
+  data?: Record<string, unknown>;
+}
+
 /**
  * Publish a new listing discovery event
  */
 export const publishNewListing = api(
   { method: 'POST', path: '/events/listings/new' },
-  async (
-    event: Omit<NewListingEvent, 'discoveredAt'>
-  ): Promise<{ success: boolean; messageId?: string }> => {
+  async (event: NewListingInput): Promise<{ success: boolean; messageId?: string }> => {
     try {
       const eventWithTimestamp: NewListingEvent = {
         ...event,
@@ -84,13 +130,12 @@ export const publishTargetReady = api(
  */
 export const publishSnipeExecution = api(
   { method: 'POST', path: '/events/snipes/executed' },
-  async (
-    event: Omit<SnipeExecutedEvent, 'executedAt'>
-  ): Promise<{ success: boolean; messageId?: string }> => {
+  async (event: SnipeExecutionInput): Promise<{ success: boolean; messageId?: string }> => {
     try {
       const eventWithTimestamp: SnipeExecutedEvent = {
         ...event,
         executedAt: new Date().toISOString(),
+        userEmail: event.userEmail, // Ensure attribute is included
       };
 
       const messageId = await snipeExecutions.publish(eventWithTimestamp);
@@ -120,13 +165,12 @@ export const publishSnipeExecution = api(
  */
 export const publishPnLUpdate = api(
   { method: 'POST', path: '/events/pnl/update' },
-  async (
-    event: Omit<PnLUpdateEvent, 'updatedAt'>
-  ): Promise<{ success: boolean; messageId?: string }> => {
+  async (event: PnLUpdateInput): Promise<{ success: boolean; messageId?: string }> => {
     try {
       const eventWithTimestamp: PnLUpdateEvent = {
         ...event,
         updatedAt: new Date().toISOString(),
+        userEmail: event.userEmail, // Ensure attribute is included
       };
 
       const messageId = await pnlUpdates.publish(eventWithTimestamp);
@@ -157,9 +201,7 @@ export const publishPnLUpdate = api(
  */
 export const publishSystemHealth = api(
   { method: 'POST', path: '/events/system/health' },
-  async (
-    event: Omit<SystemHealthEvent, 'timestamp'>
-  ): Promise<{ success: boolean; messageId?: string }> => {
+  async (event: SystemHealthInput): Promise<{ success: boolean; messageId?: string }> => {
     try {
       const eventWithTimestamp: SystemHealthEvent = {
         ...event,
@@ -192,13 +234,12 @@ export const publishSystemHealth = api(
  */
 export const publishAlert = api(
   { method: 'POST', path: '/events/alerts' },
-  async (
-    event: Omit<AlertEvent, 'timestamp'>
-  ): Promise<{ success: boolean; messageId?: string }> => {
+  async (event: AlertInput): Promise<{ success: boolean; messageId?: string }> => {
     try {
       const eventWithTimestamp: AlertEvent = {
         ...event,
         timestamp: new Date().toISOString(),
+        userId: event.userId, // Ensure attribute is included
       };
 
       const messageId = await alerts.publish(eventWithTimestamp);
