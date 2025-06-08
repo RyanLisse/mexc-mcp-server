@@ -1,11 +1,10 @@
 import { Service } from 'encore.dev/service';
-import { adaptiveRateLimit } from '../shared/middleware/rate-limiting.js';
 import {
+  adaptiveRateLimit,
   authRateLimit,
   registrationRateLimit,
-  securityHeaders,
-  validateContentType,
-} from '../shared/middleware/validation.js';
+} from '../shared/middleware/rate-limiting.js';
+import { securityHeaders, validateContentType } from '../shared/middleware/validation.js';
 
 export default new Service('user', {
   middlewares: [
